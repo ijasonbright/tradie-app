@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# Expo
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/npm-debug.*
+apps/mobile/*.jks
+apps/mobile/*.p8
+apps/mobile/*.p12
+apps/mobile/*.key
+apps/mobile/*.mobileprovision
+apps/mobile/*.orig.*
+apps/mobile/web-build/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Typescript
+*.tsbuildinfo
