@@ -4,6 +4,9 @@ import { db, organizations, organizationMembers, users } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
+// Force dynamic rendering to prevent build-time evaluation
+export const dynamic = 'force-dynamic'
+
 const createOrganizationSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
   abn: z.string().optional(),

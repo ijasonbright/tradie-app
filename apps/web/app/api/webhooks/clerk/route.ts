@@ -4,6 +4,9 @@ import { WebhookEvent } from '@clerk/nextjs/server'
 import { db, users } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: Request) {
   // Get the headers
   const headerPayload = await headers()
