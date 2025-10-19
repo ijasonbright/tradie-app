@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { db, organizations, organizationMembers, users } from '@/lib/db'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
 
 // Force dynamic rendering to prevent build-time evaluation
 export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, 'Business name is required'),
@@ -22,6 +22,9 @@ const createOrganizationSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Import database at runtime only
+    const { db, organizations, organizationMembers, users } = await import('@/lib/db')
+
     // Check authentication
     const { userId: clerkUserId } = await auth()
 
@@ -30,9 +33,12 @@ export async function POST(req: Request) {
     }
 
     // Get user from database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkUserId, clerkUserId),
-    })
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkUserId, clerkUserId))
+      .limit(1)
+      .then(rows => rows[0])
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -100,6 +106,9 @@ export async function POST(req: Request) {
 // Get current user's organizations
 export async function GET() {
   try {
+    // Import database at runtime only
+    const { db, organizations, organizationMembers, users } = await import('@/lib/db')
+
     const { userId: clerkUserId } = await auth()
 
     if (!clerkUserId) {
@@ -107,9 +116,12 @@ export async function GET() {
     }
 
     // Get user from database
-    const user = await db.query.users.findFirst({
-      where: eq(users.clerkUserId, clerkUserId),
-    })
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.clerkUserId, clerkUserId))
+      .limit(1)
+      .then(rows => rows[0])
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
