@@ -76,8 +76,16 @@ export default function DashboardPage() {
       <nav className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 justify-between">
-            <div className="flex items-center">
+            <div className="flex items-center gap-8">
               <h1 className="text-xl font-bold">Tradie App</h1>
+              <div className="flex gap-4">
+                <a href="/dashboard" className="font-medium text-blue-600">
+                  Organizations
+                </a>
+                <a href="/dashboard/clients" className="text-gray-600 hover:text-gray-900">
+                  Clients
+                </a>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</span>
