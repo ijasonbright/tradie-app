@@ -52,6 +52,8 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     if (params.id) {
+      // Sync user data to ensure full_name is up to date
+      fetch('/api/users/sync', { method: 'POST' }).catch(console.error)
       fetchJob()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

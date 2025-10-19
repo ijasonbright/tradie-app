@@ -51,7 +51,9 @@ export async function POST(req: Request) {
 
       const email = email_addresses?.[0]?.email_address || ''
       const phone = phone_numbers?.[0]?.phone_number || null
-      const fullName = [first_name, last_name].filter(Boolean).join(' ') || 'Unknown'
+      // Use email username as fallback if no name is provided
+      const emailUsername = email.split('@')[0]
+      const fullName = [first_name, last_name].filter(Boolean).join(' ') || emailUsername || 'Unknown User'
 
       // Check if user already exists
       const existingUsers = await sql`
