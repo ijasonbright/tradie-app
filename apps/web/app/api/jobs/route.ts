@@ -30,35 +30,85 @@ export async function GET(req: Request) {
     const user = users[0]
 
     // Build query with optional filters
-    let query = sql`
-      SELECT
-        j.*,
-        o.name as organization_name,
-        c.company_name, c.first_name, c.last_name, c.is_company,
-        u.full_name as created_by_name,
-        a.full_name as assigned_to_name
-      FROM jobs j
-      INNER JOIN organizations o ON j.organization_id = o.id
-      INNER JOIN organization_members om ON o.id = om.organization_id
-      INNER JOIN clients c ON j.client_id = c.id
-      LEFT JOIN users u ON j.created_by_user_id = u.id
-      LEFT JOIN users a ON j.assigned_to_user_id = a.id
-      WHERE om.user_id = ${user.id}
-      AND om.status = 'active'
-    `
+    let jobs
 
-    // Apply filters if provided
-    if (status) {
-      query = sql`${query} AND j.status = ${status}`
+    if (status && clientId) {
+      jobs = await sql`
+        SELECT
+          j.*,
+          o.name as organization_name,
+          c.company_name, c.first_name, c.last_name, c.is_company,
+          u.full_name as created_by_name,
+          a.full_name as assigned_to_name
+        FROM jobs j
+        INNER JOIN organizations o ON j.organization_id = o.id
+        INNER JOIN organization_members om ON o.id = om.organization_id
+        INNER JOIN clients c ON j.client_id = c.id
+        LEFT JOIN users u ON j.created_by_user_id = u.id
+        LEFT JOIN users a ON j.assigned_to_user_id = a.id
+        WHERE om.user_id = ${user.id}
+        AND om.status = 'active'
+        AND j.status = ${status}
+        AND j.client_id = ${clientId}
+        ORDER BY j.created_at DESC
+      `
+    } else if (status) {
+      jobs = await sql`
+        SELECT
+          j.*,
+          o.name as organization_name,
+          c.company_name, c.first_name, c.last_name, c.is_company,
+          u.full_name as created_by_name,
+          a.full_name as assigned_to_name
+        FROM jobs j
+        INNER JOIN organizations o ON j.organization_id = o.id
+        INNER JOIN organization_members om ON o.id = om.organization_id
+        INNER JOIN clients c ON j.client_id = c.id
+        LEFT JOIN users u ON j.created_by_user_id = u.id
+        LEFT JOIN users a ON j.assigned_to_user_id = a.id
+        WHERE om.user_id = ${user.id}
+        AND om.status = 'active'
+        AND j.status = ${status}
+        ORDER BY j.created_at DESC
+      `
+    } else if (clientId) {
+      jobs = await sql`
+        SELECT
+          j.*,
+          o.name as organization_name,
+          c.company_name, c.first_name, c.last_name, c.is_company,
+          u.full_name as created_by_name,
+          a.full_name as assigned_to_name
+        FROM jobs j
+        INNER JOIN organizations o ON j.organization_id = o.id
+        INNER JOIN organization_members om ON o.id = om.organization_id
+        INNER JOIN clients c ON j.client_id = c.id
+        LEFT JOIN users u ON j.created_by_user_id = u.id
+        LEFT JOIN users a ON j.assigned_to_user_id = a.id
+        WHERE om.user_id = ${user.id}
+        AND om.status = 'active'
+        AND j.client_id = ${clientId}
+        ORDER BY j.created_at DESC
+      `
+    } else {
+      jobs = await sql`
+        SELECT
+          j.*,
+          o.name as organization_name,
+          c.company_name, c.first_name, c.last_name, c.is_company,
+          u.full_name as created_by_name,
+          a.full_name as assigned_to_name
+        FROM jobs j
+        INNER JOIN organizations o ON j.organization_id = o.id
+        INNER JOIN organization_members om ON o.id = om.organization_id
+        INNER JOIN clients c ON j.client_id = c.id
+        LEFT JOIN users u ON j.created_by_user_id = u.id
+        LEFT JOIN users a ON j.assigned_to_user_id = a.id
+        WHERE om.user_id = ${user.id}
+        AND om.status = 'active'
+        ORDER BY j.created_at DESC
+      `
     }
-
-    if (clientId) {
-      query = sql`${query} AND j.client_id = ${clientId}`
-    }
-
-    query = sql`${query} ORDER BY j.created_at DESC`
-
-    const jobs = await query
 
     return NextResponse.json({
       jobs,
