@@ -112,20 +112,30 @@ export async function GET() {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Get user's organizations
-    const userOrgs = await db.query.organizationMembers.findMany({
-      where: eq(organizationMembers.userId, user.id),
-      with: {
-        organization: true,
-      },
-    })
+    // Get user's organizations (using simple query instead of relational query)
+    const userOrgs = await db
+      .select()
+      .from(organizationMembers)
+      .where(eq(organizationMembers.userId, user.id))
+
+    // Get organization details for each membership
+    const orgsWithDetails = await Promise.all(
+      userOrgs.map(async (membership) => {
+        const [org] = await db
+          .select()
+          .from(organizations)
+          .where(eq(organizations.id, membership.organizationId))
+
+        return {
+          ...org,
+          role: membership.role,
+          status: membership.status,
+        }
+      })
+    )
 
     return NextResponse.json({
-      organizations: userOrgs.map((m) => ({
-        ...m.organization,
-        role: m.role,
-        status: m.status,
-      })),
+      organizations: orgsWithDetails,
     })
   } catch (error) {
     console.error('Error fetching organizations:', error)
