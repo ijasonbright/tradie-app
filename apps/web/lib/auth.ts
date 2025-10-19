@@ -39,7 +39,7 @@ export async function getCurrentUser() {
  * Returns null if user is not in an organization
  */
 export async function getCurrentOrganization() {
-  const { orgId } = auth()
+  const { orgId } = await auth()
 
   if (!orgId) {
     return null

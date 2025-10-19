@@ -20,7 +20,7 @@ const createOrganizationSchema = z.object({
 export async function POST(req: Request) {
   try {
     // Check authentication
-    const { userId: clerkUserId } = auth()
+    const { userId: clerkUserId } = await auth()
 
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
 // Get current user's organizations
 export async function GET() {
   try {
-    const { userId: clerkUserId } = auth()
+    const { userId: clerkUserId } = await auth()
 
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
