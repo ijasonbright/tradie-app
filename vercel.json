@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build --workspace=apps/web",
+  "installCommand": "npm install --workspace=apps/web --workspace=packages/database --workspace=packages/utils --include-workspace-root"
+}
