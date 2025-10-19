@@ -89,6 +89,12 @@ export default function DashboardPage() {
                 <Link href="/dashboard/jobs" className="text-gray-600 hover:text-gray-900">
                   Jobs
                 </Link>
+                <Link href="/dashboard/quotes" className="text-gray-600 hover:text-gray-900">
+                  Quotes
+                </Link>
+                <Link href="/dashboard/invoices" className="text-gray-600 hover:text-gray-900">
+                  Invoices
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">
