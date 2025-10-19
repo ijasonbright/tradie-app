@@ -6,6 +6,8 @@ import Link from 'next/link'
 
 interface Quote {
   id: string
+  organization_id: string
+  client_id: string
   quote_number: string
   title: string
   description: string
@@ -23,6 +25,7 @@ interface Quote {
   client_email: string
   organization_name: string
   created_by_name: string
+  converted_to_job_id: string | null
 }
 
 interface LineItem {
