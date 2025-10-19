@@ -133,7 +133,6 @@ export async function PUT(
         billing_state = ${body.billingState !== undefined ? body.billingState : client.billing_state},
         billing_postcode = ${body.billingPostcode !== undefined ? body.billingPostcode : client.billing_postcode},
         notes = ${body.notes !== undefined ? body.notes : client.notes},
-        tags = ${body.tags !== undefined ? body.tags : client.tags},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

@@ -113,7 +113,7 @@ export async function POST(req: Request) {
         billing_address_same_as_site,
         billing_address_line1, billing_address_line2,
         billing_city, billing_state, billing_postcode,
-        notes, tags,
+        notes, created_by_user_id,
         created_at, updated_at
       ) VALUES (
         ${body.organizationId},
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
         ${body.billingState || null},
         ${body.billingPostcode || null},
         ${body.notes || null},
-        ${body.tags || null},
+        ${user.id},
         NOW(),
         NOW()
       )
