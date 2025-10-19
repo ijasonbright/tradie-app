@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 // GET - Get a single client by ID
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth()
@@ -16,6 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const sql = neon(process.env.DATABASE_URL!)
 
     // Get user from database
@@ -37,7 +38,7 @@ export async function GET(
       FROM clients c
       INNER JOIN organizations o ON c.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
-      WHERE c.id = ${params.id}
+      WHERE c.id = ${id}
       AND om.user_id = ${user.id}
       AND om.status = 'active'
       LIMIT 1
@@ -62,7 +63,7 @@ export async function GET(
 // PUT - Update a client
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth()
@@ -71,6 +72,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const sql = neon(process.env.DATABASE_URL!)
 
     // Get user from database
@@ -90,7 +92,7 @@ export async function PUT(
       SELECT c.*, om.role, om.can_create_jobs
       FROM clients c
       INNER JOIN organization_members om ON c.organization_id = om.organization_id
-      WHERE c.id = ${params.id}
+      WHERE c.id = ${id}
       AND om.user_id = ${user.id}
       AND om.status = 'active'
       LIMIT 1
@@ -133,7 +135,7 @@ export async function PUT(
         notes = ${body.notes !== undefined ? body.notes : client.notes},
         tags = ${body.tags !== undefined ? body.tags : client.tags},
         updated_at = NOW()
-      WHERE id = ${params.id}
+      WHERE id = ${id}
       RETURNING *
     `
 
@@ -153,7 +155,7 @@ export async function PUT(
 // DELETE - Delete a client
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth()
@@ -162,6 +164,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const sql = neon(process.env.DATABASE_URL!)
 
     // Get user from database
@@ -180,7 +183,7 @@ export async function DELETE(
       SELECT c.*, om.role
       FROM clients c
       INNER JOIN organization_members om ON c.organization_id = om.organization_id
-      WHERE c.id = ${params.id}
+      WHERE c.id = ${id}
       AND om.user_id = ${user.id}
       AND om.status = 'active'
       LIMIT 1
@@ -199,7 +202,7 @@ export async function DELETE(
 
     // Delete client
     await sql`
-      DELETE FROM clients WHERE id = ${params.id}
+      DELETE FROM clients WHERE id = ${id}
     `
 
     return NextResponse.json({
