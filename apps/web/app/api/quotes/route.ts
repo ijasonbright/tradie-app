@@ -123,7 +123,7 @@ export async function POST(req: Request) {
 
     // Check user has permission in this organization
     const members = await sql`
-      SELECT role, can_create_quotes FROM organization_members
+      SELECT role FROM organization_members
       WHERE organization_id = ${body.organizationId}
       AND user_id = ${user.id}
       AND status = 'active'
@@ -135,7 +135,8 @@ export async function POST(req: Request) {
     }
 
     const member = members[0]
-    if (member.role !== 'owner' && member.role !== 'admin' && !member.can_create_quotes) {
+    // Only owners and admins can create quotes (or employees with permission in the future)
+    if (member.role !== 'owner' && member.role !== 'admin') {
       return NextResponse.json({ error: 'No permission to create quotes' }, { status: 403 })
     }
 
