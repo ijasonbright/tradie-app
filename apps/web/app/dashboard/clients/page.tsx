@@ -98,6 +98,12 @@ export default function ClientsPage() {
                 >
                   Clients
                 </Link>
+                <Link
+                  href="/dashboard/jobs"
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  Jobs
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">
