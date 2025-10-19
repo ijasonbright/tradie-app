@@ -32,11 +32,40 @@ interface Client {
   created_at: string
 }
 
+interface Job {
+  id: string
+  job_number: string
+  title: string
+  status: string
+  created_at: string
+}
+
+interface Quote {
+  id: string
+  quote_number: string
+  title: string
+  status: string
+  total_amount: string
+  created_at: string
+}
+
+interface Invoice {
+  id: string
+  invoice_number: string
+  status: string
+  total_amount: string
+  paid_amount: string
+  created_at: string
+}
+
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useUser()
   const [client, setClient] = useState<Client | null>(null)
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [quotes, setQuotes] = useState<Quote[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
@@ -57,9 +86,39 @@ export default function ClientDetailPage() {
     }
   }
 
+  const fetchActivity = async () => {
+    if (!params.id) return
+
+    try {
+      // Fetch jobs for this client
+      const jobsRes = await fetch(`/api/jobs?clientId=${params.id}`)
+      if (jobsRes.ok) {
+        const jobsData = await jobsRes.json()
+        setJobs(jobsData.jobs || [])
+      }
+
+      // Fetch quotes for this client
+      const quotesRes = await fetch(`/api/quotes?clientId=${params.id}`)
+      if (quotesRes.ok) {
+        const quotesData = await quotesRes.json()
+        setQuotes(quotesData.quotes || [])
+      }
+
+      // Fetch invoices for this client
+      const invoicesRes = await fetch(`/api/invoices?clientId=${params.id}`)
+      if (invoicesRes.ok) {
+        const invoicesData = await invoicesRes.json()
+        setInvoices(invoicesData.invoices || [])
+      }
+    } catch (error) {
+      console.error('Error fetching activity:', error)
+    }
+  }
+
   useEffect(() => {
     if (params.id) {
       fetchClient()
+      fetchActivity()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
@@ -272,12 +331,126 @@ export default function ClientDetailPage() {
           )}
         </div>
 
-        {/* Future: Jobs, Quotes, Invoices sections will go here */}
-        <div className="mt-6 rounded-lg bg-white p-6 shadow">
-          <h3 className="mb-4 text-lg font-semibold">Activity</h3>
-          <p className="text-sm text-gray-500">
-            Jobs, quotes, and invoices will appear here once those features are implemented.
-          </p>
+        {/* Activity Section */}
+        <div className="mt-6 space-y-6">
+          {/* Jobs */}
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Jobs ({jobs.length})</h3>
+              <Link
+                href={`/dashboard/jobs/new?clientId=${client.id}`}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + New Job
+              </Link>
+            </div>
+            {jobs.length === 0 ? (
+              <p className="text-sm text-gray-500">No jobs yet</p>
+            ) : (
+              <div className="space-y-2">
+                {jobs.map((job) => (
+                  <Link
+                    key={job.id}
+                    href={`/dashboard/jobs/${job.id}`}
+                    className="block p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">{job.job_number}</p>
+                        <p className="text-sm text-gray-600">{job.title}</p>
+                      </div>
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                        {job.status}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quotes */}
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Quotes ({quotes.length})</h3>
+              <Link
+                href={`/dashboard/quotes/new?clientId=${client.id}`}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + New Quote
+              </Link>
+            </div>
+            {quotes.length === 0 ? (
+              <p className="text-sm text-gray-500">No quotes yet</p>
+            ) : (
+              <div className="space-y-2">
+                {quotes.map((quote) => (
+                  <Link
+                    key={quote.id}
+                    href={`/dashboard/quotes/${quote.id}`}
+                    className="block p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">{quote.quote_number}</p>
+                        <p className="text-sm text-gray-600">{quote.title}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-sm text-gray-900">${parseFloat(quote.total_amount).toFixed(2)}</p>
+                        <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
+                          {quote.status}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Invoices */}
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Invoices ({invoices.length})</h3>
+              <Link
+                href={`/dashboard/invoices/new?clientId=${client.id}`}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + New Invoice
+              </Link>
+            </div>
+            {invoices.length === 0 ? (
+              <p className="text-sm text-gray-500">No invoices yet</p>
+            ) : (
+              <div className="space-y-2">
+                {invoices.map((invoice) => (
+                  <Link
+                    key={invoice.id}
+                    href={`/dashboard/invoices/${invoice.id}`}
+                    className="block p-3 bg-gray-50 rounded-md hover:bg-gray-100"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">{invoice.invoice_number}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(invoice.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-sm text-gray-900">${parseFloat(invoice.total_amount).toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">
+                          Paid: ${parseFloat(invoice.paid_amount).toFixed(2)}
+                        </p>
+                        <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
+                          {invoice.status}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
