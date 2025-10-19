@@ -28,9 +28,14 @@ export async function GET(
 
     // Get quote with organization check
     const quotes = await sql`
-      SELECT q.*, o.name as organization_name, c.company_name, c.first_name, c.last_name, c.is_company,
-             c.email as client_email,
-             u.full_name as created_by_name
+      SELECT
+        q.id, q.organization_id, q.client_id, q.quote_number, q.title, q.description,
+        q.status, q.subtotal, q.gst_amount, q.total_amount, q.valid_until_date,
+        q.sent_at, q.accepted_at, q.rejected_at, q.rejection_reason,
+        q.converted_to_job_id, q.notes, q.created_at, q.updated_at,
+        o.name as organization_name,
+        c.company_name, c.first_name, c.last_name, c.is_company, c.email as client_email,
+        u.full_name as created_by_name
       FROM quotes q
       INNER JOIN organizations o ON q.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
@@ -107,8 +112,8 @@ export async function PUT(
     }
 
     // Calculate totals if provided
-    let subtotal = body.subtotal !== undefined ? parseFloat(body.subtotal) : existingQuotes[0].subtotal
-    let gstAmount = body.gstAmount !== undefined ? parseFloat(body.gstAmount) : existingQuotes[0].gst_amount
+    let subtotal = body.subtotal !== undefined ? parseFloat(body.subtotal) : parseFloat(existingQuotes[0].subtotal)
+    let gstAmount = body.gstAmount !== undefined ? parseFloat(body.gstAmount) : parseFloat(existingQuotes[0].gst_amount)
     let totalAmount = subtotal + gstAmount
 
     // Update quote
