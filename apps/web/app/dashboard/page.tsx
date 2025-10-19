@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useUser, UserButton } from '@clerk/nextjs'
+import Link from 'next/link'
 
 interface Organization {
   id: string
@@ -79,12 +80,12 @@ export default function DashboardPage() {
             <div className="flex items-center gap-8">
               <h1 className="text-xl font-bold">Tradie App</h1>
               <div className="flex gap-4">
-                <a href="/dashboard" className="font-medium text-blue-600">
+                <Link href="/dashboard" className="font-medium text-blue-600">
                   Organizations
-                </a>
-                <a href="/dashboard/clients" className="text-gray-600 hover:text-gray-900">
+                </Link>
+                <Link href="/dashboard/clients" className="text-gray-600 hover:text-gray-900">
                   Clients
-                </a>
+                </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">

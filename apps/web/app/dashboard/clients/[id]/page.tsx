@@ -40,12 +40,6 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => {
-    if (params.id) {
-      fetchClient()
-    }
-  }, [params.id])
-
   const fetchClient = async () => {
     try {
       const res = await fetch(`/api/clients/${params.id}`)
@@ -62,6 +56,13 @@ export default function ClientDetailPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (params.id) {
+      fetchClient()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.id])
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
