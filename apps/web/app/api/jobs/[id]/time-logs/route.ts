@@ -60,6 +60,15 @@ export async function POST(
     if (body.endTime) {
       const start = new Date(body.startTime)
       const end = new Date(body.endTime)
+
+      // Validate that end time is after start time
+      if (end <= start) {
+        return NextResponse.json(
+          { error: 'End time must be after start time' },
+          { status: 400 }
+        )
+      }
+
       const breakMinutes = body.breakDurationMinutes || 0
 
       const durationMs = end.getTime() - start.getTime()
