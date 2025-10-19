@@ -29,8 +29,7 @@ export async function GET(
     // Get quote with organization check
     const quotes = await sql`
       SELECT q.*, o.name as organization_name, c.company_name, c.first_name, c.last_name, c.is_company,
-             c.email as client_email, c.phone as client_phone, c.mobile as client_mobile,
-             c.site_address_line1, c.site_address_line2, c.site_city, c.site_state, c.site_postcode,
+             c.email as client_email,
              u.full_name as created_by_name
       FROM quotes q
       INNER JOIN organizations o ON q.organization_id = o.id
