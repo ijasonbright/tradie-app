@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 interface Organization {
@@ -35,6 +35,7 @@ interface LineItem {
 
 export default function NewInvoicePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
@@ -57,6 +58,16 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     fetchOrganizations()
+
+    // Check for URL parameters to pre-fill from job
+    const jobId = searchParams.get('jobId')
+    const clientId = searchParams.get('clientId')
+
+    if (jobId && clientId) {
+      // Fetch job and quote data to pre-fill invoice
+      fetchJobAndQuoteData(jobId, clientId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -116,6 +127,50 @@ export default function NewInvoicePage() {
       setJobs(data.jobs || [])
     } catch (error) {
       console.error('Error fetching jobs:', error)
+    }
+  }
+
+  const fetchJobAndQuoteData = async (jobId: string, clientId: string) => {
+    try {
+      // Fetch job details which includes the quote
+      const jobRes = await fetch(`/api/jobs/${jobId}`)
+      if (!jobRes.ok) return
+
+      const jobData = await jobRes.json()
+      const job = jobData.job
+      const quote = jobData.quote
+
+      // Pre-fill form with job/client data
+      setFormData(prev => ({
+        ...prev,
+        clientId: clientId,
+        jobId: jobId,
+        organizationId: job.organization_id || prev.organizationId,
+        notes: quote ? `Invoice for ${quote.quote_number} - ${quote.title}` : `Invoice for ${job.title}`,
+      }))
+
+      // If there's a quote, fetch its line items and pre-fill
+      if (quote) {
+        const quoteLineItemsRes = await fetch(`/api/quotes/${quote.id}/line-items`)
+        if (quoteLineItemsRes.ok) {
+          const quoteLineItemsData = await quoteLineItemsRes.json()
+          const quoteLineItems = quoteLineItemsData.lineItems || []
+
+          if (quoteLineItems.length > 0) {
+            // Convert quote line items to invoice line items
+            const invoiceLineItems: LineItem[] = quoteLineItems.map((item: any) => ({
+              itemType: item.item_type,
+              description: item.description,
+              quantity: item.quantity.toString(),
+              unitPrice: item.unit_price.toString(),
+              lineTotal: parseFloat(item.line_total),
+            }))
+            setLineItems(invoiceLineItems)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching job/quote data:', error)
     }
   }
 
