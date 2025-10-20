@@ -34,10 +34,25 @@ interface TimeLog {
   status: string
 }
 
+interface Quote {
+  id: string
+  quote_number: string
+  title: string
+  description: string | null
+  status: string
+  subtotal: string
+  gst_amount: string
+  total_amount: string
+  valid_until_date: string | null
+  created_at: string
+  created_by_name: string
+}
+
 export default function JobDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [job, setJob] = useState<Job | null>(null)
+  const [quote, setQuote] = useState<Quote | null>(null)
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
   const [loading, setLoading] = useState(true)
   const [showTimeLogForm, setShowTimeLogForm] = useState(false)
@@ -63,6 +78,7 @@ export default function JobDetailPage() {
       if (res.ok) {
         const data = await res.json()
         setJob(data.job)
+        setQuote(data.quote)
         setTimeLogs(data.timeLogs || [])
       } else {
         alert('Job not found')
@@ -113,6 +129,34 @@ export default function JobDetailPage() {
       return job.company_name || 'Unnamed Company'
     }
     return `${job.first_name || ''} ${job.last_name || ''}`.trim() || 'Unnamed Client'
+  }
+
+  const handleCompleteJob = async () => {
+    if (!job || !confirm('Mark this job as completed?')) return
+
+    try {
+      const res = await fetch(`/api/jobs/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' }),
+      })
+
+      if (res.ok) {
+        fetchJob()
+        alert('Job marked as completed!')
+      } else {
+        alert('Failed to update job status')
+      }
+    } catch (error) {
+      console.error('Error updating job:', error)
+      alert('Failed to update job status')
+    }
+  }
+
+  const handleCreateInvoice = () => {
+    if (!job) return
+    // Redirect to invoice creation with pre-filled data
+    router.push(`/dashboard/invoices/new?jobId=${job.id}&clientId=${job.client_id}`)
   }
 
   const getStatusColor = (status: string) => {
@@ -204,6 +248,90 @@ export default function JobDetailPage() {
                   )}
                 </div>
               </dl>
+            </div>
+
+            {/* Quote Information */}
+            {quote && (
+              <div className="rounded-lg bg-white p-6 shadow">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Related Quote</h3>
+                  <Link
+                    href={`/dashboard/quotes/${quote.id}`}
+                    className="text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    View Quote →
+                  </Link>
+                </div>
+                <dl className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Quote Number</dt>
+                      <dd className="mt-1 text-sm font-medium text-gray-900">{quote.quote_number}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Status</dt>
+                      <dd className="mt-1">
+                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
+                          {quote.status}
+                        </span>
+                      </dd>
+                    </div>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Quote Title</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{quote.title}</dd>
+                  </div>
+                  {quote.description && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Description</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{quote.description}</dd>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Subtotal</dt>
+                      <dd className="mt-1 text-sm text-gray-900">${parseFloat(quote.subtotal).toFixed(2)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">GST</dt>
+                      <dd className="mt-1 text-sm text-gray-900">${parseFloat(quote.gst_amount).toFixed(2)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Total</dt>
+                      <dd className="mt-1 text-sm font-semibold text-gray-900">${parseFloat(quote.total_amount).toFixed(2)}</dd>
+                    </div>
+                  </div>
+                </dl>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h3 className="mb-4 text-lg font-semibold">Job Actions</h3>
+              <div className="flex gap-3">
+                {job.status !== 'completed' && job.status !== 'cancelled' && (
+                  <button
+                    onClick={handleCompleteJob}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+                  >
+                    Mark as Completed
+                  </button>
+                )}
+                <button
+                  onClick={handleCreateInvoice}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium"
+                >
+                  Create Invoice
+                </button>
+                {quote && (
+                  <Link
+                    href={`/dashboard/quotes/${quote.id}`}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center"
+                  >
+                    Edit Quote
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* Time Logs */}
