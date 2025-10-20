@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUser, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 
 interface Organization {
@@ -12,7 +11,6 @@ interface Organization {
 
 export default function NewClientPage() {
   const router = useRouter()
-  const { user } = useUser()
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -113,32 +111,7 @@ export default function NewClientPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="text-xl font-bold">
-                Tradie App
-              </Link>
-              <div className="flex gap-4">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Organizations
-                </Link>
-                <Link href="/dashboard/clients" className="font-medium text-blue-600">
-                  Clients
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</span>
-              <UserButton />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link href="/dashboard/clients" className="text-blue-600 hover:text-blue-800">
             ← Back to Clients
@@ -502,7 +475,6 @@ export default function NewClientPage() {
             </div>
           </form>
         </div>
-      </main>
     </div>
   )
 }

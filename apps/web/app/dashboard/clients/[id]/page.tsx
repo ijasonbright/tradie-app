@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useUser, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 
 interface Client {
@@ -61,7 +60,6 @@ interface Invoice {
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useUser()
   const [client, setClient] = useState<Client | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [quotes, setQuotes] = useState<Quote[]>([])
@@ -185,32 +183,7 @@ export default function ClientDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="text-xl font-bold">
-                Tradie App
-              </Link>
-              <div className="flex gap-4">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Organizations
-                </Link>
-                <Link href="/dashboard/clients" className="font-medium text-blue-600">
-                  Clients
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</span>
-              <UserButton />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <Link href="/dashboard/clients" className="text-blue-600 hover:text-blue-800">
             ← Back to Clients
@@ -452,7 +425,6 @@ export default function ClientDetailPage() {
             )}
           </div>
         </div>
-      </main>
     </div>
   )
 }
