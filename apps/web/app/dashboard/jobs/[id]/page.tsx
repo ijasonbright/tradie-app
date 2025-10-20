@@ -12,6 +12,7 @@ interface Job {
   status: string
   priority: string
   job_type: string
+  client_id: string
   company_name: string | null
   first_name: string | null
   last_name: string | null
