@@ -132,13 +132,21 @@ export default function NewInvoicePage() {
 
   const fetchJobAndQuoteData = async (jobId: string, clientId: string) => {
     try {
+      console.log('Fetching job and quote data for jobId:', jobId, 'clientId:', clientId)
+
       // Fetch job details which includes the quote
       const jobRes = await fetch(`/api/jobs/${jobId}`)
-      if (!jobRes.ok) return
+      if (!jobRes.ok) {
+        console.error('Failed to fetch job:', jobRes.status, jobRes.statusText)
+        return
+      }
 
       const jobData = await jobRes.json()
       const job = jobData.job
       const quote = jobData.quote
+
+      console.log('Job data:', job)
+      console.log('Quote data:', quote)
 
       // Pre-fill form with job/client data
       setFormData(prev => ({
@@ -151,10 +159,16 @@ export default function NewInvoicePage() {
 
       // If there's a quote, fetch its line items and pre-fill
       if (quote) {
+        console.log('Fetching line items for quote:', quote.id)
         const quoteLineItemsRes = await fetch(`/api/quotes/${quote.id}/line-items`)
+        console.log('Line items response status:', quoteLineItemsRes.status)
+
         if (quoteLineItemsRes.ok) {
           const quoteLineItemsData = await quoteLineItemsRes.json()
           const quoteLineItems = quoteLineItemsData.lineItems || []
+
+          console.log('Quote line items:', quoteLineItems)
+          console.log('Number of line items:', quoteLineItems.length)
 
           if (quoteLineItems.length > 0) {
             // Convert quote line items to invoice line items
@@ -165,9 +179,18 @@ export default function NewInvoicePage() {
               unitPrice: item.unit_price.toString(),
               lineTotal: parseFloat(item.line_total),
             }))
+            console.log('Converted invoice line items:', invoiceLineItems)
             setLineItems(invoiceLineItems)
+            console.log('Line items set successfully')
+          } else {
+            console.log('No line items found in quote')
           }
+        } else {
+          const errorText = await quoteLineItemsRes.text()
+          console.error('Failed to fetch line items:', errorText)
         }
+      } else {
+        console.log('No quote found for this job')
       }
     } catch (error) {
       console.error('Error fetching job/quote data:', error)
