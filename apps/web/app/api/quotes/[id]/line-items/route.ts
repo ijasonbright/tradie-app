@@ -4,6 +4,60 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
+// GET - Fetch all line items for a quote
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: quoteId } = await params
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const sql = neon(process.env.DATABASE_URL!)
+
+    // Get user's internal ID
+    const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    const user = users[0]
+
+    // Check quote exists and user has access
+    const quotes = await sql`
+      SELECT q.* FROM quotes q
+      INNER JOIN organization_members om ON q.organization_id = om.organization_id
+      WHERE q.id = ${quoteId}
+      AND om.user_id = ${user.id}
+      AND om.status = 'active'
+      LIMIT 1
+    `
+
+    if (quotes.length === 0) {
+      return NextResponse.json({ error: 'Quote not found' }, { status: 404 })
+    }
+
+    // Fetch line items ordered by line_order
+    const lineItems = await sql`
+      SELECT *
+      FROM quote_line_items
+      WHERE quote_id = ${quoteId}
+      ORDER BY line_order ASC, created_at ASC
+    `
+
+    return NextResponse.json({ lineItems })
+  } catch (error) {
+    console.error('Error fetching line items:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
 // POST - Add line item to quote
 export async function POST(
   req: Request,
