@@ -154,7 +154,9 @@ export default function QuoteDetailPage() {
           clientId: quote.client_id,
           title: quote.title,
           description: quote.description || `Created from ${quote.quote_number}`,
+          jobType: 'service', // Default job type for quote conversions
           status: 'scheduled',
+          priority: 'medium', // Default priority
           quoted_amount: quote.total_amount,
         }),
       })
