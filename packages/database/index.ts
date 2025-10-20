@@ -6,6 +6,7 @@ import * as schema from './schema'
 const connectionString = process.env.DATABASE_URL || 'postgresql://placeholder'
 
 const sql = neon(connectionString)
+// @ts-expect-error - Neon type mismatch between workspaces
 export const db = drizzle(sql, { schema })
 
 export * from './schema'

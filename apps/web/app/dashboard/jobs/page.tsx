@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 
 interface Job {
@@ -22,7 +21,6 @@ interface Job {
 }
 
 export default function JobsPage() {
-  const { user } = useUser()
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -85,41 +83,7 @@ export default function JobsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/dashboard" className="text-xl font-bold">
-                Tradie App
-              </Link>
-              <div className="flex gap-4">
-                <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
-                  Organizations
-                </Link>
-                <Link href="/dashboard/clients" className="text-gray-600 hover:text-gray-900">
-                  Clients
-                </Link>
-                <Link href="/dashboard/jobs" className="font-medium text-blue-600">
-                  Jobs
-                </Link>
-                <Link href="/dashboard/quotes" className="text-gray-600 hover:text-gray-900">
-                  Quotes
-                </Link>
-                <Link href="/dashboard/invoices" className="text-gray-600 hover:text-gray-900">
-                  Invoices
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</span>
-              <UserButton />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Jobs</h2>
           <Link
@@ -286,7 +250,6 @@ export default function JobsPage() {
         <div className="mt-4 text-sm text-gray-500">
           Showing {jobs.length} job{jobs.length !== 1 ? 's' : ''}
         </div>
-      </main>
     </div>
   )
 }

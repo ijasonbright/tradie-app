@@ -89,59 +89,24 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-              <p className="mt-2 text-sm text-gray-600">
-                Manage your invoices and payments
-              </p>
-            </div>
-            <Link
-              href="/dashboard/invoices/new"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-            >
-              + New Invoice
-            </Link>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Manage your invoices and payments
+            </p>
           </div>
-
-          {/* Navigation */}
-          <nav className="mt-6 flex gap-4 border-b border-gray-200">
-            <Link
-              href="/dashboard"
-              className="pb-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/clients"
-              className="pb-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              Clients
-            </Link>
-            <Link
-              href="/dashboard/jobs"
-              className="pb-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              Jobs
-            </Link>
-            <Link
-              href="/dashboard/quotes"
-              className="pb-3 px-1 text-sm font-medium text-gray-500 hover:text-gray-700"
-            >
-              Quotes
-            </Link>
-            <Link
-              href="/dashboard/invoices"
-              className="pb-3 px-1 text-sm font-medium text-blue-600 border-b-2 border-blue-600"
-            >
-              Invoices
-            </Link>
-          </nav>
+          <Link
+            href="/dashboard/invoices/new"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+          >
+            + New Invoice
+          </Link>
         </div>
+      </div>
 
         {/* Status Filter */}
         <div className="mb-6 flex gap-2">
@@ -246,7 +211,6 @@ export default function InvoicesPage() {
             </table>
           </div>
         )}
-      </div>
     </div>
   )
 }

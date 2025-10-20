@@ -1,8 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser, UserButton } from '@clerk/nextjs'
-import Link from 'next/link'
 
 interface Organization {
   id: string
@@ -12,7 +10,6 @@ interface Organization {
 }
 
 export default function DashboardPage() {
-  const { user } = useUser()
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -73,39 +70,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 justify-between">
-            <div className="flex items-center gap-8">
-              <h1 className="text-xl font-bold">Tradie App</h1>
-              <div className="flex gap-4">
-                <Link href="/dashboard" className="font-medium text-blue-600">
-                  Organizations
-                </Link>
-                <Link href="/dashboard/clients" className="text-gray-600 hover:text-gray-900">
-                  Clients
-                </Link>
-                <Link href="/dashboard/jobs" className="text-gray-600 hover:text-gray-900">
-                  Jobs
-                </Link>
-                <Link href="/dashboard/quotes" className="text-gray-600 hover:text-gray-900">
-                  Quotes
-                </Link>
-                <Link href="/dashboard/invoices" className="text-gray-600 hover:text-gray-900">
-                  Invoices
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{user?.emailAddresses[0]?.emailAddress}</span>
-              <UserButton />
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-2xl font-bold">Your Organizations</h2>
           <button
@@ -220,7 +185,6 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </main>
     </div>
   )
 }
