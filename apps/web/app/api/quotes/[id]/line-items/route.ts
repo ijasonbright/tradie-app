@@ -45,7 +45,7 @@ export async function GET(
       SELECT *
       FROM quote_line_items
       WHERE quote_id = ${quoteId}
-      ORDER BY line_order ASC, created_at ASC
+      ORDER BY line_order ASC
     `
 
     return NextResponse.json({ lineItems })
