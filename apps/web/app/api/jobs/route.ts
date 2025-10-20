@@ -194,7 +194,7 @@ export async function POST(req: Request) {
         job_number, title, description, job_type, status, priority,
         site_address_line1, site_address_line2,
         site_city, site_state, site_postcode, site_access_notes,
-        quoted_amount, scheduled_date,
+        quoted_amount, quote_id, scheduled_date,
         scheduled_start_time, scheduled_end_time,
         created_at, updated_at
       ) VALUES (
@@ -215,6 +215,7 @@ export async function POST(req: Request) {
         ${body.sitePostcode || null},
         ${body.siteAccessNotes || null},
         ${body.quotedAmount || null},
+        ${body.quoteId || null},
         ${body.scheduledDate || null},
         ${body.scheduledStartTime || null},
         ${body.scheduledEndTime || null},

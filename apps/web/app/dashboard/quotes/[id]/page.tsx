@@ -157,7 +157,8 @@ export default function QuoteDetailPage() {
           jobType: 'service', // Default job type for quote conversions
           status: 'scheduled',
           priority: 'medium', // Default priority
-          quoted_amount: quote.total_amount,
+          quotedAmount: quote.total_amount,
+          quoteId: quote.id, // Link job back to quote
         }),
       })
 

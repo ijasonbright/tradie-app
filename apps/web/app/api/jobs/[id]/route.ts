@@ -89,23 +89,27 @@ export async function GET(
       ORDER BY n.created_at DESC
     `
 
-    // Get quote that was converted to this job (if any)
-    const quotes = await sql`
-      SELECT
-        q.*,
-        u.full_name as created_by_name
-      FROM quotes q
-      LEFT JOIN users u ON q.created_by_user_id = u.id
-      WHERE q.converted_to_job_id = ${id}
-      LIMIT 1
-    `
+    // Get quote linked to this job (if any)
+    let quote = null
+    if (job.quote_id) {
+      const quotes = await sql`
+        SELECT
+          q.*,
+          u.full_name as created_by_name
+        FROM quotes q
+        LEFT JOIN users u ON q.created_by_user_id = u.id
+        WHERE q.id = ${job.quote_id}
+        LIMIT 1
+      `
+      quote = quotes.length > 0 ? quotes[0] : null
+    }
 
     return NextResponse.json({
       job,
       timeLogs,
       materials,
       notes,
-      quote: quotes.length > 0 ? quotes[0] : null,
+      quote,
     })
   } catch (error) {
     console.error('Error fetching job:', error)
