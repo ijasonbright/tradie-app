@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-serverless'
+import { drizzle } from 'drizzle-orm/neon-http'
 import * as schema from './schema'
 
 // Allow build to succeed without DATABASE_URL (it's only needed at runtime)
