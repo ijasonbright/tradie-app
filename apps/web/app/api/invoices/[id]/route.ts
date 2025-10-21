@@ -199,7 +199,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'No permission to delete invoices' }, { status: 403 })
     }
 
-    // Delete invoice (cascade will delete line items and payments)
+    // Delete related records first (no cascade configured)
+    await sql`DELETE FROM invoice_payments WHERE invoice_id = ${id}`
+    await sql`DELETE FROM invoice_line_items WHERE invoice_id = ${id}`
+
+    // Delete invoice
     await sql`DELETE FROM invoices WHERE id = ${id}`
 
     return NextResponse.json({ success: true })
