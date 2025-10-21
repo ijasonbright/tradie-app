@@ -54,7 +54,7 @@ export async function GET(
     const lineItems = await sql`
       SELECT * FROM invoice_line_items
       WHERE invoice_id = ${id}
-      ORDER BY line_order ASC, created_at ASC
+      ORDER BY line_order ASC
     `
 
     // Get payments
