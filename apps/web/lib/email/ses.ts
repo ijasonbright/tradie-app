@@ -1,13 +1,25 @@
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses'
 
+// Validate AWS credentials are configured
+const validateAwsConfig = () => {
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    throw new Error(
+      'AWS SES credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables in Vercel.'
+    )
+  }
+}
+
 // Initialize SES client
-const ses = new SESClient({
-  region: process.env.AWS_REGION || 'ap-southeast-2', // Sydney region (default for Australian businesses)
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-})
+const getSESClient = () => {
+  validateAwsConfig()
+  return new SESClient({
+    region: process.env.AWS_REGION || 'ap-southeast-2', // Sydney region (default for Australian businesses)
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  })
+}
 
 interface EmailAttachment {
   filename: string
@@ -80,9 +92,27 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   })
 
   try {
+    const ses = getSESClient()
     await ses.send(command)
   } catch (error) {
     console.error('SES Error:', error)
+
+    // Provide more helpful error messages
+    if (error instanceof Error) {
+      // Check for common AWS SES errors
+      if (error.message.includes('not configured')) {
+        throw error // Re-throw our validation error
+      }
+      if (error.message.includes('Email address is not verified')) {
+        throw new Error(
+          `Email address "${from}" is not verified in AWS SES. Please verify it in the AWS Console.`
+        )
+      }
+      if (error.message.includes('not authorized')) {
+        throw new Error('AWS SES credentials are invalid or not authorized to send emails.')
+      }
+      throw new Error(`Failed to send email via AWS SES: ${error.message}`)
+    }
     throw new Error('Failed to send email via AWS SES')
   }
 }
