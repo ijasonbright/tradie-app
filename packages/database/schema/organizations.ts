@@ -21,6 +21,11 @@ export const organizations = pgTable('organizations', {
   subscriptionPlan: varchar('subscription_plan', { length: 50 }).default('free'),
   stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
   xeroConnected: boolean('xero_connected').default(false),
+  // Bank details for invoices
+  bankName: varchar('bank_name', { length: 100 }),
+  bankBsb: varchar('bank_bsb', { length: 10 }),
+  bankAccountNumber: varchar('bank_account_number', { length: 50 }),
+  bankAccountName: varchar('bank_account_name', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

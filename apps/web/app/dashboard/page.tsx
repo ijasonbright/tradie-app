@@ -19,6 +19,10 @@ export default function DashboardPage() {
     tradeType: '',
     phone: '',
     email: '',
+    bankName: '',
+    bankBsb: '',
+    bankAccountNumber: '',
+    bankAccountName: '',
   })
 
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function DashboardPage() {
 
       if (res.ok) {
         setShowCreateForm(false)
-        setFormData({ name: '', abn: '', tradeType: '', phone: '', email: '' })
+        setFormData({ name: '', abn: '', tradeType: '', phone: '', email: '', bankName: '', bankBsb: '', bankAccountNumber: '', bankAccountName: '' })
         fetchOrganizations()
       } else {
         const error = await res.json()
@@ -142,6 +146,61 @@ export default function DashboardPage() {
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
                 />
               </div>
+
+              <div className="border-t pt-4">
+                <h4 className="mb-3 text-sm font-semibold text-gray-900">Bank Details (for invoices)</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bankName}
+                      onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="e.g., Commonwealth Bank"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      BSB
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bankBsb}
+                      onChange={(e) => setFormData({ ...formData, bankBsb: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="123-456"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bankAccountNumber}
+                      onChange={(e) => setFormData({ ...formData, bankAccountNumber: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="12345678"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Account Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bankAccountName}
+                      onChange={(e) => setFormData({ ...formData, bankAccountName: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="Business Trading Name"
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <button
                   type="submit"

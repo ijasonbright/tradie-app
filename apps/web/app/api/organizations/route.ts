@@ -36,6 +36,7 @@ export async function POST(req: Request) {
       INSERT INTO organizations (
         name, abn, trade_type, phone, email,
         address_line1, address_line2, city, state, postcode,
+        bank_name, bank_bsb, bank_account_number, bank_account_name,
         owner_id, sms_credits, created_at, updated_at
       ) VALUES (
         ${body.name},
@@ -48,6 +49,10 @@ export async function POST(req: Request) {
         ${body.city || null},
         ${body.state || null},
         ${body.postcode || null},
+        ${body.bankName || null},
+        ${body.bankBsb || null},
+        ${body.bankAccountNumber || null},
+        ${body.bankAccountName || null},
         ${user.id},
         0,
         NOW(),

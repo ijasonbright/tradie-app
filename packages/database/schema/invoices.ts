@@ -23,6 +23,7 @@ export const invoices = pgTable('invoices', {
   paymentMethod: varchar('payment_method', { length: 50 }), // cash/card/bank_transfer/stripe/other
   notes: text('notes'),
   footerText: text('footer_text'),
+  sentAt: timestamp('sent_at'), // Track when invoice was emailed to client
   // Xero sync
   xeroInvoiceId: varchar('xero_invoice_id', { length: 255 }),
   lastSyncedAt: timestamp('last_synced_at'),
