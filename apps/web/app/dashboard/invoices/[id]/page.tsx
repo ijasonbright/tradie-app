@@ -17,6 +17,7 @@ interface Invoice {
   issue_date: string
   due_date: string
   paid_date: string | null
+  sent_at: string | null
   payment_terms: string | null
   payment_method: string | null
   notes: string | null
@@ -201,6 +202,48 @@ export default function InvoiceDetailPage() {
     } catch (error) {
       console.error('Error recording payment:', error)
       alert(error instanceof Error ? error.message : 'Failed to record payment')
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    try {
+      const res = await fetch(`/api/invoices/${params.id}/pdf`)
+      if (!res.ok) throw new Error('Failed to generate PDF')
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${invoice?.invoice_number || 'invoice'}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      alert('Failed to download PDF')
+    }
+  }
+
+  const handleSendInvoice = async () => {
+    if (!invoice) return
+    if (!confirm(`Send invoice to ${invoice.client_email}?`)) return
+
+    try {
+      const res = await fetch(`/api/invoices/${params.id}/send`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to send invoice')
+      }
+
+      alert('Invoice sent successfully!')
+      fetchInvoice() // Refresh to show updated sent_at timestamp
+    } catch (error) {
+      console.error('Error sending invoice:', error)
+      alert(error instanceof Error ? error.message : 'Failed to send invoice')
     }
   }
 
@@ -490,10 +533,24 @@ export default function InvoiceDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
           <div className="flex flex-wrap gap-3">
+            <button
+              onClick={handleDownloadPDF}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium"
+            >
+              Download PDF
+            </button>
+
+            <button
+              onClick={handleSendInvoice}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            >
+              Send Invoice
+            </button>
+
             {invoice.status === 'draft' && (
               <button
                 onClick={() => handleStatusChange('sent')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
               >
                 Mark as Sent
               </button>
