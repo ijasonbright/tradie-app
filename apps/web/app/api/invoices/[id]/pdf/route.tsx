@@ -71,18 +71,8 @@ export async function GET(
       organization,
     } as any // Type assertion to bypass strict typing from database queries
 
-    const pdfStream = generateInvoicePDF(pdfData)
-
-    // Convert stream to buffer
-    const chunks: Buffer[] = []
-    pdfStream.on('data', (chunk) => chunks.push(chunk))
-
-    await new Promise<void>((resolve, reject) => {
-      pdfStream.on('end', () => resolve())
-      pdfStream.on('error', reject)
-    })
-
-    const buffer = Buffer.concat(chunks)
+    const pdfBytes = await generateInvoicePDF(pdfData)
+    const buffer = Buffer.from(pdfBytes)
 
     // Return PDF with proper headers
     return new NextResponse(buffer, {
