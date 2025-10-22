@@ -99,17 +99,31 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
 
     // Provide more helpful error messages
     if (error instanceof Error) {
+      const errorMsg = error.message.toLowerCase()
+
       // Check for common AWS SES errors
-      if (error.message.includes('not configured')) {
+      if (errorMsg.includes('not configured')) {
         throw error // Re-throw our validation error
       }
-      if (error.message.includes('Email address is not verified')) {
+      if (errorMsg.includes('security token') && errorMsg.includes('invalid')) {
         throw new Error(
-          `Email address "${from}" is not verified in AWS SES. Please verify it in the AWS Console.`
+          'AWS credentials are invalid. Please check your AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in Vercel environment variables. Make sure they are from an IAM user with SES permissions.'
         )
       }
-      if (error.message.includes('not authorized')) {
-        throw new Error('AWS SES credentials are invalid or not authorized to send emails.')
+      if (errorMsg.includes('email address is not verified')) {
+        throw new Error(
+          `Email address "${from}" is not verified in AWS SES. Go to AWS Console → SES → Verified identities and verify this email or domain.`
+        )
+      }
+      if (errorMsg.includes('not authorized') || errorMsg.includes('accessdenied')) {
+        throw new Error(
+          'AWS IAM user does not have SES permissions. Please attach the AmazonSESFullAccess policy to your IAM user.'
+        )
+      }
+      if (errorMsg.includes('messagereject')) {
+        throw new Error(
+          `AWS SES is in sandbox mode and can only send to verified email addresses. Either verify "${to}" in SES or request production access.`
+        )
       }
       throw new Error(`Failed to send email via AWS SES: ${error.message}`)
     }
