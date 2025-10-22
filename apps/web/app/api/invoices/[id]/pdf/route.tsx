@@ -70,14 +70,14 @@ export async function GET(
       invoice,
       lineItems,
       organization,
-    }
+    } as any // Type assertion to bypass strict typing from database queries
 
     const stream = await renderToStream(<InvoicePDF data={pdfData} />)
 
     // Convert stream to buffer
-    const chunks: Uint8Array[] = []
+    const chunks: Buffer[] = []
     for await (const chunk of stream) {
-      chunks.push(chunk)
+      chunks.push(Buffer.from(chunk))
     }
     const buffer = Buffer.concat(chunks)
 

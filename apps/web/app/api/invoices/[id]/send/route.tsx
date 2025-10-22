@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
-import { renderToBuffer } from '@react-pdf/renderer'
+import { renderToStream } from '@react-pdf/renderer'
 import { InvoicePDF } from '@/lib/pdf/InvoicePDF'
 import { sendEmail } from '@/lib/email/ses'
 import { generateInvoiceEmailHTML, generateInvoiceEmailText } from '@/lib/email/templates/invoice'
@@ -77,9 +77,16 @@ export async function POST(
       invoice,
       lineItems,
       organization,
-    }
+    } as any // Type assertion to bypass strict typing from database queries
 
-    const pdfBuffer = await renderToBuffer(<InvoicePDF data={pdfData} />)
+    const stream = await renderToStream(<InvoicePDF data={pdfData} />)
+
+    // Convert stream to buffer
+    const chunks: Buffer[] = []
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk))
+    }
+    const pdfBuffer = Buffer.concat(chunks)
 
     // Get client name
     const clientName = invoice.is_company && invoice.company_name
