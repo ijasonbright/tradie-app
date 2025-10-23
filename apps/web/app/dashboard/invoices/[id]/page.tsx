@@ -236,7 +236,10 @@ export default function InvoiceDetailPage() {
 
       if (!res.ok) {
         const error = await res.json()
-        throw new Error(error.error || 'Failed to send invoice')
+        console.error('Send invoice error response:', error)
+        // Show details field if available for better debugging
+        const errorMessage = error.details || error.error || 'Failed to send invoice'
+        throw new Error(errorMessage)
       }
 
       alert('Invoice sent successfully!')
