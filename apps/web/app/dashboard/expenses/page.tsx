@@ -45,11 +45,12 @@ export default function ExpensesPage() {
     organizationId: '',
     category: 'materials',
     description: '',
-    amount: '',
-    gstAmount: '',
+    totalAmount: '',
     expenseDate: new Date().toISOString().split('T')[0],
     jobId: '',
   })
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [uploadingReceipt, setUploadingReceipt] = useState(false)
 
   useEffect(() => {
     fetchOrganizations()
@@ -109,26 +110,55 @@ export default function ExpensesPage() {
     e.preventDefault()
 
     try {
+      // Calculate GST (10%) and amount from total
+      const totalAmount = parseFloat(formData.totalAmount)
+      const gstAmount = totalAmount / 11 // GST is 1/11th of total (10% of base)
+      const amount = totalAmount - gstAmount
+
+      // Upload receipt if provided
+      let receiptUrl = null
+      if (receiptFile) {
+        setUploadingReceipt(true)
+        const receiptFormData = new FormData()
+        receiptFormData.append('file', receiptFile)
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: receiptFormData,
+        })
+
+        if (uploadRes.ok) {
+          const uploadData = await uploadRes.json()
+          receiptUrl = uploadData.url
+        }
+        setUploadingReceipt(false)
+      }
+
       const res = await fetch('/api/expenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          amount: parseFloat(formData.amount),
-          gstAmount: formData.gstAmount ? parseFloat(formData.gstAmount) : 0,
+          organizationId: formData.organizationId,
+          category: formData.category,
+          description: formData.description,
+          amount: amount,
+          gstAmount: gstAmount,
+          expenseDate: formData.expenseDate,
+          jobId: formData.jobId || null,
+          receiptUrl: receiptUrl,
         }),
       })
 
       if (res.ok) {
         setShowAddForm(false)
+        setReceiptFile(null)
         fetchExpenses()
         // Reset form
         setFormData({
           organizationId: formData.organizationId,
           category: 'materials',
           description: '',
-          amount: '',
-          gstAmount: '',
+          totalAmount: '',
           expenseDate: new Date().toISOString().split('T')[0],
           jobId: '',
         })
@@ -443,31 +473,38 @@ export default function ExpensesPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium">Amount (excl. GST) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                    placeholder="0.00"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium">Total Amount (inc. GST) *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                  className="mt-1 w-full rounded border px-3 py-2"
+                  placeholder="0.00"
+                />
+                {formData.totalAmount && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Includes ${(parseFloat(formData.totalAmount) / 11).toFixed(2)} GST
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium">GST Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.gstAmount}
-                    onChange={(e) => setFormData({ ...formData, gstAmount: e.target.value })}
-                    className="mt-1 w-full rounded border px-3 py-2"
-                    placeholder="0.00"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium">Receipt Photo/Image</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  capture="environment"
+                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
+                  className="mt-1 w-full rounded border px-3 py-2"
+                />
+                {receiptFile && (
+                  <p className="mt-1 text-xs text-green-600">
+                    ✓ {receiptFile.name} selected
+                  </p>
+                )}
               </div>
 
               <div>
@@ -486,20 +523,13 @@ export default function ExpensesPage() {
                 </select>
               </div>
 
-              <div className="rounded bg-blue-50 p-3 text-sm text-blue-800">
-                <strong>Total:</strong> $
-                {(
-                  parseFloat(formData.amount || '0') +
-                  parseFloat(formData.gstAmount || '0')
-                ).toFixed(2)}
-              </div>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 rounded bg-blue-600 py-2 text-white hover:bg-blue-700"
+                  disabled={uploadingReceipt}
+                  className="flex-1 rounded bg-blue-600 py-2 text-white hover:bg-blue-700 disabled:bg-blue-400"
                 >
-                  Submit Expense
+                  {uploadingReceipt ? 'Uploading Receipt...' : 'Submit Expense'}
                 </button>
                 <button
                   type="button"
