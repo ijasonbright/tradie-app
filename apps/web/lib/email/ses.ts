@@ -12,10 +12,21 @@ const validateAwsConfig = () => {
 // Initialize SES client
 const getSESClient = () => {
   validateAwsConfig()
+
+  const region = process.env.AWS_REGION || 'ap-southeast-2'
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID!
+
+  // Log configuration (safely, without exposing secrets)
+  console.log('Initializing SES client:', {
+    region,
+    accessKeyIdPrefix: accessKeyId.substring(0, 8) + '...',
+    hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+  })
+
   return new SESClient({
-    region: process.env.AWS_REGION || 'ap-southeast-2', // Sydney region (default for Australian businesses)
+    region,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      accessKeyId,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   })
