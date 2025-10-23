@@ -79,6 +79,22 @@ interface Assignment {
   assigned_at: string
 }
 
+interface Quote {
+  id: string
+  quote_number: string
+  title: string
+  status: string
+  total_amount: string
+}
+
+interface Invoice {
+  id: string
+  invoice_number: string
+  status: string
+  total_amount: string
+  paid_amount: string
+}
+
 type Tab = 'overview' | 'time' | 'materials' | 'photos' | 'notes'
 
 export default function JobDetailPage() {
@@ -86,6 +102,8 @@ export default function JobDetailPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [job, setJob] = useState<Job | null>(null)
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
   const [materials, setMaterials] = useState<Material[]>([])
   const [photos, setPhotos] = useState<Photo[]>([])
@@ -151,6 +169,8 @@ export default function JobDetailPage() {
       if (res.ok) {
         const data = await res.json()
         setJob(data.job)
+        setQuote(data.quote || null)
+        setInvoice(data.invoice || null)
       }
     } catch (error) {
       console.error('Error fetching job:', error)
@@ -454,8 +474,11 @@ export default function JobDetailPage() {
     return colors[status] || 'bg-gray-100 text-gray-800'
   }
 
-  const formatCurrency = (amount: string) => {
-    return `$${parseFloat(amount).toFixed(2)}`
+  const formatCurrency = (amount: string | number) => {
+    return new Intl.NumberFormat('en-AU', {
+      style: 'currency',
+      currency: 'AUD',
+    }).format(typeof amount === 'string' ? parseFloat(amount) : amount)
   }
 
   const formatDate = (dateString: string) => {
@@ -564,6 +587,60 @@ export default function JobDetailPage() {
             <p className="text-lg font-bold text-green-600">{formatCurrency((totalLaborCost + totalMaterialCost).toString())}</p>
           </div>
         </div>
+
+        {/* Linked Quote & Invoice */}
+        {(quote || invoice) && (
+          <div className="mt-4 pt-4 border-t">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Related Documents</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {quote && (
+                <Link
+                  href={`/dashboard/quotes/${quote.id}`}
+                  className="block p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-blue-600 uppercase">Quote</span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                      quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {quote.status}
+                    </span>
+                  </div>
+                  <p className="font-bold text-gray-900">{quote.quote_number}</p>
+                  <p className="text-sm text-gray-600 mt-1">{quote.title}</p>
+                  <p className="text-lg font-bold text-blue-600 mt-2">{formatCurrency(quote.total_amount)}</p>
+                </Link>
+              )}
+              {invoice && (
+                <Link
+                  href={`/dashboard/invoices/${invoice.id}`}
+                  className="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-green-600 uppercase">Invoice</span>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                      invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                      invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {invoice.status}
+                    </span>
+                  </div>
+                  <p className="font-bold text-gray-900">{invoice.invoice_number}</p>
+                  <p className="text-lg font-bold text-green-600 mt-2">{formatCurrency(invoice.total_amount)}</p>
+                  {parseFloat(invoice.paid_amount) > 0 && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Paid: {formatCurrency(invoice.paid_amount)}
+                    </p>
+                  )}
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
