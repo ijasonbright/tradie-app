@@ -28,7 +28,16 @@ interface TradeType {
   id: string
   job_type_id: number
   name: string
+  // Client billing rates
   client_hourly_rate: string
+  client_first_hour_rate: string | null
+  client_callout_fee: string
+  client_after_hours_callout_fee: string
+  client_after_hours_extra_percent: string
+  // Employee/Contractor costs
+  default_employee_hourly_rate: string
+  default_employee_daily_rate: string | null
+  // Deprecated fields
   client_daily_rate: string | null
   default_employee_cost: string
   is_active: boolean
@@ -49,8 +58,12 @@ export default function SettingsPage() {
     jobTypeId: 0,
     name: '',
     clientHourlyRate: '',
-    clientDailyRate: '',
-    defaultEmployeeCost: '',
+    clientFirstHourRate: '',
+    clientCalloutFee: '',
+    clientAfterHoursCalloutFee: '',
+    clientAfterHoursExtraPercent: '',
+    defaultEmployeeHourlyRate: '',
+    defaultEmployeeDailyRate: '',
   })
 
   const [formData, setFormData] = useState({
@@ -160,8 +173,12 @@ export default function SettingsPage() {
       jobTypeId: 0,
       name: '',
       clientHourlyRate: '',
-      clientDailyRate: '',
-      defaultEmployeeCost: '',
+      clientFirstHourRate: '',
+      clientCalloutFee: '',
+      clientAfterHoursCalloutFee: '',
+      clientAfterHoursExtraPercent: '',
+      defaultEmployeeHourlyRate: '',
+      defaultEmployeeDailyRate: '',
     })
     setEditingTrade(null)
     setShowAddTrade(true)
@@ -172,8 +189,12 @@ export default function SettingsPage() {
       jobTypeId: trade.job_type_id,
       name: trade.name,
       clientHourlyRate: trade.client_hourly_rate,
-      clientDailyRate: trade.client_daily_rate || '',
-      defaultEmployeeCost: trade.default_employee_cost,
+      clientFirstHourRate: trade.client_first_hour_rate || '',
+      clientCalloutFee: trade.client_callout_fee,
+      clientAfterHoursCalloutFee: trade.client_after_hours_callout_fee,
+      clientAfterHoursExtraPercent: trade.client_after_hours_extra_percent,
+      defaultEmployeeHourlyRate: trade.default_employee_hourly_rate,
+      defaultEmployeeDailyRate: trade.default_employee_daily_rate || '',
     })
     setEditingTrade(trade)
     setShowAddTrade(true)
@@ -186,9 +207,13 @@ export default function SettingsPage() {
       setTradeForm({
         jobTypeId: standardTrade.jobTypeId,
         name: standardTrade.name,
-        clientHourlyRate: standardTrade.defaultHourlyRate.toString(),
-        clientDailyRate: '',
-        defaultEmployeeCost: standardTrade.defaultEmployeeCost.toString(),
+        clientHourlyRate: standardTrade.clientHourlyRate.toString(),
+        clientFirstHourRate: standardTrade.clientFirstHourRate?.toString() || '',
+        clientCalloutFee: standardTrade.clientCalloutFee.toString(),
+        clientAfterHoursCalloutFee: standardTrade.clientAfterHoursCalloutFee.toString(),
+        clientAfterHoursExtraPercent: standardTrade.clientAfterHoursExtraPercent.toString(),
+        defaultEmployeeHourlyRate: standardTrade.defaultEmployeeHourlyRate.toString(),
+        defaultEmployeeDailyRate: standardTrade.defaultEmployeeDailyRate?.toString() || '',
       })
     }
   }
@@ -255,8 +280,9 @@ export default function SettingsPage() {
   const calculateTradeMargin = (clientRate: string, employeeCost: string) => {
     const billing = parseFloat(clientRate) || 0
     const cost = parseFloat(employeeCost) || 0
-    if (cost === 0) return 0
-    return (((billing - cost) / cost) * 100).toFixed(1)
+    if (billing === 0) return 0
+    if (cost === 0) return 100
+    return (((billing - cost) / billing) * 100).toFixed(1)
   }
 
   if (loading) {
@@ -502,31 +528,51 @@ export default function SettingsPage() {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-4 gap-3 text-sm">
                           <div>
-                            <p className="text-xs text-gray-500">Client Hourly Rate</p>
-                            <p className="text-lg font-semibold text-gray-900">
+                            <p className="text-xs text-gray-500">Hourly Rate</p>
+                            <p className="font-semibold text-gray-900">
                               ${parseFloat(trade.client_hourly_rate).toFixed(2)}/hr
                             </p>
                           </div>
-                          {trade.client_daily_rate && (
+                          {trade.client_first_hour_rate && (
                             <div>
-                              <p className="text-xs text-gray-500">Client Daily Rate</p>
-                              <p className="text-lg font-semibold text-gray-900">
-                                ${parseFloat(trade.client_daily_rate).toFixed(2)}/day
+                              <p className="text-xs text-gray-500">First Hour</p>
+                              <p className="font-semibold text-gray-900">
+                                ${parseFloat(trade.client_first_hour_rate).toFixed(2)}
                               </p>
                             </div>
                           )}
                           <div>
-                            <p className="text-xs text-gray-500">Default Employee Cost</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              ${parseFloat(trade.default_employee_cost).toFixed(2)}/hr
+                            <p className="text-xs text-gray-500">Callout Fee</p>
+                            <p className="font-semibold text-gray-900">
+                              ${parseFloat(trade.client_callout_fee).toFixed(2)}
                             </p>
                           </div>
                           <div>
+                            <p className="text-xs text-gray-500">After Hours</p>
+                            <p className="font-semibold text-orange-600">
+                              +{parseFloat(trade.client_after_hours_extra_percent).toFixed(0)}%
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Employee Cost/hr</p>
+                            <p className="font-semibold text-gray-900">
+                              ${parseFloat(trade.default_employee_hourly_rate).toFixed(2)}
+                            </p>
+                          </div>
+                          {trade.default_employee_daily_rate && (
+                            <div>
+                              <p className="text-xs text-gray-500">Employee Cost/day</p>
+                              <p className="font-semibold text-gray-900">
+                                ${parseFloat(trade.default_employee_daily_rate).toFixed(2)}
+                              </p>
+                            </div>
+                          )}
+                          <div>
                             <p className="text-xs text-gray-500">Profit Margin</p>
-                            <p className="text-lg font-semibold text-green-600">
-                              {calculateTradeMargin(trade.client_hourly_rate, trade.default_employee_cost)}%
+                            <p className="font-semibold text-green-600">
+                              {calculateTradeMargin(trade.client_hourly_rate, trade.default_employee_hourly_rate)}%
                             </p>
                           </div>
                         </div>
@@ -601,63 +647,141 @@ export default function SettingsPage() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Client Hourly Rate ($) *
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      value={tradeForm.clientHourlyRate}
-                      onChange={(e) => setTradeForm({ ...tradeForm, clientHourlyRate: e.target.value })}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      placeholder="0.00"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">What you charge clients per hour</p>
+                  {/* Client Billing Rates Section */}
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-blue-900">Client Billing Rates</h4>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Hourly Rate ($) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          required
+                          value={tradeForm.clientHourlyRate}
+                          onChange={(e) => setTradeForm({ ...tradeForm, clientHourlyRate: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          First Hour Rate ($)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={tradeForm.clientFirstHourRate}
+                          onChange={(e) => setTradeForm({ ...tradeForm, clientFirstHourRate: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Business Hours Callout ($)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={tradeForm.clientCalloutFee}
+                          onChange={(e) => setTradeForm({ ...tradeForm, clientCalloutFee: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          After Hours Callout ($)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={tradeForm.clientAfterHoursCalloutFee}
+                          onChange={(e) => setTradeForm({ ...tradeForm, clientAfterHoursCalloutFee: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div className="col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          After Hours Extra (%)
+                        </label>
+                        <input
+                          type="number"
+                          step="1"
+                          min="0"
+                          max="200"
+                          value={tradeForm.clientAfterHoursExtraPercent}
+                          onChange={(e) => setTradeForm({ ...tradeForm, clientAfterHoursExtraPercent: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="50"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          Extra percentage added to hourly rate for after hours work
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Client Daily Rate ($)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={tradeForm.clientDailyRate}
-                      onChange={(e) => setTradeForm({ ...tradeForm, clientDailyRate: e.target.value })}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      placeholder="0.00"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">Optional daily rate for this trade</p>
-                  </div>
+                  {/* Employee/Contractor Costs Section */}
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <h4 className="mb-3 text-sm font-semibold text-green-900">Employee/Contractor Default Costs</h4>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Default Employee Cost ($)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={tradeForm.defaultEmployeeCost}
-                      onChange={(e) =>
-                        setTradeForm({ ...tradeForm, defaultEmployeeCost: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      placeholder="0.00"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">What you typically pay employees per hour</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Hourly Cost ($)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={tradeForm.defaultEmployeeHourlyRate}
+                          onChange={(e) => setTradeForm({ ...tradeForm, defaultEmployeeHourlyRate: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">What you pay per hour</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Daily Cost ($)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={tradeForm.defaultEmployeeDailyRate}
+                          onChange={(e) => setTradeForm({ ...tradeForm, defaultEmployeeDailyRate: e.target.value })}
+                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                          placeholder="0.00"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">What you pay per day</p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Margin Preview */}
-                  {tradeForm.clientHourlyRate && tradeForm.defaultEmployeeCost && (
+                  {tradeForm.clientHourlyRate && tradeForm.defaultEmployeeHourlyRate && (
                     <div className="rounded-lg bg-gray-50 p-3">
                       <p className="text-sm text-gray-600">Profit Margin Preview:</p>
                       <p className="text-xl font-bold text-green-600">
-                        {calculateTradeMargin(tradeForm.clientHourlyRate, tradeForm.defaultEmployeeCost)}%
+                        {calculateTradeMargin(tradeForm.clientHourlyRate, tradeForm.defaultEmployeeHourlyRate)}%
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        ${(parseFloat(tradeForm.clientHourlyRate) - parseFloat(tradeForm.defaultEmployeeHourlyRate)).toFixed(2)} profit per hour
                       </p>
                     </div>
                   )}

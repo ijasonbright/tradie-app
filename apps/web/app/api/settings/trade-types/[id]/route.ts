@@ -54,15 +54,23 @@ export async function PUT(
       return NextResponse.json({ error: 'Trade type not found' }, { status: 404 })
     }
 
-    // Update trade type
+    // Get current values first
+    const current = await sql`SELECT * FROM trade_types WHERE id = ${tradeTypeId}`
+    const currentTrade = current[0]
+
+    // Update trade type with explicit values
     const updated = await sql`
       UPDATE trade_types
       SET
-        name = COALESCE(${body.name}, name),
-        client_hourly_rate = COALESCE(${body.clientHourlyRate}, client_hourly_rate),
-        client_daily_rate = ${body.clientDailyRate !== undefined ? body.clientDailyRate : null},
-        default_employee_cost = COALESCE(${body.defaultEmployeeCost}, default_employee_cost),
-        is_active = COALESCE(${body.isActive}, is_active),
+        name = ${body.name !== undefined ? body.name : currentTrade.name},
+        client_hourly_rate = ${body.clientHourlyRate !== undefined ? body.clientHourlyRate : currentTrade.client_hourly_rate},
+        client_first_hour_rate = ${body.clientFirstHourRate !== undefined ? body.clientFirstHourRate : currentTrade.client_first_hour_rate},
+        client_callout_fee = ${body.clientCalloutFee !== undefined ? body.clientCalloutFee : currentTrade.client_callout_fee},
+        client_after_hours_callout_fee = ${body.clientAfterHoursCalloutFee !== undefined ? body.clientAfterHoursCalloutFee : currentTrade.client_after_hours_callout_fee},
+        client_after_hours_extra_percent = ${body.clientAfterHoursExtraPercent !== undefined ? body.clientAfterHoursExtraPercent : currentTrade.client_after_hours_extra_percent},
+        default_employee_hourly_rate = ${body.defaultEmployeeHourlyRate !== undefined ? body.defaultEmployeeHourlyRate : currentTrade.default_employee_hourly_rate},
+        default_employee_daily_rate = ${body.defaultEmployeeDailyRate !== undefined ? body.defaultEmployeeDailyRate : currentTrade.default_employee_daily_rate},
+        is_active = ${body.isActive !== undefined ? body.isActive : currentTrade.is_active},
         updated_at = NOW()
       WHERE id = ${tradeTypeId}
       RETURNING *

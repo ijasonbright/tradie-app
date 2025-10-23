@@ -171,6 +171,20 @@ export async function POST() {
          LIMIT 1
        )
        WHERE primary_trade_id IS NULL`,
+
+      // Add comprehensive pricing fields
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS client_first_hour_rate DECIMAL(10, 2)`,
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS client_callout_fee DECIMAL(10, 2) DEFAULT 0`,
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS client_after_hours_callout_fee DECIMAL(10, 2) DEFAULT 0`,
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS client_after_hours_extra_percent DECIMAL(5, 2) DEFAULT 0`,
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS default_employee_hourly_rate DECIMAL(10, 2) DEFAULT 0`,
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS default_employee_daily_rate DECIMAL(10, 2)`,
+
+      // Migrate old default_employee_cost to new default_employee_hourly_rate
+      `UPDATE trade_types
+       SET default_employee_hourly_rate = default_employee_cost
+       WHERE (default_employee_hourly_rate IS NULL OR default_employee_hourly_rate = 0)
+       AND default_employee_cost IS NOT NULL AND default_employee_cost > 0`,
     ]
 
     const results = []

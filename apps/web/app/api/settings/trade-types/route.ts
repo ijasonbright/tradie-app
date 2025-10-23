@@ -115,8 +115,12 @@ export async function POST(req: Request) {
         job_type_id,
         name,
         client_hourly_rate,
-        client_daily_rate,
-        default_employee_cost,
+        client_first_hour_rate,
+        client_callout_fee,
+        client_after_hours_callout_fee,
+        client_after_hours_extra_percent,
+        default_employee_hourly_rate,
+        default_employee_daily_rate,
         is_active
       )
       VALUES (
@@ -124,8 +128,12 @@ export async function POST(req: Request) {
         ${body.jobTypeId},
         ${body.name},
         ${body.clientHourlyRate},
-        ${body.clientDailyRate || null},
-        ${body.defaultEmployeeCost || 0},
+        ${body.clientFirstHourRate || null},
+        ${body.clientCalloutFee || 0},
+        ${body.clientAfterHoursCalloutFee || 0},
+        ${body.clientAfterHoursExtraPercent || 0},
+        ${body.defaultEmployeeHourlyRate || 0},
+        ${body.defaultEmployeeDailyRate || null},
         ${body.isActive !== undefined ? body.isActive : true}
       )
       RETURNING *
