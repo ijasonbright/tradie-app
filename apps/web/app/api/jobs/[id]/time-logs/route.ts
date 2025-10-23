@@ -4,6 +4,70 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
+// GET - Fetch all time logs for a job
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId: clerkUserId } = await auth()
+
+    if (!clerkUserId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id: jobId } = await params
+    const sql = neon(process.env.DATABASE_URL!)
+
+    // Get user from database
+    const users = await sql`
+      SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+    `
+
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const user = users[0]
+
+    // Verify user has access to this job
+    const jobs = await sql`
+      SELECT j.id
+      FROM jobs j
+      INNER JOIN organization_members om ON j.organization_id = om.organization_id
+      WHERE j.id = ${jobId}
+      AND om.user_id = ${user.id}
+      AND om.status = 'active'
+      LIMIT 1
+    `
+
+    if (jobs.length === 0) {
+      return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
+    }
+
+    // Fetch time logs with user names
+    const timeLogs = await sql`
+      SELECT
+        tl.*,
+        u.full_name as user_name,
+        approver.full_name as approved_by_name
+      FROM job_time_logs tl
+      LEFT JOIN users u ON tl.user_id = u.id
+      LEFT JOIN users approver ON tl.approved_by_user_id = approver.id
+      WHERE tl.job_id = ${jobId}
+      ORDER BY tl.created_at DESC
+    `
+
+    return NextResponse.json({ timeLogs })
+  } catch (error) {
+    console.error('Error fetching time logs:', error)
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    )
+  }
+}
+
 // POST - Add time log to a job
 export async function POST(
   req: Request,
