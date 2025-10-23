@@ -59,10 +59,12 @@ export default function CalendarPage() {
     fetchOrganizations()
     fetchTeamMembers()
     fetchAppointments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchAppointments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate, view, selectedUserId])
 
   const fetchOrganizations = async () => {
