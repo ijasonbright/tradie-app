@@ -565,6 +565,14 @@ export default function InvoiceDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
           <div className="flex flex-wrap gap-3">
+            {/* Edit button */}
+            <Link
+              href={`/dashboard/invoices/${params.id}/edit`}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+            >
+              Edit Invoice
+            </Link>
+
             <button
               onClick={handleDownloadPDF}
               className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium"
