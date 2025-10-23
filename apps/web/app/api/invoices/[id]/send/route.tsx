@@ -109,8 +109,8 @@ export async function POST(
     }
 
     // Determine FROM email address
-    // Use organization email if verified with SES, otherwise use default
-    const fromEmail = organization.email || process.env.DEFAULT_FROM_EMAIL || 'noreply@tradie-app.com'
+    // Use DEFAULT_FROM_EMAIL (verified in SES), but set reply-to as organization email
+    const fromEmail = process.env.DEFAULT_FROM_EMAIL || 'hello@taskforce.com.au'
     const replyToEmail = organization.email || undefined
 
     // Send email with PDF attachment
