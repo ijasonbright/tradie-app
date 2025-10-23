@@ -23,12 +23,21 @@ export async function GET() {
 
     const region = process.env.AWS_REGION || 'ap-southeast-2'
 
-    // Log configuration (safely)
+    // Log configuration (safely) - show more detail for debugging
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID
+    const secretKey = process.env.AWS_SECRET_ACCESS_KEY
+
     console.log('Testing SES with config:', {
       region,
-      accessKeyIdPrefix: process.env.AWS_ACCESS_KEY_ID.substring(0, 8) + '...',
-      accessKeyIdLength: process.env.AWS_ACCESS_KEY_ID.length,
-      secretKeyLength: process.env.AWS_SECRET_ACCESS_KEY.length,
+      accessKeyId_first4: accessKeyId.substring(0, 4),
+      accessKeyId_last4: accessKeyId.substring(accessKeyId.length - 4),
+      accessKeyIdLength: accessKeyId.length,
+      secretKeyLength: secretKey.length,
+      // Check for whitespace issues
+      hasLeadingSpace: accessKeyId[0] === ' ',
+      hasTrailingSpace: accessKeyId[accessKeyId.length - 1] === ' ',
+      secretHasLeadingSpace: secretKey[0] === ' ',
+      secretHasTrailingSpace: secretKey[secretKey.length - 1] === ' ',
     })
 
     // Create SES client with explicit credentials to override Vercel's default AWS role
@@ -58,11 +67,26 @@ export async function GET() {
   } catch (error) {
     console.error('SES test error:', error)
 
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID || ''
+    const secretKey = process.env.AWS_SECRET_ACCESS_KEY || ''
+
     if (error instanceof Error) {
       return NextResponse.json({
         error: 'SES test failed',
         details: error.message,
         errorName: error.name,
+        debug: {
+          region: process.env.AWS_REGION || 'ap-southeast-2',
+          accessKeyId_first4: accessKeyId.substring(0, 4),
+          accessKeyId_last4: accessKeyId.substring(accessKeyId.length - 4),
+          accessKeyIdLength: accessKeyId.length,
+          secretKeyLength: secretKey.length,
+          expectedAccessKeyIdLength: 20,
+          expectedSecretKeyLength: 40,
+          accessKeyIdStartsWithAKIA: accessKeyId.startsWith('AKIA'),
+          hasLeadingSpace: accessKeyId[0] === ' ',
+          hasTrailingSpace: accessKeyId[accessKeyId.length - 1] === ' ',
+        }
       }, { status: 500 })
     }
 
