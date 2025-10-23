@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SESClient, VerifyEmailIdentityCommand, ListVerifiedEmailAddressesCommand } from '@aws-sdk/client-ses'
-import { fromEnv } from '@aws-sdk/credential-providers'
+import { SESClient, ListVerifiedEmailAddressesCommand } from '@aws-sdk/client-ses'
 import { auth } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
@@ -32,10 +31,13 @@ export async function GET() {
       secretKeyLength: process.env.AWS_SECRET_ACCESS_KEY.length,
     })
 
-    // Create SES client
+    // Create SES client with explicit credentials to override Vercel's default AWS role
     const ses = new SESClient({
       region,
-      credentials: fromEnv(),
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     })
 
     // Try to list verified email addresses

@@ -1,5 +1,4 @@
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses'
-import { fromEnv } from '@aws-sdk/credential-providers'
 
 // Validate AWS credentials are configured
 const validateAwsConfig = () => {
@@ -15,19 +14,24 @@ const getSESClient = () => {
   validateAwsConfig()
 
   const region = process.env.AWS_REGION || 'ap-southeast-2'
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID!
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY!
 
   // Log configuration (safely, without exposing secrets)
   console.log('Initializing SES client:', {
     region,
-    accessKeyIdPrefix: process.env.AWS_ACCESS_KEY_ID!.substring(0, 8) + '...',
-    accessKeySecretLength: process.env.AWS_SECRET_ACCESS_KEY!.length,
-    hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyIdPrefix: accessKeyId.substring(0, 8) + '...',
+    accessKeyIdLength: accessKeyId.length,
+    secretKeyLength: secretAccessKey.length,
   })
 
-  // Use AWS SDK's credential provider to automatically load from environment
+  // IMPORTANT: Explicitly pass credentials object to override Vercel's default AWS role
   return new SESClient({
     region,
-    credentials: fromEnv(),
+    credentials: {
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+    },
   })
 }
 
