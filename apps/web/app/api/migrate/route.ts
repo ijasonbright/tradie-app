@@ -4,7 +4,15 @@ import { neon } from '@neondatabase/serverless'
 export const dynamic = 'force-dynamic'
 
 // GET - Show migration status and allow running from browser
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const run = searchParams.get('run')
+
+  if (run === 'true') {
+    // Run migrations via GET request
+    return POST()
+  }
+
   return NextResponse.json({
     message: 'Database Migration Endpoint',
     instructions: 'Send a POST request to this endpoint to run migrations, or add ?run=true to this URL',
@@ -248,6 +256,31 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS expenses_user_id_idx ON expenses(user_id)`,
       `CREATE INDEX IF NOT EXISTS expenses_status_idx ON expenses(status)`,
       `CREATE INDEX IF NOT EXISTS expenses_job_id_idx ON expenses(job_id)`,
+
+      // ========== XERO INTEGRATION ==========
+
+      // Create xero_connections table
+      `CREATE TABLE IF NOT EXISTS xero_connections (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL UNIQUE,
+        tenant_id VARCHAR(255) NOT NULL,
+        access_token TEXT NOT NULL,
+        refresh_token TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        connected_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        last_sync_at TIMESTAMP,
+        sync_contacts BOOLEAN DEFAULT true,
+        sync_invoices BOOLEAN DEFAULT true,
+        sync_expenses BOOLEAN DEFAULT true,
+        sync_bills BOOLEAN DEFAULT true,
+        auto_sync_enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes
+      `CREATE INDEX IF NOT EXISTS xero_connections_organization_id_idx ON xero_connections(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS xero_connections_tenant_id_idx ON xero_connections(tenant_id)`,
     ]
 
     const results = []
