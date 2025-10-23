@@ -23,11 +23,32 @@ interface Organization {
   default_employee_cost: string | null
 }
 
+interface TradeType {
+  id: string
+  name: string
+  client_hourly_rate: string
+  client_daily_rate: string | null
+  default_employee_cost: string
+  is_active: boolean
+}
+
 export default function SettingsPage() {
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'business' | 'rates' | 'banking'>('business')
+  const [activeTab, setActiveTab] = useState<'business' | 'trades' | 'banking'>('business')
+
+  // Trade Types state
+  const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
+  const [loadingTrades, setLoadingTrades] = useState(false)
+  const [showAddTrade, setShowAddTrade] = useState(false)
+  const [editingTrade, setEditingTrade] = useState<TradeType | null>(null)
+  const [tradeForm, setTradeForm] = useState({
+    name: '',
+    clientHourlyRate: '',
+    clientDailyRate: '',
+    defaultEmployeeCost: '',
+  })
 
   const [formData, setFormData] = useState({
     name: '',
@@ -49,7 +70,11 @@ export default function SettingsPage() {
   })
 
   useEffect(() => {
-    fetchOrganization()
+    const loadData = async () => {
+      await fetchOrganization()
+      await fetchTradeTypes()
+    }
+    loadData()
   }, [])
 
   const fetchOrganization = async () => {
@@ -86,6 +111,21 @@ export default function SettingsPage() {
     }
   }
 
+  const fetchTradeTypes = async () => {
+    setLoadingTrades(true)
+    try {
+      const res = await fetch('/api/settings/trade-types')
+      if (res.ok) {
+        const data = await res.json()
+        setTradeTypes(data.tradeTypes)
+      }
+    } catch (error) {
+      console.error('Error fetching trade types:', error)
+    } finally {
+      setLoadingTrades(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -112,9 +152,84 @@ export default function SettingsPage() {
     }
   }
 
-  const calculateMargin = () => {
-    const billing = parseFloat(formData.defaultHourlyRate) || 0
-    const cost = parseFloat(formData.defaultEmployeeCost) || 0
+  const handleAddTrade = () => {
+    setTradeForm({
+      name: '',
+      clientHourlyRate: '',
+      clientDailyRate: '',
+      defaultEmployeeCost: '',
+    })
+    setEditingTrade(null)
+    setShowAddTrade(true)
+  }
+
+  const handleEditTrade = (trade: TradeType) => {
+    setTradeForm({
+      name: trade.name,
+      clientHourlyRate: trade.client_hourly_rate,
+      clientDailyRate: trade.client_daily_rate || '',
+      defaultEmployeeCost: trade.default_employee_cost,
+    })
+    setEditingTrade(trade)
+    setShowAddTrade(true)
+  }
+
+  const handleSaveTrade = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+
+    try {
+      const url = editingTrade
+        ? `/api/settings/trade-types/${editingTrade.id}`
+        : '/api/settings/trade-types'
+
+      const res = await fetch(url, {
+        method: editingTrade ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tradeForm),
+      })
+
+      if (res.ok) {
+        alert(editingTrade ? 'Trade updated!' : 'Trade added!')
+        setShowAddTrade(false)
+        fetchTradeTypes()
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error saving trade:', error)
+      alert('Failed to save trade')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleToggleActive = async (trade: TradeType) => {
+    if (!confirm(`${trade.is_active ? 'Deactivate' : 'Activate'} ${trade.name}?`)) return
+
+    try {
+      const res = await fetch(`/api/settings/trade-types/${trade.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !trade.is_active }),
+      })
+
+      if (res.ok) {
+        fetchTradeTypes()
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error toggling trade:', error)
+      alert('Failed to update trade')
+    }
+  }
+
+  const calculateTradeMargin = (clientRate: string, employeeCost: string) => {
+    const billing = parseFloat(clientRate) || 0
+    const cost = parseFloat(employeeCost) || 0
     if (cost === 0) return 0
     return (((billing - cost) / cost) * 100).toFixed(1)
   }
@@ -148,14 +263,14 @@ export default function SettingsPage() {
             Business Information
           </button>
           <button
-            onClick={() => setActiveTab('rates')}
+            onClick={() => setActiveTab('trades')}
             className={`whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium ${
-              activeTab === 'rates'
+              activeTab === 'trades'
                 ? 'border-blue-500 text-blue-600'
                 : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
             }`}
           >
-            Rates & Pricing
+            Trade Types & Rates
           </button>
           <button
             onClick={() => setActiveTab('banking')}
@@ -170,9 +285,9 @@ export default function SettingsPage() {
         </nav>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Business Information Tab */}
-        {activeTab === 'business' && (
+      {/* Business Information Tab */}
+      {activeTab === 'business' && (
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="rounded-lg bg-white p-6 shadow">
             <h2 className="mb-6 text-xl font-semibold">Business Information</h2>
 
@@ -201,7 +316,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Trade Type</label>
+                  <label className="block text-sm font-medium text-gray-700">Primary Trade</label>
                   <input
                     type="text"
                     value={formData.tradeType}
@@ -286,81 +401,242 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Rates & Pricing Tab */}
-        {activeTab === 'rates' && (
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300"
+            >
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+            <Link
+              href="/dashboard"
+              className="rounded bg-gray-200 px-6 py-2 text-gray-700 hover:bg-gray-300"
+            >
+              Cancel
+            </Link>
+          </div>
+        </form>
+      )}
+
+      {/* Trade Types & Rates Tab */}
+      {activeTab === 'trades' && (
+        <div className="space-y-6">
           <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-6 text-xl font-semibold">Rates & Pricing</h2>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Trade Types & Rates</h2>
+                <p className="mt-1 text-sm text-gray-600">
+                  Set billing rates and default employee costs per trade type
+                </p>
+              </div>
+              <button
+                onClick={handleAddTrade}
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              >
+                + Add Trade Type
+              </button>
+            </div>
 
             <div className="mb-6 rounded-lg bg-blue-50 p-4">
-              <h3 className="mb-2 text-sm font-semibold text-blue-900">How Rates Work</h3>
+              <h3 className="mb-2 text-sm font-semibold text-blue-900">How Trade-Based Pricing Works</h3>
               <ul className="space-y-1 text-sm text-blue-800">
-                <li>• <strong>Client Billing Rate:</strong> What you charge customers per hour</li>
-                <li>• <strong>Employee Cost Rate:</strong> What you pay employees per hour</li>
-                <li>• <strong>Profit Margin:</strong> Difference between billing and cost</li>
-                <li>• You can override these defaults per team member</li>
+                <li>• Each trade type has its own client billing rate (what you charge)</li>
+                <li>• Set a default employee cost per trade (what you typically pay)</li>
+                <li>• Jobs are assigned to trade types for accurate costing</li>
+                <li>• Team members can have individual rate overrides</li>
+                <li>• Profit margins are calculated per trade type</li>
               </ul>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Default Client Billing Rate ($/hour)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.defaultHourlyRate}
-                  onChange={(e) => setFormData({ ...formData, defaultHourlyRate: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="0.00"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  The rate you charge clients for labor (shown on invoices)
-                </p>
-              </div>
+            {loadingTrades ? (
+              <p className="text-center text-gray-500">Loading trade types...</p>
+            ) : tradeTypes.length === 0 ? (
+              <p className="text-center text-gray-500">No trade types yet. Add your first trade type above.</p>
+            ) : (
+              <div className="space-y-4">
+                {tradeTypes.map((trade) => (
+                  <div
+                    key={trade.id}
+                    className={`rounded-lg border p-4 ${
+                      trade.is_active ? 'border-gray-200 bg-white' : 'border-gray-200 bg-gray-50 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="mb-3 flex items-center gap-3">
+                          <h3 className="text-lg font-semibold">{trade.name}</h3>
+                          {!trade.is_active && (
+                            <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-600">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Default Employee Cost Rate ($/hour)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.defaultEmployeeCost}
-                  onChange={(e) => setFormData({ ...formData, defaultEmployeeCost: e.target.value })}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                  placeholder="0.00"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  The rate you pay employees (for internal cost tracking)
-                </p>
-              </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-xs text-gray-500">Client Hourly Rate</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              ${parseFloat(trade.client_hourly_rate).toFixed(2)}/hr
+                            </p>
+                          </div>
+                          {trade.client_daily_rate && (
+                            <div>
+                              <p className="text-xs text-gray-500">Client Daily Rate</p>
+                              <p className="text-lg font-semibold text-gray-900">
+                                ${parseFloat(trade.client_daily_rate).toFixed(2)}/day
+                              </p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs text-gray-500">Default Employee Cost</p>
+                            <p className="text-lg font-semibold text-gray-900">
+                              ${parseFloat(trade.default_employee_cost).toFixed(2)}/hr
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Profit Margin</p>
+                            <p className="text-lg font-semibold text-green-600">
+                              {calculateTradeMargin(trade.client_hourly_rate, trade.default_employee_cost)}%
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-              {/* Profit Margin Calculation */}
-              <div className="rounded-lg bg-gray-50 p-4">
-                <div className="flex items-center justify-between">
+                      <div className="ml-4 flex gap-2">
+                        <button
+                          onClick={() => handleEditTrade(trade)}
+                          className="rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleToggleActive(trade)}
+                          className={`rounded px-3 py-1 text-sm ${
+                            trade.is_active
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {trade.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add/Edit Trade Modal */}
+          {showAddTrade && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="w-full max-w-md rounded-lg bg-white p-6">
+                <h3 className="mb-4 text-xl font-semibold">
+                  {editingTrade ? 'Edit Trade Type' : 'Add Trade Type'}
+                </h3>
+
+                <form onSubmit={handleSaveTrade} className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Profit Margin</p>
-                    <p className="text-xs text-gray-500">Based on rates above</p>
+                    <label className="block text-sm font-medium text-gray-700">Trade Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={tradeForm.name}
+                      onChange={(e) => setTradeForm({ ...tradeForm, name: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="e.g., Plumbing, Electrical"
+                    />
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-green-600">{calculateMargin()}%</p>
-                    <p className="text-xs text-gray-500">
-                      ${(parseFloat(formData.defaultHourlyRate) - parseFloat(formData.defaultEmployeeCost)).toFixed(2)} per hour
-                    </p>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Client Hourly Rate ($) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={tradeForm.clientHourlyRate}
+                      onChange={(e) => setTradeForm({ ...tradeForm, clientHourlyRate: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="0.00"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">What you charge clients per hour</p>
                   </div>
-                </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Client Daily Rate ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={tradeForm.clientDailyRate}
+                      onChange={(e) => setTradeForm({ ...tradeForm, clientDailyRate: e.target.value })}
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="0.00"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Optional daily rate for this trade</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Default Employee Cost ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={tradeForm.defaultEmployeeCost}
+                      onChange={(e) =>
+                        setTradeForm({ ...tradeForm, defaultEmployeeCost: e.target.value })
+                      }
+                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      placeholder="0.00"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">What you typically pay employees per hour</p>
+                  </div>
+
+                  {/* Margin Preview */}
+                  {tradeForm.clientHourlyRate && tradeForm.defaultEmployeeCost && (
+                    <div className="rounded-lg bg-gray-50 p-3">
+                      <p className="text-sm text-gray-600">Profit Margin Preview:</p>
+                      <p className="text-xl font-bold text-green-600">
+                        {calculateTradeMargin(tradeForm.clientHourlyRate, tradeForm.defaultEmployeeCost)}%
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-4">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300"
+                    >
+                      {saving ? 'Saving...' : editingTrade ? 'Update Trade' : 'Add Trade'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddTrade(false)}
+                      className="rounded bg-gray-200 px-4 py-2 text-gray-700 hover:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {/* Banking Details Tab */}
-        {activeTab === 'banking' && (
+      {/* Banking Details Tab */}
+      {activeTab === 'banking' && (
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="rounded-lg bg-white p-6 shadow">
             <h2 className="mb-6 text-xl font-semibold">Banking Details</h2>
             <p className="mb-6 text-sm text-gray-600">
@@ -415,25 +691,24 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Submit Button */}
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300"
-          >
-            {saving ? 'Saving...' : 'Save Settings'}
-          </button>
-          <Link
-            href="/dashboard"
-            className="rounded bg-gray-200 px-6 py-2 text-gray-700 hover:bg-gray-300"
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:bg-blue-300"
+            >
+              {saving ? 'Saving...' : 'Save Settings'}
+            </button>
+            <Link
+              href="/dashboard"
+              className="rounded bg-gray-200 px-6 py-2 text-gray-700 hover:bg-gray-300"
+            >
+              Cancel
+            </Link>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
