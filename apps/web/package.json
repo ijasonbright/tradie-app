@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.67.0",
     "@aws-sdk/client-ses": "^3.914.0",
     "@aws-sdk/credential-providers": "^3.915.0",
     "@clerk/nextjs": "^5.0.0",

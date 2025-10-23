@@ -34,12 +34,21 @@ export const userDocuments = pgTable('user_documents', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id').references(() => users.id).notNull(),
   documentType: varchar('document_type', { length: 100 }).notNull(), // license/certification/insurance/white_card/etc
+  documentCategory: varchar('document_category', { length: 50 }), // license, insurance, certification, other
   title: varchar('title', { length: 255 }).notNull(),
   documentNumber: varchar('document_number', { length: 100 }),
   fileUrl: varchar('file_url', { length: 500 }).notNull(),
   issueDate: timestamp('issue_date'),
-  expiryDate: timestamp('expiry_date'),
+  expiryDate: timestamp('expiry_date'), // User-entered expiry date
   issuingAuthority: varchar('issuing_authority', { length: 255 }),
+  // Admin verification
+  verifiedByUserId: uuid('verified_by_user_id').references(() => users.id),
+  verifiedAt: timestamp('verified_at'),
+  verificationNotes: varchar('verification_notes', { length: 500 }),
+  // AI verification
+  aiVerificationStatus: varchar('ai_verification_status', { length: 50 }), // pending, verified, mismatch, error
+  aiVerificationNotes: varchar('ai_verification_notes', { length: 500 }),
+  aiExtractedExpiryDate: timestamp('ai_extracted_expiry_date'), // AI-extracted date from document
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

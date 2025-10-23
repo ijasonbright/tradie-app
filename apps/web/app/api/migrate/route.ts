@@ -65,6 +65,62 @@ export async function POST() {
       `UPDATE organization_members SET employment_type = 'subcontractor' WHERE role = 'subcontractor'`,
       `UPDATE organization_members SET employment_type = 'employee' WHERE role != 'subcontractor'`,
       `UPDATE organization_members SET billing_rate = hourly_rate WHERE hourly_rate IS NOT NULL AND billing_rate IS NULL`,
+
+      // ========== TRADE TYPES MIGRATION ==========
+
+      // Create trade_types table
+      `CREATE TABLE IF NOT EXISTS trade_types (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        client_hourly_rate DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        client_daily_rate DECIMAL(10, 2),
+        default_employee_cost DECIMAL(10, 2) DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        UNIQUE(organization_id, name)
+      )`,
+
+      // Add trade-related columns to organization_members
+      `ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS primary_trade_id UUID REFERENCES trade_types(id)`,
+      `ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS rate_type VARCHAR(20) DEFAULT 'hourly'`,
+      `ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS daily_rate DECIMAL(10, 2)`,
+
+      // Add trade to jobs
+      `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS trade_type_id UUID REFERENCES trade_types(id)`,
+
+      // Enhance user_documents with verification
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS document_category VARCHAR(50)`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS verified_by_user_id UUID REFERENCES users(id)`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS verified_at TIMESTAMP`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS verification_notes TEXT`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS ai_verification_status VARCHAR(50)`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS ai_verification_notes TEXT`,
+      `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS ai_extracted_expiry_date DATE`,
+
+      // Create indexes
+      `CREATE INDEX IF NOT EXISTS idx_trade_types_org ON trade_types(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_trade_types_active ON trade_types(organization_id, is_active) WHERE is_active = true`,
+      `CREATE INDEX IF NOT EXISTS idx_jobs_trade_type ON jobs(trade_type_id)`,
+
+      // Create "General" trade for each organization from their default rates
+      `INSERT INTO trade_types (organization_id, name, client_hourly_rate, default_employee_cost, is_active)
+       SELECT id, 'General', COALESCE(default_hourly_rate, 0), COALESCE(default_employee_cost, 0), true
+       FROM organizations
+       WHERE NOT EXISTS (
+         SELECT 1 FROM trade_types
+         WHERE trade_types.organization_id = organizations.id AND trade_types.name = 'General'
+       )`,
+
+      // Link existing team members to General trade
+      `UPDATE organization_members om
+       SET primary_trade_id = (
+         SELECT id FROM trade_types tt
+         WHERE tt.organization_id = om.organization_id AND tt.name = 'General'
+         LIMIT 1
+       )
+       WHERE primary_trade_id IS NULL`,
     ]
 
     const results = []
