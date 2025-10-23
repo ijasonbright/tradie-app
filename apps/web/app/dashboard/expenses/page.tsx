@@ -179,7 +179,13 @@ export default function ExpensesPage() {
         }
       } else {
         const error = await res.json()
-        alert(`Could not scan receipt: ${error.error}. Please enter details manually.`)
+
+        // Show user-friendly message based on error type
+        if (res.status === 429 || error.isRateLimitError) {
+          alert('⏱️ AI receipt scanning is temporarily rate limited.\n\nThe feature is working but needs to scale up usage gradually. Please enter the receipt details manually for now, or try again in a few minutes.')
+        } else {
+          alert(`Could not scan receipt: ${error.error}`)
+        }
       }
     } catch (error) {
       console.error('Error scanning receipt:', error)

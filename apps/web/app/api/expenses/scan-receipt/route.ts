@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     // Use Claude Vision to extract receipt details
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-sonnet-20250129',
       max_tokens: 1024,
       messages: [
         {
@@ -141,22 +141,27 @@ Return ONLY the JSON object, nothing else.`,
   } catch (error) {
     console.error('Error scanning receipt:', error)
 
-    // Log detailed error information
+    // Check if it's a rate limit error
+    if (error && typeof error === 'object' && 'status' in error) {
+      const status = (error as any).status
+
+      if (status === 429) {
+        // Rate limit error - provide helpful message
+        return NextResponse.json(
+          {
+            error: 'AI receipt scanning is temporarily rate limited. Please enter receipt details manually or try again in a few minutes.',
+            isRateLimitError: true
+          },
+          { status: 429 }
+        )
+      }
+    }
+
+    // Log detailed error information for debugging
     if (error instanceof Error) {
       console.error('Error name:', error.name)
       console.error('Error message:', error.message)
-      console.error('Error stack:', error.stack)
     }
-
-    // Check if it's an Anthropic API error
-    if (error && typeof error === 'object' && 'status' in error) {
-      console.error('API Error status:', (error as any).status)
-      console.error('API Error details:', (error as any).message)
-    }
-
-    // Log environment check
-    console.error('API Key present:', !!process.env.ANTHROPIC_API_KEY)
-    console.error('API Key length:', process.env.ANTHROPIC_API_KEY?.length || 0)
 
     return NextResponse.json(
       {
