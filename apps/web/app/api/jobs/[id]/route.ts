@@ -104,12 +104,28 @@ export async function GET(
       quote = quotes.length > 0 ? quotes[0] : null
     }
 
+    // Get invoice linked to this job (if any)
+    let invoice = null
+    if (job.invoice_id) {
+      const invoices = await sql`
+        SELECT
+          i.*,
+          u.full_name as created_by_name
+        FROM invoices i
+        LEFT JOIN users u ON i.created_by_user_id = u.id
+        WHERE i.id = ${job.invoice_id}
+        LIMIT 1
+      `
+      invoice = invoices.length > 0 ? invoices[0] : null
+    }
+
     return NextResponse.json({
       job,
       timeLogs,
       materials,
       notes,
       quote,
+      invoice,
     })
   } catch (error) {
     console.error('Error fetching job:', error)

@@ -132,6 +132,7 @@ export async function PUT(
         accepted_at = ${body.acceptedAt !== undefined ? body.acceptedAt : existingQuotes[0].accepted_at},
         rejected_at = ${body.rejectedAt !== undefined ? body.rejectedAt : existingQuotes[0].rejected_at},
         rejection_reason = ${body.rejectionReason !== undefined ? body.rejectionReason : existingQuotes[0].rejection_reason},
+        converted_to_job_id = ${body.convertedToJobId !== undefined ? body.convertedToJobId : existingQuotes[0].converted_to_job_id},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

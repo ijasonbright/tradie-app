@@ -199,6 +199,15 @@ export async function POST(req: Request) {
       ) RETURNING *
     `
 
+    // If invoice is linked to a job, update the job's invoice_id
+    if (body.jobId) {
+      await sql`
+        UPDATE jobs
+        SET invoice_id = ${invoices[0].id}, updated_at = NOW()
+        WHERE id = ${body.jobId}
+      `
+    }
+
     return NextResponse.json({ invoice: invoices[0] }, { status: 201 })
   } catch (error) {
     console.error('Error creating invoice:', error)
