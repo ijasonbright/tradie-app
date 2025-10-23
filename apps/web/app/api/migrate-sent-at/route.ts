@@ -4,8 +4,8 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
-// POST - Add sent_at column to invoices table
-export async function POST() {
+// GET or POST - Add sent_at column to invoices table
+async function runMigration() {
   try {
     const { userId } = await auth()
 
@@ -36,3 +36,6 @@ export async function POST() {
     )
   }
 }
+
+export const GET = runMigration
+export const POST = runMigration
