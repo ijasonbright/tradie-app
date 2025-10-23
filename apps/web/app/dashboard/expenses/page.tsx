@@ -62,10 +62,12 @@ export default function ExpensesPage() {
     fetchJobs()
     fetchExpenses()
     fetchXeroAccounts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     fetchExpenses()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, showMyExpenses])
 
   const fetchOrganizations = async () => {

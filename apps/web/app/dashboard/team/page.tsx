@@ -43,7 +43,7 @@ export default function TeamPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Team Members</h1>
         <p className="mt-2 text-gray-600">
-          Manage your organization's team members and their roles
+          Manage your organization&apos;s team members and their roles
         </p>
       </div>
 
