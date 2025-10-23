@@ -111,6 +111,18 @@ export async function POST(
       newStatus = 'overdue'
     }
 
+    // Log status update for debugging
+    console.log('Payment status update:', {
+      invoiceId,
+      oldStatus: invoice.status,
+      newStatus,
+      totalAmount,
+      paidAmount,
+      newPaidAmount,
+      isFullyPaid: newPaidAmount >= totalAmount,
+      isOverdue,
+    })
+
     // Update invoice paid amount and status
     await sql`
       UPDATE invoices
