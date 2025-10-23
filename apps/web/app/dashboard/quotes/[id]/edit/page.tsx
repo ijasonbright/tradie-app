@@ -106,8 +106,8 @@ export default function EditQuotePage() {
           id: item.id,
           itemType: item.item_type,
           description: item.description,
-          quantity: item.quantity,
-          unitPrice: item.unit_price,
+          quantity: String(item.quantity),
+          unitPrice: String(item.unit_price),
           lineTotal: parseFloat(item.line_total),
         })))
       }
