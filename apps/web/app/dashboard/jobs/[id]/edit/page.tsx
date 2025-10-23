@@ -58,53 +58,53 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   }, [params])
 
   useEffect(() => {
-    if (jobId) {
-      fetchJob()
-    }
-  }, [jobId])
+    const loadJob = async () => {
+      if (!jobId) return
 
-  const fetchJob = async () => {
-    try {
-      const res = await fetch(`/api/jobs/${jobId}`)
-      if (!res.ok) {
-        throw new Error('Failed to fetch job')
+      try {
+        const res = await fetch(`/api/jobs/${jobId}`)
+        if (!res.ok) {
+          throw new Error('Failed to fetch job')
+        }
+        const data = await res.json()
+        const jobData = data.job
+
+        setJob(jobData)
+
+        // Pre-fill form
+        setFormData({
+          title: jobData.title || '',
+          description: jobData.description || '',
+          jobType: jobData.job_type || 'repair',
+          status: jobData.status || 'quoted',
+          priority: jobData.priority || 'medium',
+          siteAddressLine1: jobData.site_address_line1 || '',
+          siteAddressLine2: jobData.site_address_line2 || '',
+          siteCity: jobData.site_city || '',
+          siteState: jobData.site_state || '',
+          sitePostcode: jobData.site_postcode || '',
+          siteAccessNotes: jobData.site_access_notes || '',
+          quotedAmount: jobData.quoted_amount || '',
+          scheduledDate: jobData.scheduled_date
+            ? new Date(jobData.scheduled_date).toISOString().split('T')[0]
+            : '',
+          scheduledStartTime: jobData.scheduled_start_time
+            ? new Date(jobData.scheduled_start_time).toISOString().slice(0, 16)
+            : '',
+          scheduledEndTime: jobData.scheduled_end_time
+            ? new Date(jobData.scheduled_end_time).toISOString().slice(0, 16)
+            : '',
+        })
+      } catch (error) {
+        console.error('Error fetching job:', error)
+        alert('Failed to load job')
+      } finally {
+        setLoading(false)
       }
-      const data = await res.json()
-      const jobData = data.job
-
-      setJob(jobData)
-
-      // Pre-fill form
-      setFormData({
-        title: jobData.title || '',
-        description: jobData.description || '',
-        jobType: jobData.job_type || 'repair',
-        status: jobData.status || 'quoted',
-        priority: jobData.priority || 'medium',
-        siteAddressLine1: jobData.site_address_line1 || '',
-        siteAddressLine2: jobData.site_address_line2 || '',
-        siteCity: jobData.site_city || '',
-        siteState: jobData.site_state || '',
-        sitePostcode: jobData.site_postcode || '',
-        siteAccessNotes: jobData.site_access_notes || '',
-        quotedAmount: jobData.quoted_amount || '',
-        scheduledDate: jobData.scheduled_date
-          ? new Date(jobData.scheduled_date).toISOString().split('T')[0]
-          : '',
-        scheduledStartTime: jobData.scheduled_start_time
-          ? new Date(jobData.scheduled_start_time).toISOString().slice(0, 16)
-          : '',
-        scheduledEndTime: jobData.scheduled_end_time
-          ? new Date(jobData.scheduled_end_time).toISOString().slice(0, 16)
-          : '',
-      })
-    } catch (error) {
-      console.error('Error fetching job:', error)
-      alert('Failed to load job')
-    } finally {
-      setLoading(false)
     }
-  }
+
+    loadJob()
+  }, [jobId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -26,24 +26,24 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const url = statusFilter === 'all'
+          ? '/api/jobs'
+          : `/api/jobs?status=${statusFilter}`
+
+        const res = await fetch(url)
+        const data = await res.json()
+        setJobs(data.jobs || [])
+      } catch (error) {
+        console.error('Error fetching jobs:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
     fetchJobs()
   }, [statusFilter])
-
-  const fetchJobs = async () => {
-    try {
-      const url = statusFilter === 'all'
-        ? '/api/jobs'
-        : `/api/jobs?status=${statusFilter}`
-
-      const res = await fetch(url)
-      const data = await res.json()
-      setJobs(data.jobs || [])
-    } catch (error) {
-      console.error('Error fetching jobs:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const getClientName = (job: Job) => {
     if (job.is_company) {
