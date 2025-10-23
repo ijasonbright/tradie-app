@@ -4,6 +4,11 @@ import Anthropic from '@anthropic-ai/sdk'
 
 export const dynamic = 'force-dynamic'
 
+// Check if API key is available
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error('ANTHROPIC_API_KEY is not set in environment variables')
+}
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
@@ -135,8 +140,29 @@ Return ONLY the JSON object, nothing else.`,
     return NextResponse.json(result)
   } catch (error) {
     console.error('Error scanning receipt:', error)
+
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
+
+    // Check if it's an Anthropic API error
+    if (error && typeof error === 'object' && 'status' in error) {
+      console.error('API Error status:', (error as any).status)
+      console.error('API Error details:', (error as any).message)
+    }
+
+    // Log environment check
+    console.error('API Key present:', !!process.env.ANTHROPIC_API_KEY)
+    console.error('API Key length:', process.env.ANTHROPIC_API_KEY?.length || 0)
+
     return NextResponse.json(
-      { error: 'Failed to scan receipt. Please try again or enter details manually.' },
+      {
+        error: 'Failed to scan receipt. Please try again or enter details manually.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
