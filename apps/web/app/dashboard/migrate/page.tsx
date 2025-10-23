@@ -57,7 +57,7 @@ export default function MigratePage() {
         <div className="mb-6 rounded-lg bg-yellow-50 p-4">
           <p className="text-sm text-yellow-800">
             <strong>Note:</strong> This migration is safe to run multiple times. It will only add new
-            columns and tables if they don't already exist.
+            columns and tables if they don&apos;t already exist.
           </p>
         </div>
 
