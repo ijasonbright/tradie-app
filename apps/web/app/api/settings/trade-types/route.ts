@@ -94,14 +94,25 @@ export async function POST(req: Request) {
     const org = orgs[0]
 
     // Validate required fields
-    if (!body.name || body.clientHourlyRate === undefined) {
-      return NextResponse.json({ error: 'Name and client hourly rate are required' }, { status: 400 })
+    if (!body.jobTypeId || !body.name || body.clientHourlyRate === undefined) {
+      return NextResponse.json({ error: 'Job type, name, and client hourly rate are required' }, { status: 400 })
+    }
+
+    // Check if this job type already exists for this organization
+    const existing = await sql`
+      SELECT id FROM trade_types
+      WHERE organization_id = ${org.id} AND job_type_id = ${body.jobTypeId}
+    `
+
+    if (existing.length > 0) {
+      return NextResponse.json({ error: 'This trade type already exists for your organization' }, { status: 409 })
     }
 
     // Create trade type
     const tradeType = await sql`
       INSERT INTO trade_types (
         organization_id,
+        job_type_id,
         name,
         client_hourly_rate,
         client_daily_rate,
@@ -110,6 +121,7 @@ export async function POST(req: Request) {
       )
       VALUES (
         ${org.id},
+        ${body.jobTypeId},
         ${body.name},
         ${body.clientHourlyRate},
         ${body.clientDailyRate || null},

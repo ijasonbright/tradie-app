@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { STANDARD_TRADE_TYPES, getStandardTradeType } from '@/../../packages/database/schema/standard-trade-types'
 
 interface Organization {
   id: string
@@ -25,6 +26,7 @@ interface Organization {
 
 interface TradeType {
   id: string
+  job_type_id: number
   name: string
   client_hourly_rate: string
   client_daily_rate: string | null
@@ -44,6 +46,7 @@ export default function SettingsPage() {
   const [showAddTrade, setShowAddTrade] = useState(false)
   const [editingTrade, setEditingTrade] = useState<TradeType | null>(null)
   const [tradeForm, setTradeForm] = useState({
+    jobTypeId: 0,
     name: '',
     clientHourlyRate: '',
     clientDailyRate: '',
@@ -154,6 +157,7 @@ export default function SettingsPage() {
 
   const handleAddTrade = () => {
     setTradeForm({
+      jobTypeId: 0,
       name: '',
       clientHourlyRate: '',
       clientDailyRate: '',
@@ -165,6 +169,7 @@ export default function SettingsPage() {
 
   const handleEditTrade = (trade: TradeType) => {
     setTradeForm({
+      jobTypeId: trade.job_type_id,
       name: trade.name,
       clientHourlyRate: trade.client_hourly_rate,
       clientDailyRate: trade.client_daily_rate || '',
@@ -172,6 +177,26 @@ export default function SettingsPage() {
     })
     setEditingTrade(trade)
     setShowAddTrade(true)
+  }
+
+  // Handle trade type selection from dropdown
+  const handleTradeTypeSelect = (jobTypeId: number) => {
+    const standardTrade = getStandardTradeType(jobTypeId)
+    if (standardTrade) {
+      setTradeForm({
+        jobTypeId: standardTrade.jobTypeId,
+        name: standardTrade.name,
+        clientHourlyRate: standardTrade.defaultHourlyRate.toString(),
+        clientDailyRate: '',
+        defaultEmployeeCost: standardTrade.defaultEmployeeCost.toString(),
+      })
+    }
+  }
+
+  // Get available trade types (not already added)
+  const getAvailableTradeTypes = () => {
+    const existingJobTypeIds = tradeTypes.map(t => t.job_type_id)
+    return STANDARD_TRADE_TYPES.filter(t => !existingJobTypeIds.includes(t.jobTypeId))
   }
 
   const handleSaveTrade = async (e: React.FormEvent) => {
@@ -467,6 +492,9 @@ export default function SettingsPage() {
                       <div className="flex-1">
                         <div className="mb-3 flex items-center gap-3">
                           <h3 className="text-lg font-semibold">{trade.name}</h3>
+                          <span className="rounded bg-blue-100 px-2 py-1 text-xs font-mono text-blue-700">
+                            ID: {trade.job_type_id}
+                          </span>
                           {!trade.is_active && (
                             <span className="rounded bg-gray-200 px-2 py-1 text-xs text-gray-600">
                               Inactive
@@ -538,17 +566,40 @@ export default function SettingsPage() {
                 </h3>
 
                 <form onSubmit={handleSaveTrade} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Trade Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={tradeForm.name}
-                      onChange={(e) => setTradeForm({ ...tradeForm, name: e.target.value })}
-                      className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      placeholder="e.g., Plumbing, Electrical"
-                    />
-                  </div>
+                  {!editingTrade && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Select Trade Type *</label>
+                      <select
+                        required
+                        value={tradeForm.jobTypeId}
+                        onChange={(e) => handleTradeTypeSelect(parseInt(e.target.value))}
+                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                      >
+                        <option value={0}>-- Select a trade type --</option>
+                        {getAvailableTradeTypes().map((trade) => (
+                          <option key={trade.jobTypeId} value={trade.jobTypeId}>
+                            {trade.name} (ID: {trade.jobTypeId})
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Choose from standard trade types. Rates will be pre-filled with defaults.
+                      </p>
+                    </div>
+                  )}
+
+                  {editingTrade && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Trade Type</label>
+                      <input
+                        type="text"
+                        disabled
+                        value={`${tradeForm.name} (ID: ${tradeForm.jobTypeId})`}
+                        className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Trade type cannot be changed after creation</p>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">

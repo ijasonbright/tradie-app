@@ -99,19 +99,69 @@ export async function POST() {
       `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS ai_verification_notes TEXT`,
       `ALTER TABLE user_documents ADD COLUMN IF NOT EXISTS ai_extracted_expiry_date DATE`,
 
+      // Add job_type_id to trade_types
+      `ALTER TABLE trade_types ADD COLUMN IF NOT EXISTS job_type_id INTEGER`,
+
+      // Create standard_trade_types reference table
+      `CREATE TABLE IF NOT EXISTS standard_trade_types (
+        job_type_id INTEGER PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description VARCHAR(255)
+      )`,
+
+      // Insert standard trade types
+      `INSERT INTO standard_trade_types (job_type_id, name, description) VALUES
+        (12070, 'Air Conditioning', 'Air conditioning installation, repair, and maintenance'),
+        (12022, 'Antennas', 'Antenna installation and repair services'),
+        (3300, 'Appliance Repair', 'Household appliance repair and maintenance'),
+        (3700, 'Bricklaying', 'Bricklaying and masonry services'),
+        (12051, 'Cabinet Making', 'Custom cabinet design and installation'),
+        (3900, 'Carpentry', 'General carpentry and woodworking services'),
+        (12033, 'Carpet Cleaning', 'Professional carpet cleaning services'),
+        (4000, 'Carpet Laying', 'Carpet installation and repair'),
+        (4100, 'Cleaning', 'General cleaning services'),
+        (4700, 'Electrical', 'Licensed electrical services'),
+        (4800, 'Fencing', 'Fence installation and repair'),
+        (12064, 'Glazing', 'Window and glass installation services'),
+        (6500, 'Handyman', 'General handyman and maintenance services'),
+        (6000, 'Landscaping', 'Landscape design and maintenance'),
+        (6100, 'Lawn Mowing', 'Lawn mowing and garden maintenance'),
+        (7200, 'Locksmithing', 'Lock installation and security services'),
+        (7500, 'Painting', 'Interior and exterior painting services'),
+        (10600, 'Pest Control', 'Pest inspection and treatment services'),
+        (7900, 'Plastering', 'Plastering and rendering services'),
+        (2600, 'Plumbing', 'Licensed plumbing services'),
+        (8300, 'Roofing', 'Roof installation, repair, and maintenance'),
+        (9400, 'Tiling', 'Floor and wall tiling services')
+      ON CONFLICT (job_type_id) DO NOTHING`,
+
       // Create indexes
       `CREATE INDEX IF NOT EXISTS idx_trade_types_org ON trade_types(organization_id)`,
       `CREATE INDEX IF NOT EXISTS idx_trade_types_active ON trade_types(organization_id, is_active) WHERE is_active = true`,
       `CREATE INDEX IF NOT EXISTS idx_jobs_trade_type ON jobs(trade_type_id)`,
 
+      // Drop old unique constraint on organization_id + name
+      `ALTER TABLE trade_types DROP CONSTRAINT IF EXISTS trade_types_organization_id_name_key`,
+
+      // Add new unique constraint on organization_id + job_type_id
+      `ALTER TABLE trade_types ADD CONSTRAINT trade_types_organization_id_job_type_id_key
+       UNIQUE(organization_id, job_type_id)`,
+
       // Create "General" trade for each organization from their default rates
-      `INSERT INTO trade_types (organization_id, name, client_hourly_rate, default_employee_cost, is_active)
-       SELECT id, 'General', COALESCE(default_hourly_rate, 0), COALESCE(default_employee_cost, 0), true
+      `INSERT INTO trade_types (organization_id, job_type_id, name, client_hourly_rate, default_employee_cost, is_active)
+       SELECT id, 9999, 'General', COALESCE(default_hourly_rate, 0), COALESCE(default_employee_cost, 0), true
        FROM organizations
        WHERE NOT EXISTS (
          SELECT 1 FROM trade_types
-         WHERE trade_types.organization_id = organizations.id AND trade_types.name = 'General'
+         WHERE trade_types.organization_id = organizations.id AND (trade_types.name = 'General' OR trade_types.job_type_id = 9999)
        )`,
+
+      // Update existing trade types to match job_type_id where possible
+      `UPDATE trade_types t
+       SET job_type_id = s.job_type_id
+       FROM standard_trade_types s
+       WHERE LOWER(t.name) = LOWER(s.name)
+       AND t.job_type_id IS NULL`,
 
       // Link existing team members to General trade
       `UPDATE organization_members om

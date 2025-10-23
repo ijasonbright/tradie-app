@@ -1,9 +1,10 @@
-import { pgTable, uuid, varchar, decimal, boolean, timestamp, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, decimal, boolean, timestamp, unique, integer } from 'drizzle-orm/pg-core'
 import { organizations } from './organizations'
 
 export const tradeTypes = pgTable('trade_types', {
   id: uuid('id').defaultRandom().primaryKey(),
   organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  jobTypeId: integer('job_type_id'),
   name: varchar('name', { length: 100 }).notNull(),
   clientHourlyRate: decimal('client_hourly_rate', { precision: 10, scale: 2 }).default('0').notNull(),
   clientDailyRate: decimal('client_daily_rate', { precision: 10, scale: 2 }),
@@ -12,5 +13,5 @@ export const tradeTypes = pgTable('trade_types', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
-  uniqueOrgName: unique().on(table.organizationId, table.name),
+  uniqueOrgJobType: unique().on(table.organizationId, table.jobTypeId),
 }))
