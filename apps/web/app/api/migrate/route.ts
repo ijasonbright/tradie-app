@@ -235,6 +235,10 @@ export async function POST() {
         updated_at TIMESTAMP DEFAULT NOW() NOT NULL
       )`,
 
+      // Add new expense columns for AI receipt scanning and Xero integration
+      `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS supplier_name VARCHAR(255)`,
+      `ALTER TABLE expenses ADD COLUMN IF NOT EXISTS xero_account_code VARCHAR(50)`,
+
       // Create indexes for better query performance
       `CREATE INDEX IF NOT EXISTS appointments_organization_id_idx ON appointments(organization_id)`,
       `CREATE INDEX IF NOT EXISTS appointments_assigned_to_user_id_idx ON appointments(assigned_to_user_id)`,

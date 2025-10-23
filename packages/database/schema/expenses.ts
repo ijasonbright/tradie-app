@@ -10,6 +10,7 @@ export const expenses = pgTable('expenses', {
   jobId: uuid('job_id').references(() => jobs.id), // optional allocation
 
   category: varchar('category', { length: 100 }).notNull(), // fuel/materials/tools/vehicle/subcontractor/meals/other
+  supplierName: varchar('supplier_name', { length: 255 }), // supplier/vendor name
   description: text('description').notNull(),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   gstAmount: decimal('gst_amount', { precision: 10, scale: 2 }).default('0').notNull(),
@@ -24,8 +25,9 @@ export const expenses = pgTable('expenses', {
   rejectionReason: text('rejection_reason'),
   reimbursedAt: timestamp('reimbursed_at'),
 
-  // Xero sync (future)
+  // Xero sync
   xeroExpenseId: varchar('xero_expense_id', { length: 255 }),
+  xeroAccountCode: varchar('xero_account_code', { length: 50 }), // Xero account code for categorization
   lastSyncedAt: timestamp('last_synced_at'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),

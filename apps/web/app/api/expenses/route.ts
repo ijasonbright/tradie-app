@@ -118,21 +118,23 @@ export async function POST(req: Request) {
     const expenses = await sql`
       INSERT INTO expenses (
         organization_id, user_id, job_id,
-        category, description,
+        category, supplier_name, description,
         amount, gst_amount, total_amount,
-        receipt_url, expense_date
+        receipt_url, expense_date, xero_account_code
       )
       VALUES (
         ${body.organizationId},
         ${user.id},
         ${body.jobId || null},
         ${body.category},
+        ${body.supplierName || null},
         ${body.description},
         ${amount},
         ${gstAmount},
         ${totalAmount},
         ${body.receiptUrl || null},
-        ${body.expenseDate}
+        ${body.expenseDate},
+        ${body.xeroAccountCode || null}
       )
       RETURNING *
     `

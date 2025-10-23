@@ -44,18 +44,24 @@ export default function ExpensesPage() {
   const [formData, setFormData] = useState({
     organizationId: '',
     category: 'materials',
+    supplierName: '',
     description: '',
     totalAmount: '',
     expenseDate: new Date().toISOString().split('T')[0],
     jobId: '',
+    xeroAccountCode: '',
   })
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [uploadingReceipt, setUploadingReceipt] = useState(false)
+  const [scanningReceipt, setScanningReceipt] = useState(false)
+  const [xeroAccounts, setXeroAccounts] = useState<any[]>([])
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrganizations()
     fetchJobs()
     fetchExpenses()
+    fetchXeroAccounts()
   }, [])
 
   useEffect(() => {
@@ -106,6 +112,102 @@ export default function ExpensesPage() {
     }
   }
 
+  const fetchXeroAccounts = async () => {
+    try {
+      const res = await fetch('/api/xero/account-codes')
+      if (res.ok) {
+        const data = await res.json()
+        setXeroAccounts(data.accounts || [])
+      }
+    } catch (error) {
+      console.error('Error fetching Xero accounts:', error)
+    }
+  }
+
+  const handleReceiptFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setReceiptFile(file)
+
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setReceiptPreview(reader.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Auto-scan receipt with AI
+    setScanningReceipt(true)
+    try {
+      const scanFormData = new FormData()
+      scanFormData.append('file', file)
+
+      const res = await fetch('/api/expenses/scan-receipt', {
+        method: 'POST',
+        body: scanFormData,
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+
+        // Auto-fill form with scanned data
+        setFormData(prev => ({
+          ...prev,
+          category: data.category || prev.category,
+          supplierName: data.supplierName || prev.supplierName,
+          description: data.description || prev.description,
+          totalAmount: data.totalAmount ? data.totalAmount.toString() : prev.totalAmount,
+          expenseDate: data.date || prev.expenseDate,
+        }))
+
+        // Try to auto-match Xero account code based on category
+        if (xeroAccounts.length > 0 && data.category) {
+          const matchingAccount = findMatchingXeroAccount(data.category)
+          if (matchingAccount) {
+            setFormData(prev => ({
+              ...prev,
+              xeroAccountCode: matchingAccount.code,
+            }))
+          }
+        }
+      } else {
+        const error = await res.json()
+        alert(`Could not scan receipt: ${error.error}. Please enter details manually.`)
+      }
+    } catch (error) {
+      console.error('Error scanning receipt:', error)
+      alert('Failed to scan receipt. Please enter details manually.')
+    } finally {
+      setScanningReceipt(false)
+    }
+  }
+
+  const findMatchingXeroAccount = (category: string): any | null => {
+    // Map expense categories to common Xero account patterns
+    const categoryMap: Record<string, string[]> = {
+      fuel: ['fuel', 'petrol', 'gas', 'diesel', 'motor vehicle'],
+      materials: ['materials', 'supplies', 'inventory', 'cost of goods', 'cogs'],
+      tools: ['tools', 'equipment', 'assets', 'capital'],
+      vehicle: ['vehicle', 'motor', 'auto', 'car', 'truck'],
+      subcontractor: ['subcontractor', 'contractor', 'labour', 'labor', 'wages'],
+      meals: ['meals', 'food', 'entertainment', 'travel'],
+      other: ['general', 'misc', 'sundry'],
+    }
+
+    const searchTerms = categoryMap[category] || [category]
+
+    for (const term of searchTerms) {
+      const match = xeroAccounts.find(acc =>
+        acc.name.toLowerCase().includes(term.toLowerCase()) ||
+        acc.description?.toLowerCase().includes(term.toLowerCase())
+      )
+      if (match) return match
+    }
+
+    return null
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -140,27 +242,32 @@ export default function ExpensesPage() {
         body: JSON.stringify({
           organizationId: formData.organizationId,
           category: formData.category,
+          supplierName: formData.supplierName || null,
           description: formData.description,
           amount: amount,
           gstAmount: gstAmount,
           expenseDate: formData.expenseDate,
           jobId: formData.jobId || null,
           receiptUrl: receiptUrl,
+          xeroAccountCode: formData.xeroAccountCode || null,
         }),
       })
 
       if (res.ok) {
         setShowAddForm(false)
         setReceiptFile(null)
+        setReceiptPreview(null)
         fetchExpenses()
         // Reset form
         setFormData({
           organizationId: formData.organizationId,
           category: 'materials',
+          supplierName: '',
           description: '',
           totalAmount: '',
           expenseDate: new Date().toISOString().split('T')[0],
           jobId: '',
+          xeroAccountCode: '',
         })
       } else {
         const error = await res.json()
@@ -430,6 +537,44 @@ export default function ExpensesPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Receipt Photo - Camera First */}
+              <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4">
+                <label className="block text-sm font-medium text-blue-900">
+                  📸 Take/Upload Receipt Photo *
+                </label>
+                <p className="mb-2 text-xs text-blue-700">
+                  AI will automatically extract details from your receipt
+                </p>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  capture="environment"
+                  onChange={handleReceiptFileChange}
+                  className="mt-1 w-full rounded border px-3 py-2 bg-white"
+                />
+                {scanningReceipt && (
+                  <div className="mt-2 flex items-center gap-2 text-blue-600">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+                    <span className="text-sm">Scanning receipt with AI...</span>
+                  </div>
+                )}
+                {receiptPreview && (
+                  <div className="mt-3">
+                    <img
+                      src={receiptPreview}
+                      alt="Receipt preview"
+                      className="max-h-48 rounded border"
+                    />
+                  </div>
+                )}
+                {receiptFile && !scanningReceipt && (
+                  <p className="mt-2 text-xs text-green-600">
+                    ✓ {receiptFile.name} - Details extracted
+                  </p>
+                )}
+              </div>
+
+              {/* Auto-filled fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium">Category *</label>
@@ -462,6 +607,17 @@ export default function ExpensesPage() {
               </div>
 
               <div>
+                <label className="block text-sm font-medium">Supplier/Vendor</label>
+                <input
+                  type="text"
+                  value={formData.supplierName}
+                  onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+                  className="mt-1 w-full rounded border px-3 py-2"
+                  placeholder="e.g., Bunnings, Shell, etc."
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium">Description *</label>
                 <textarea
                   required
@@ -491,21 +647,26 @@ export default function ExpensesPage() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium">Receipt Photo/Image</label>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  capture="environment"
-                  onChange={(e) => setReceiptFile(e.target.files?.[0] || null)}
-                  className="mt-1 w-full rounded border px-3 py-2"
-                />
-                {receiptFile && (
-                  <p className="mt-1 text-xs text-green-600">
-                    ✓ {receiptFile.name} selected
+              {xeroAccounts.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium">Xero Account Code</label>
+                  <select
+                    value={formData.xeroAccountCode}
+                    onChange={(e) => setFormData({ ...formData, xeroAccountCode: e.target.value })}
+                    className="mt-1 w-full rounded border px-3 py-2"
+                  >
+                    <option value="">Select account code (optional)</option>
+                    {xeroAccounts.map((acc) => (
+                      <option key={acc.code} value={acc.code}>
+                        {acc.code} - {acc.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Account code for Xero sync
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium">Allocate to Job (Optional)</label>
