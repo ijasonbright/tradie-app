@@ -29,15 +29,38 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes)
     const base64Image = buffer.toString('base64')
 
-    // Determine media type
+    // Determine media type and content type
     let mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg'
-    if (file.type === 'image/png') {
+    let contentType: 'image' | 'document' = 'image'
+
+    if (file.type === 'application/pdf') {
+      contentType = 'document'
+    } else if (file.type === 'image/png') {
       mediaType = 'image/png'
     } else if (file.type === 'image/webp') {
       mediaType = 'image/webp'
     } else if (file.type === 'image/gif') {
       mediaType = 'image/gif'
     }
+
+    // Build content block based on file type
+    const contentBlock = contentType === 'document'
+      ? {
+          type: 'document' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: 'application/pdf' as const,
+            data: base64Image,
+          },
+        }
+      : {
+          type: 'image' as const,
+          source: {
+            type: 'base64' as const,
+            media_type: mediaType,
+            data: base64Image,
+          },
+        }
 
     // Use Claude Vision to extract receipt details
     const message = await anthropic.messages.create({
@@ -47,14 +70,7 @@ export async function POST(req: Request) {
         {
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Image,
-              },
-            },
+            contentBlock,
             {
               type: 'text',
               text: `Analyze this receipt and extract the following information in JSON format:
