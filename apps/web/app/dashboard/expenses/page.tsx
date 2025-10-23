@@ -49,7 +49,7 @@ export default function ExpensesPage() {
     totalAmount: '',
     expenseDate: new Date().toISOString().split('T')[0],
     jobId: '',
-    xeroAccountCode: '',
+    accountCode: '',
   })
   const [receiptFile, setReceiptFile] = useState<File | null>(null)
   const [uploadingReceipt, setUploadingReceipt] = useState(false)
@@ -161,13 +161,13 @@ export default function ExpensesPage() {
           expenseDate: data.date || prev.expenseDate,
         }))
 
-        // Try to auto-match Xero account code based on category
+        // Try to auto-match account code based on category
         if (xeroAccounts.length > 0 && data.category) {
           const matchingAccount = findMatchingXeroAccount(data.category)
           if (matchingAccount) {
             setFormData(prev => ({
               ...prev,
-              xeroAccountCode: matchingAccount.code,
+              accountCode: matchingAccount.code,
             }))
           }
         }
@@ -249,7 +249,7 @@ export default function ExpensesPage() {
           expenseDate: formData.expenseDate,
           jobId: formData.jobId || null,
           receiptUrl: receiptUrl,
-          xeroAccountCode: formData.xeroAccountCode || null,
+          accountCode: formData.accountCode || null,
         }),
       })
 
@@ -267,7 +267,7 @@ export default function ExpensesPage() {
           totalAmount: '',
           expenseDate: new Date().toISOString().split('T')[0],
           jobId: '',
-          xeroAccountCode: '',
+          accountCode: '',
         })
       } else {
         const error = await res.json()
@@ -649,10 +649,10 @@ export default function ExpensesPage() {
 
               {xeroAccounts.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium">Xero Account Code</label>
+                  <label className="block text-sm font-medium">Account Code</label>
                   <select
-                    value={formData.xeroAccountCode}
-                    onChange={(e) => setFormData({ ...formData, xeroAccountCode: e.target.value })}
+                    value={formData.accountCode}
+                    onChange={(e) => setFormData({ ...formData, accountCode: e.target.value })}
                     className="mt-1 w-full rounded border px-3 py-2"
                   >
                     <option value="">Select account code (optional)</option>
@@ -663,7 +663,7 @@ export default function ExpensesPage() {
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    Account code for Xero sync
+                    Account code for accounting software sync
                   </p>
                 </div>
               )}

@@ -120,7 +120,7 @@ export async function POST(req: Request) {
         organization_id, user_id, job_id,
         category, supplier_name, description,
         amount, gst_amount, total_amount,
-        receipt_url, expense_date, xero_account_code
+        receipt_url, expense_date, account_code
       )
       VALUES (
         ${body.organizationId},
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
         ${totalAmount},
         ${body.receiptUrl || null},
         ${body.expenseDate},
-        ${body.xeroAccountCode || null}
+        ${body.accountCode || null}
       )
       RETURNING *
     `

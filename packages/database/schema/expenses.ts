@@ -25,9 +25,9 @@ export const expenses = pgTable('expenses', {
   rejectionReason: text('rejection_reason'),
   reimbursedAt: timestamp('reimbursed_at'),
 
-  // Xero sync
+  // Accounting software sync
   xeroExpenseId: varchar('xero_expense_id', { length: 255 }),
-  xeroAccountCode: varchar('xero_account_code', { length: 50 }), // Xero account code for categorization
+  accountCode: varchar('account_code', { length: 50 }), // Account code for accounting software (Xero, MYOB, QuickBooks, etc.)
   lastSyncedAt: timestamp('last_synced_at'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
