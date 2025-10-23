@@ -68,8 +68,13 @@ export async function POST(req: Request) {
         }
 
     // Use Claude Vision to extract receipt details
+    // Use Haiku for PDFs (higher rate limits), Sonnet for images (better quality)
+    const model = contentType === 'document'
+      ? 'claude-3-5-haiku-20241022'  // Haiku for PDFs - higher rate limits
+      : 'claude-3-5-sonnet-20241022' // Sonnet for images - best quality
+
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model,
       max_tokens: 1024,
       messages: [
         {
