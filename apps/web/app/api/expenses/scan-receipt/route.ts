@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const base64Image = buffer.toString('base64')
 
     // Determine media type
-    let mediaType = 'image/jpeg'
+    let mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg'
     if (file.type === 'image/png') {
       mediaType = 'image/png'
     } else if (file.type === 'image/webp') {
