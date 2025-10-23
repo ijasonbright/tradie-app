@@ -46,6 +46,8 @@ export default function QuoteDetailPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [converting, setConverting] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
     if (params.id) {
@@ -205,6 +207,69 @@ export default function QuoteDetailPage() {
     }
   }
 
+  const handleDownloadPDF = async () => {
+    if (!quote) return
+
+    setDownloading(true)
+
+    try {
+      const res = await fetch(`/api/quotes/${params.id}/pdf`)
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to download PDF')
+      }
+
+      // Download the PDF
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${quote.quote_number}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+      alert(error instanceof Error ? error.message : 'Failed to download PDF')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const handleSendQuote = async () => {
+    if (!quote) return
+
+    if (!quote.client_email) {
+      alert('Cannot send quote: Client email is missing')
+      return
+    }
+
+    if (!confirm(`Send quote ${quote.quote_number} to ${quote.client_email}?`)) return
+
+    setSending(true)
+
+    try {
+      const res = await fetch(`/api/quotes/${params.id}/send`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to send quote')
+      }
+
+      alert(`Quote sent successfully to ${quote.client_email}`)
+      fetchQuote() // Refresh to show updated status
+    } catch (error) {
+      console.error('Error sending quote:', error)
+      alert(error instanceof Error ? error.message : 'Failed to send quote')
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -336,6 +401,25 @@ export default function QuoteDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
           <div className="flex flex-wrap gap-3">
+            {/* Download and Send buttons - always available */}
+            <button
+              onClick={handleDownloadPDF}
+              disabled={downloading}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium disabled:opacity-50"
+            >
+              {downloading ? 'Downloading...' : 'Download PDF'}
+            </button>
+
+            <button
+              onClick={handleSendQuote}
+              disabled={sending || !quote.client_email}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium disabled:opacity-50"
+              title={!quote.client_email ? 'Client email is required' : ''}
+            >
+              {sending ? 'Sending...' : 'Send Quote via Email'}
+            </button>
+
+            {/* Status change buttons */}
             {quote.status === 'draft' && (
               <button
                 onClick={() => handleStatusChange('sent')}
