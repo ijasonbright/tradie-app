@@ -148,10 +148,17 @@ export default function CalendarPage() {
 
       const method = editingAppointment ? 'PUT' : 'POST'
 
+      // Convert local datetime strings to ISO strings (UTC) for database storage
+      const submitData = {
+        ...formData,
+        startTime: formData.startTime ? new Date(formData.startTime).toISOString() : '',
+        endTime: formData.endTime ? new Date(formData.endTime).toISOString() : '',
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       })
 
       if (res.ok) {
