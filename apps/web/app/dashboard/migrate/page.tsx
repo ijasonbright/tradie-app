@@ -52,6 +52,7 @@ export default function MigratePage() {
           <li>✓ Leave balance tracking</li>
           <li>✓ Job duration and geolocation fields</li>
           <li>✓ Team member unavailability system</li>
+          <li>✓ <strong className="text-blue-600">NEW: Comprehensive pricing fields</strong> - First hour rates, callout fees, after hours pricing</li>
         </ul>
 
         <div className="mb-6 rounded-lg bg-yellow-50 p-4">

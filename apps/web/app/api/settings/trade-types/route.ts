@@ -148,6 +148,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'A trade with this name already exists' }, { status: 409 })
     }
 
+    // Handle missing column errors (migrations not run)
+    if (error instanceof Error && (error.message.includes('column') || error.message.includes('does not exist'))) {
+      return NextResponse.json(
+        {
+          error: 'Database needs to be updated. Please run migrations at /dashboard/migrate',
+          details: error.message
+        },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
