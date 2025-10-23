@@ -3,6 +3,16 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
+// GET - Show migration status and allow running from browser
+export async function GET() {
+  return NextResponse.json({
+    message: 'Database Migration Endpoint',
+    instructions: 'Send a POST request to this endpoint to run migrations, or add ?run=true to this URL',
+    endpoint: '/api/migrate',
+    method: 'POST or GET with ?run=true',
+  })
+}
+
 // This endpoint runs the database migration
 // Call it once to update the schema
 export async function POST() {
