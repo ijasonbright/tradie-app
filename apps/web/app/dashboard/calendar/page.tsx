@@ -11,6 +11,7 @@ interface Appointment {
   start_time: string
   end_time: string
   all_day: boolean
+  assigned_to_user_id: string
   assigned_to_name: string
   client_company_name: string | null
   client_first_name: string | null
@@ -40,6 +41,7 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedUserId, setSelectedUserId] = useState<string>('all')
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
   const [formData, setFormData] = useState({
     organizationId: '',
@@ -138,14 +140,21 @@ export default function CalendarPage() {
     e.preventDefault()
 
     try {
-      const res = await fetch('/api/appointments', {
-        method: 'POST',
+      const url = editingAppointment
+        ? `/api/appointments/${editingAppointment.id}`
+        : '/api/appointments'
+
+      const method = editingAppointment ? 'PUT' : 'POST'
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       })
 
       if (res.ok) {
         setShowAddForm(false)
+        setEditingAppointment(null)
         fetchAppointments()
         // Reset form
         setFormData({
@@ -164,8 +173,44 @@ export default function CalendarPage() {
         alert(`Error: ${error.error}`)
       }
     } catch (error) {
-      console.error('Error creating appointment:', error)
-      alert('Failed to create appointment')
+      console.error('Error saving appointment:', error)
+      alert('Failed to save appointment')
+    }
+  }
+
+  const handleEdit = (appointment: Appointment) => {
+    setEditingAppointment(appointment)
+    setFormData({
+      organizationId: formData.organizationId,
+      title: appointment.title,
+      description: appointment.description || '',
+      appointmentType: appointment.appointment_type,
+      startTime: new Date(appointment.start_time).toISOString().slice(0, 16),
+      endTime: new Date(appointment.end_time).toISOString().slice(0, 16),
+      allDay: appointment.all_day,
+      assignedToUserId: appointment.assigned_to_user_id || '',
+      locationAddress: appointment.location_address || '',
+    })
+    setShowAddForm(true)
+  }
+
+  const handleDelete = async (appointmentId: string) => {
+    if (!confirm('Are you sure you want to delete this appointment?')) return
+
+    try {
+      const res = await fetch(`/api/appointments/${appointmentId}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        fetchAppointments()
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error)
+      alert('Failed to delete appointment')
     }
   }
 
@@ -358,6 +403,20 @@ export default function CalendarPage() {
                       <p className="mt-2 text-sm text-gray-600">{apt.description}</p>
                     )}
                   </div>
+                  <div className="ml-4 flex gap-2">
+                    <button
+                      onClick={() => handleEdit(apt)}
+                      className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(apt.id)}
+                      className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -370,9 +429,14 @@ export default function CalendarPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold">New Appointment</h2>
+              <h2 className="text-2xl font-bold">
+                {editingAppointment ? 'Edit Appointment' : 'New Appointment'}
+              </h2>
               <button
-                onClick={() => setShowAddForm(false)}
+                onClick={() => {
+                  setShowAddForm(false)
+                  setEditingAppointment(null)
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 ✕
@@ -490,11 +554,14 @@ export default function CalendarPage() {
                   type="submit"
                   className="flex-1 rounded bg-blue-600 py-2 text-white hover:bg-blue-700"
                 >
-                  Create Appointment
+                  {editingAppointment ? 'Update Appointment' : 'Create Appointment'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false)
+                    setEditingAppointment(null)
+                  }}
                   className="rounded border px-6 py-2 hover:bg-gray-100"
                 >
                   Cancel
