@@ -1,4 +1,5 @@
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses'
+import { fromEnv } from '@aws-sdk/credential-providers'
 
 // Validate AWS credentials are configured
 const validateAwsConfig = () => {
@@ -14,21 +15,19 @@ const getSESClient = () => {
   validateAwsConfig()
 
   const region = process.env.AWS_REGION || 'ap-southeast-2'
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID!
 
   // Log configuration (safely, without exposing secrets)
   console.log('Initializing SES client:', {
     region,
-    accessKeyIdPrefix: accessKeyId.substring(0, 8) + '...',
+    accessKeyIdPrefix: process.env.AWS_ACCESS_KEY_ID!.substring(0, 8) + '...',
+    accessKeySecretLength: process.env.AWS_SECRET_ACCESS_KEY!.length,
     hasSecretKey: !!process.env.AWS_SECRET_ACCESS_KEY,
   })
 
+  // Use AWS SDK's credential provider to automatically load from environment
   return new SESClient({
     region,
-    credentials: {
-      accessKeyId,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-    },
+    credentials: fromEnv(),
   })
 }
 
