@@ -401,6 +401,14 @@ export default function QuoteDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
           <div className="flex flex-wrap gap-3">
+            {/* Edit button */}
+            <Link
+              href={`/dashboard/quotes/${params.id}/edit`}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+            >
+              Edit Quote
+            </Link>
+
             {/* Download and Send buttons - always available */}
             <button
               onClick={handleDownloadPDF}
