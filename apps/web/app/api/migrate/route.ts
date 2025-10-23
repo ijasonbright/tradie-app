@@ -185,6 +185,65 @@ export async function POST() {
        SET default_employee_hourly_rate = default_employee_cost
        WHERE (default_employee_hourly_rate IS NULL OR default_employee_hourly_rate = 0)
        AND default_employee_cost IS NOT NULL AND default_employee_cost > 0`,
+
+      // ========== CALENDAR & EXPENSES MIGRATION ==========
+
+      // Create appointments table
+      `CREATE TABLE IF NOT EXISTS appointments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        appointment_type VARCHAR(50) NOT NULL,
+        start_time TIMESTAMP NOT NULL,
+        end_time TIMESTAMP NOT NULL,
+        all_day BOOLEAN DEFAULT false,
+        job_id UUID REFERENCES jobs(id),
+        client_id UUID REFERENCES clients(id),
+        assigned_to_user_id UUID REFERENCES users(id) NOT NULL,
+        created_by_user_id UUID REFERENCES users(id) NOT NULL,
+        location_address TEXT,
+        reminder_minutes_before VARCHAR(50),
+        reminder_sent_at TIMESTAMP,
+        is_recurring BOOLEAN DEFAULT false,
+        recurrence_rule TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create expenses table
+      `CREATE TABLE IF NOT EXISTS expenses (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        user_id UUID REFERENCES users(id) NOT NULL,
+        job_id UUID REFERENCES jobs(id),
+        category VARCHAR(100) NOT NULL,
+        description TEXT NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        gst_amount DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+        total_amount DECIMAL(10, 2) NOT NULL,
+        receipt_url TEXT,
+        expense_date TIMESTAMP NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+        approved_by_user_id UUID REFERENCES users(id),
+        approved_at TIMESTAMP,
+        rejection_reason TEXT,
+        reimbursed_at TIMESTAMP,
+        xero_expense_id VARCHAR(255),
+        last_synced_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for better query performance
+      `CREATE INDEX IF NOT EXISTS appointments_organization_id_idx ON appointments(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS appointments_assigned_to_user_id_idx ON appointments(assigned_to_user_id)`,
+      `CREATE INDEX IF NOT EXISTS appointments_start_time_idx ON appointments(start_time)`,
+      `CREATE INDEX IF NOT EXISTS appointments_job_id_idx ON appointments(job_id)`,
+      `CREATE INDEX IF NOT EXISTS expenses_organization_id_idx ON expenses(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS expenses_user_id_idx ON expenses(user_id)`,
+      `CREATE INDEX IF NOT EXISTS expenses_status_idx ON expenses(status)`,
+      `CREATE INDEX IF NOT EXISTS expenses_job_id_idx ON expenses(job_id)`,
     ]
 
     const results = []
