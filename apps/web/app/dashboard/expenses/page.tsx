@@ -118,9 +118,13 @@ export default function ExpensesPage() {
       if (res.ok) {
         const data = await res.json()
         setXeroAccounts(data.accounts || [])
+      } else {
+        // Silently fail if Xero not connected - it's optional
+        console.log('Xero accounts not available (Xero may not be connected)')
       }
     } catch (error) {
-      console.error('Error fetching Xero accounts:', error)
+      // Silently fail - Xero is optional
+      console.log('Xero accounts fetch failed:', error)
     }
   }
 
