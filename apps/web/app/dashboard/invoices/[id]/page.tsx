@@ -250,6 +250,27 @@ export default function InvoiceDetailPage() {
     }
   }
 
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!confirm('Are you sure you want to delete this payment? This will recalculate the invoice status.')) return
+
+    try {
+      const res = await fetch(`/api/invoices/${params.id}/payments/${paymentId}`, {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to delete payment')
+      }
+
+      alert('Payment deleted successfully')
+      fetchInvoice() // Refresh invoice to show updated amounts and status
+    } catch (error) {
+      console.error('Error deleting payment:', error)
+      alert(error instanceof Error ? error.message : 'Failed to delete payment')
+    }
+  }
+
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this invoice?')) return
 
@@ -524,6 +545,14 @@ export default function InvoiceDetailPage() {
                     {payment.notes && (
                       <p className="text-xs text-gray-600 mt-1">{payment.notes}</p>
                     )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDeletePayment(payment.id)}
+                      className="text-xs text-red-600 hover:text-red-700 px-2 py-1 hover:bg-red-50 rounded"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
