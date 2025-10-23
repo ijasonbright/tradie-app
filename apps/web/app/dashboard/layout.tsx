@@ -23,6 +23,8 @@ export default function DashboardLayout({
     { href: '/dashboard', label: 'Organizations' },
     { href: '/dashboard/clients', label: 'Clients' },
     { href: '/dashboard/jobs', label: 'Jobs' },
+    { href: '/dashboard/calendar', label: 'Calendar' },
+    { href: '/dashboard/expenses', label: 'Expenses' },
     { href: '/dashboard/quotes', label: 'Quotes' },
     { href: '/dashboard/invoices', label: 'Invoices' },
     { href: '/dashboard/team', label: 'Team' },
