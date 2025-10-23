@@ -180,13 +180,25 @@ export default function CalendarPage() {
 
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment)
+
+    // Convert UTC times to local timezone for datetime-local input
+    const formatDateTimeLocal = (dateString: string) => {
+      const date = new Date(dateString)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      return `${year}-${month}-${day}T${hours}:${minutes}`
+    }
+
     setFormData({
       organizationId: formData.organizationId,
       title: appointment.title,
       description: appointment.description || '',
       appointmentType: appointment.appointment_type,
-      startTime: new Date(appointment.start_time).toISOString().slice(0, 16),
-      endTime: new Date(appointment.end_time).toISOString().slice(0, 16),
+      startTime: formatDateTimeLocal(appointment.start_time),
+      endTime: formatDateTimeLocal(appointment.end_time),
       allDay: appointment.all_day,
       assignedToUserId: appointment.assigned_to_user_id || '',
       locationAddress: appointment.location_address || '',
