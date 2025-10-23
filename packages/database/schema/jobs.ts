@@ -33,6 +33,13 @@ export const jobs = pgTable('jobs', {
   actualStartTime: timestamp('actual_start_time'),
   actualEndTime: timestamp('actual_end_time'),
   completedAt: timestamp('completed_at'),
+  estimatedDurationHours: decimal('estimated_duration_hours', { precision: 5, scale: 2 }),
+  actualDurationHours: decimal('actual_duration_hours', { precision: 5, scale: 2 }),
+  travelTimeMinutes: integer('travel_time_minutes').default(0),
+  // Geolocation
+  siteLatitude: decimal('site_latitude', { precision: 10, scale: 8 }),
+  siteLongitude: decimal('site_longitude', { precision: 11, scale: 8 }),
+  sitePlaceId: varchar('site_place_id', { length: 255 }),
   // Related records
   quoteId: uuid('quote_id'),
   invoiceId: uuid('invoice_id'),

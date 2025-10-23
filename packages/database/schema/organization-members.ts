@@ -11,8 +11,13 @@ export const organizationMembers = pgTable('organization_members', {
   invitationToken: varchar('invitation_token', { length: 255 }).unique(),
   invitationSentAt: timestamp('invitation_sent_at'),
   invitationAcceptedAt: timestamp('invitation_accepted_at'),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }),
+  // Rates and employment
+  employmentType: varchar('employment_type', { length: 50 }).default('employee'), // employee/subcontractor
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }), // Cost rate (what you pay them)
+  billingRate: decimal('billing_rate', { precision: 10, scale: 2 }), // Rate charged to clients
   owedAmount: decimal('owed_amount', { precision: 10, scale: 2 }).default('0'),
+  leaveBalanceHours: decimal('leave_balance_hours', { precision: 10, scale: 2 }).default('0'),
+  availableForScheduling: boolean('available_for_scheduling').default(true),
   // Permissions
   canCreateJobs: boolean('can_create_jobs').default(false),
   canEditAllJobs: boolean('can_edit_all_jobs').default(false),

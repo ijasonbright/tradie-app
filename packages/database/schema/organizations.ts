@@ -26,6 +26,9 @@ export const organizations = pgTable('organizations', {
   bankBsb: varchar('bank_bsb', { length: 10 }),
   bankAccountNumber: varchar('bank_account_number', { length: 50 }),
   bankAccountName: varchar('bank_account_name', { length: 255 }),
+  // Business rates
+  defaultHourlyRate: decimal('default_hourly_rate', { precision: 10, scale: 2 }).default('0'),
+  defaultEmployeeCost: decimal('default_employee_cost', { precision: 10, scale: 2 }).default('0'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
