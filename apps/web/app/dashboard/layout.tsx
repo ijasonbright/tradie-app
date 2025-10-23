@@ -25,6 +25,8 @@ export default function DashboardLayout({
     { href: '/dashboard/jobs', label: 'Jobs' },
     { href: '/dashboard/quotes', label: 'Quotes' },
     { href: '/dashboard/invoices', label: 'Invoices' },
+    { href: '/dashboard/team', label: 'Team' },
+    { href: '/dashboard/settings', label: 'Settings' },
   ]
 
   return (
