@@ -21,6 +21,10 @@ interface Job {
   client_phone: string | null
   quoted_amount: string | null
   scheduled_date: string | null
+  site_address_line1: string | null
+  site_city: string | null
+  site_state: string | null
+  site_postcode: string | null
   created_at: string
 }
 
@@ -35,27 +39,61 @@ interface TimeLog {
   status: string
 }
 
-interface Quote {
+interface Material {
   id: string
-  quote_number: string
-  title: string
-  description: string | null
+  material_type: string
+  description: string
+  supplier_name: string | null
+  quantity: string
+  unit_price: string
+  total_cost: string
+  receipt_url: string | null
   status: string
-  subtotal: string
-  gst_amount: string
-  total_amount: string
-  valid_until_date: string | null
+  added_by_name: string
+  approved_by_name: string | null
   created_at: string
-  created_by_name: string
 }
+
+interface Photo {
+  id: string
+  photo_url: string
+  caption: string | null
+  photo_type: string | null
+  uploaded_by_name: string
+  uploaded_at: string
+}
+
+interface Note {
+  id: string
+  note_text: string
+  note_type: string
+  user_name: string
+  created_at: string
+}
+
+interface Assignment {
+  id: string
+  user_name: string
+  user_email: string
+  role: string
+  assigned_at: string
+}
+
+type Tab = 'overview' | 'time' | 'materials' | 'photos' | 'notes'
 
 export default function JobDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [job, setJob] = useState<Job | null>(null)
-  const [quote, setQuote] = useState<Quote | null>(null)
   const [timeLogs, setTimeLogs] = useState<TimeLog[]>([])
+  const [materials, setMaterials] = useState<Material[]>([])
+  const [photos, setPhotos] = useState<Photo[]>([])
+  const [notes, setNotes] = useState<Note[]>([])
+  const [assignments, setAssignments] = useState<Assignment[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Time log form
   const [showTimeLogForm, setShowTimeLogForm] = useState(false)
   const [timeLogForm, setTimeLogForm] = useState({
     startTime: '',
@@ -64,14 +102,48 @@ export default function JobDetailPage() {
     notes: '',
   })
 
+  // Material form
+  const [showMaterialForm, setShowMaterialForm] = useState(false)
+  const [materialForm, setMaterialForm] = useState({
+    materialType: 'product',
+    description: '',
+    supplierName: '',
+    quantity: '1',
+    unitPrice: '0',
+  })
+
+  // Photo upload
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoForm, setPhotoForm] = useState({
+    caption: '',
+    photoType: 'during',
+  })
+
+  // Note form
+  const [showNoteForm, setShowNoteForm] = useState(false)
+  const [noteForm, setNoteForm] = useState({
+    noteText: '',
+    noteType: 'general',
+  })
+
   useEffect(() => {
     if (params.id) {
-      // Sync user data to ensure full_name is up to date
-      fetch('/api/users/sync', { method: 'POST' }).catch(console.error)
-      fetchJob()
+      fetchAllData()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
+
+  const fetchAllData = async () => {
+    await Promise.all([
+      fetchJob(),
+      fetchTimeLogs(),
+      fetchMaterials(),
+      fetchPhotos(),
+      fetchNotes(),
+      fetchAssignments(),
+    ])
+    setLoading(false)
+  }
 
   const fetchJob = async () => {
     try {
@@ -79,22 +151,75 @@ export default function JobDetailPage() {
       if (res.ok) {
         const data = await res.json()
         setJob(data.job)
-        setQuote(data.quote)
-        setTimeLogs(data.timeLogs || [])
-      } else {
-        alert('Job not found')
-        router.push('/dashboard/jobs')
       }
     } catch (error) {
       console.error('Error fetching job:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
+  const fetchTimeLogs = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/time-logs`)
+      if (res.ok) {
+        const data = await res.json()
+        setTimeLogs(data.timeLogs || [])
+      }
+    } catch (error) {
+      console.error('Error fetching time logs:', error)
+    }
+  }
+
+  const fetchMaterials = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/materials`)
+      if (res.ok) {
+        const data = await res.json()
+        setMaterials(data.materials || [])
+      }
+    } catch (error) {
+      console.error('Error fetching materials:', error)
+    }
+  }
+
+  const fetchPhotos = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/photos`)
+      if (res.ok) {
+        const data = await res.json()
+        setPhotos(data.photos || [])
+      }
+    } catch (error) {
+      console.error('Error fetching photos:', error)
+    }
+  }
+
+  const fetchNotes = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/notes`)
+      if (res.ok) {
+        const data = await res.json()
+        setNotes(data.notes || [])
+      }
+    } catch (error) {
+      console.error('Error fetching notes:', error)
+    }
+  }
+
+  const fetchAssignments = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/assignments`)
+      if (res.ok) {
+        const data = await res.json()
+        setAssignments(data.assignments || [])
+      }
+    } catch (error) {
+      console.error('Error fetching assignments:', error)
+    }
+  }
+
+  // Time log handlers
   const handleAddTimeLog = async (e: React.FormEvent) => {
     e.preventDefault()
-
     try {
       const res = await fetch(`/api/jobs/${params.id}/time-logs`, {
         method: 'POST',
@@ -104,19 +229,12 @@ export default function JobDetailPage() {
           breakDurationMinutes: parseInt(timeLogForm.breakDurationMinutes),
         }),
       })
-
       if (res.ok) {
         setShowTimeLogForm(false)
-        setTimeLogForm({
-          startTime: '',
-          endTime: '',
-          breakDurationMinutes: '0',
-          notes: '',
-        })
-        fetchJob() // Refresh to show new time log
+        setTimeLogForm({ startTime: '', endTime: '', breakDurationMinutes: '0', notes: '' })
+        fetchTimeLogs()
       } else {
-        const error = await res.json()
-        alert(`Error: ${error.error}`)
+        alert('Failed to add time log')
       }
     } catch (error) {
       console.error('Error adding time log:', error)
@@ -124,40 +242,195 @@ export default function JobDetailPage() {
     }
   }
 
-  const getClientName = () => {
-    if (!job) return ''
-    if (job.is_company) {
-      return job.company_name || 'Unnamed Company'
+  const handleApproveTimeLog = async (logId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/time-logs/${logId}/approve`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        fetchTimeLogs()
+      }
+    } catch (error) {
+      console.error('Error approving time log:', error)
     }
-    return `${job.first_name || ''} ${job.last_name || ''}`.trim() || 'Unnamed Client'
   }
 
-  const handleCompleteJob = async () => {
-    if (!job || !confirm('Mark this job as completed?')) return
+  const handleRejectTimeLog = async (logId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/time-logs/${logId}/reject`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        fetchTimeLogs()
+      }
+    } catch (error) {
+      console.error('Error rejecting time log:', error)
+    }
+  }
 
+  // Material handlers
+  const handleAddMaterial = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/materials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(materialForm),
+      })
+      if (res.ok) {
+        setShowMaterialForm(false)
+        setMaterialForm({ materialType: 'product', description: '', supplierName: '', quantity: '1', unitPrice: '0' })
+        fetchMaterials()
+      } else {
+        alert('Failed to add material')
+      }
+    } catch (error) {
+      console.error('Error adding material:', error)
+      alert('Failed to add material')
+    }
+  }
+
+  const handleApproveMaterial = async (materialId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/materials/${materialId}/approve`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        fetchMaterials()
+      }
+    } catch (error) {
+      console.error('Error approving material:', error)
+    }
+  }
+
+  const handleRejectMaterial = async (materialId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/materials/${materialId}/reject`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        fetchMaterials()
+      }
+    } catch (error) {
+      console.error('Error rejecting material:', error)
+    }
+  }
+
+  const handleDeleteMaterial = async (materialId: string) => {
+    if (!confirm('Delete this material?')) return
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/materials/${materialId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        fetchMaterials()
+      }
+    } catch (error) {
+      console.error('Error deleting material:', error)
+    }
+  }
+
+  // Photo handlers
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingPhoto(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('caption', photoForm.caption)
+      formData.append('photoType', photoForm.photoType)
+
+      const res = await fetch(`/api/jobs/${params.id}/photos`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (res.ok) {
+        setPhotoForm({ caption: '', photoType: 'during' })
+        fetchPhotos()
+      } else {
+        alert('Failed to upload photo')
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error)
+      alert('Failed to upload photo')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  const handleDeletePhoto = async (photoId: string) => {
+    if (!confirm('Delete this photo?')) return
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/photos/${photoId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        fetchPhotos()
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error)
+    }
+  }
+
+  // Note handlers
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(noteForm),
+      })
+      if (res.ok) {
+        setShowNoteForm(false)
+        setNoteForm({ noteText: '', noteType: 'general' })
+        fetchNotes()
+      } else {
+        alert('Failed to add note')
+      }
+    } catch (error) {
+      console.error('Error adding note:', error)
+      alert('Failed to add note')
+    }
+  }
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm('Delete this note?')) return
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/notes/${noteId}`, {
+        method: 'DELETE',
+      })
+      if (res.ok) {
+        fetchNotes()
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error)
+    }
+  }
+
+  // Status handlers
+  const handleStatusChange = async (newStatus: string) => {
     try {
       const res = await fetch(`/api/jobs/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed' }),
+        body: JSON.stringify({ status: newStatus }),
       })
-
       if (res.ok) {
         fetchJob()
-        alert('Job marked as completed!')
-      } else {
-        alert('Failed to update job status')
       }
     } catch (error) {
-      console.error('Error updating job:', error)
-      alert('Failed to update job status')
+      console.error('Error updating status:', error)
     }
   }
 
-  const handleCreateInvoice = () => {
-    if (!job) return
-    // Redirect to invoice creation with pre-filled data
-    router.push(`/dashboard/invoices/new?jobId=${job.id}&clientId=${job.client_id}`)
+  const getClientName = () => {
+    if (!job) return ''
+    if (job.is_company) return job.company_name || 'Unnamed Company'
+    return `${job.first_name || ''} ${job.last_name || ''}`.trim() || 'Unnamed Client'
   }
 
   const getStatusColor = (status: string) => {
@@ -170,6 +443,27 @@ export default function JobDetailPage() {
       cancelled: 'bg-red-100 text-red-800',
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getStatusBadgeColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+    }
+    return colors[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  const formatCurrency = (amount: string) => {
+    return `$${parseFloat(amount).toFixed(2)}`
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString()
+  }
+
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString()
   }
 
   if (loading) {
@@ -189,322 +483,592 @@ export default function JobDetailPage() {
   }
 
   const totalHours = timeLogs.reduce((sum, log) => sum + (parseFloat(log.total_hours || '0')), 0)
-  const totalCost = timeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
+  const totalLaborCost = timeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
+  const totalMaterialCost = materials.reduce((sum, mat) => sum + (parseFloat(mat.total_cost || '0')), 0)
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-6">
-          <Link href="/dashboard/jobs" className="text-blue-600 hover:text-blue-800">
-            ← Back to Jobs
-          </Link>
-        </div>
+      <div className="mb-6">
+        <Link href="/dashboard/jobs" className="text-blue-600 hover:text-blue-800">
+          ← Back to Jobs
+        </Link>
+      </div>
 
-        <div className="mb-6 flex items-start justify-between">
+      {/* Header */}
+      <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-3xl font-bold">{job.title}</h2>
-              <span
-                className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${getStatusColor(
-                  job.status
-                )}`}
-              >
-                {job.status.replace('_', ' ')}
-              </span>
-            </div>
-            <p className="mt-2 text-gray-600">Job #{job.job_number}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{job.job_number}</h1>
+            <h2 className="text-xl text-gray-700 mt-1">{job.title}</h2>
+          </div>
+          <div className="flex gap-2">
+            <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(job.status)}`}>
+              {job.status.replace('_', ' ')}
+            </span>
+            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-800">
+              {job.priority}
+            </span>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column - Job Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Job Info */}
-            <div className="rounded-lg bg-white p-6 shadow">
-              <h3 className="mb-4 text-lg font-semibold">Job Information</h3>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Client</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{getClientName()}</dd>
-                </div>
-                {job.description && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Description</dt>
-                    <dd className="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{job.description}</dd>
-                  </div>
-                )}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Type</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{job.job_type}</dd>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Priority</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{job.priority}</dd>
-                  </div>
-                  {job.quoted_amount && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Quoted Amount</dt>
-                      <dd className="mt-1 text-sm text-gray-900">${parseFloat(job.quoted_amount).toFixed(2)}</dd>
-                    </div>
-                  )}
-                </div>
-              </dl>
-            </div>
-
-            {/* Quote Information */}
-            {quote && (
-              <div className="rounded-lg bg-white p-6 shadow">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Related Quote</h3>
-                  <Link
-                    href={`/dashboard/quotes/${quote.id}`}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    View Quote →
-                  </Link>
-                </div>
-                <dl className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Quote Number</dt>
-                      <dd className="mt-1 text-sm font-medium text-gray-900">{quote.quote_number}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Status</dt>
-                      <dd className="mt-1">
-                        <span className="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-                          {quote.status}
-                        </span>
-                      </dd>
-                    </div>
-                  </div>
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Quote Title</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{quote.title}</dd>
-                  </div>
-                  {quote.description && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Description</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{quote.description}</dd>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Subtotal</dt>
-                      <dd className="mt-1 text-sm text-gray-900">${parseFloat(quote.subtotal).toFixed(2)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">GST</dt>
-                      <dd className="mt-1 text-sm text-gray-900">${parseFloat(quote.gst_amount).toFixed(2)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Total</dt>
-                      <dd className="mt-1 text-sm font-semibold text-gray-900">${parseFloat(quote.total_amount).toFixed(2)}</dd>
-                    </div>
-                  </div>
-                </dl>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <p className="text-gray-600">Client</p>
+            <p className="font-medium text-gray-900">{getClientName()}</p>
+            {job.client_email && <p className="text-gray-600">{job.client_email}</p>}
+            {job.client_phone && <p className="text-gray-600">{job.client_phone}</p>}
+          </div>
+          <div>
+            <p className="text-gray-600">Job Type</p>
+            <p className="font-medium text-gray-900">{job.job_type}</p>
+            {job.scheduled_date && (
+              <>
+                <p className="text-gray-600 mt-2">Scheduled</p>
+                <p className="font-medium text-gray-900">{formatDate(job.scheduled_date)}</p>
+              </>
             )}
+          </div>
+          <div>
+            <p className="text-gray-600">Location</p>
+            {job.site_address_line1 ? (
+              <p className="font-medium text-gray-900">
+                {job.site_address_line1}<br />
+                {job.site_city}, {job.site_state} {job.site_postcode}
+              </p>
+            ) : (
+              <p className="text-gray-500">No address set</p>
+            )}
+          </div>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="rounded-lg bg-white p-6 shadow">
-              <h3 className="mb-4 text-lg font-semibold">Job Actions</h3>
-              <div className="flex gap-3">
-                {job.status !== 'completed' && job.status !== 'cancelled' && (
-                  <button
-                    onClick={handleCompleteJob}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
-                  >
-                    Mark as Completed
-                  </button>
-                )}
-                <button
-                  onClick={handleCreateInvoice}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium"
-                >
-                  Create Invoice
-                </button>
-                {quote && (
-                  <Link
-                    href={`/dashboard/quotes/${quote.id}`}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium inline-flex items-center"
-                  >
-                    Edit Quote
-                  </Link>
-                )}
-              </div>
-            </div>
+        {job.description && (
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-gray-600 text-sm">Description</p>
+            <p className="text-gray-900">{job.description}</p>
+          </div>
+        )}
 
-            {/* Time Logs */}
-            <div className="rounded-lg bg-white p-6 shadow">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">Time Logs</h3>
-                  <p className="text-sm text-gray-600">
-                    Total: {totalHours.toFixed(2)} hours · ${totalCost.toFixed(2)}
-                  </p>
+        {/* Cost Summary */}
+        <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Labor Cost</p>
+            <p className="text-lg font-bold text-gray-900">{formatCurrency(totalLaborCost.toString())}</p>
+            <p className="text-xs text-gray-500">{totalHours.toFixed(2)} hours</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Materials Cost</p>
+            <p className="text-lg font-bold text-gray-900">{formatCurrency(totalMaterialCost.toString())}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600">Total Cost</p>
+            <p className="text-lg font-bold text-green-600">{formatCurrency((totalLaborCost + totalMaterialCost).toString())}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/dashboard/jobs/${params.id}/edit`}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
+          >
+            Edit Job
+          </Link>
+
+          {job.status === 'scheduled' && (
+            <button
+              onClick={() => handleStatusChange('in_progress')}
+              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-medium"
+            >
+              Start Job
+            </button>
+          )}
+
+          {job.status === 'in_progress' && (
+            <button
+              onClick={() => handleStatusChange('completed')}
+              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
+            >
+              Mark Complete
+            </button>
+          )}
+
+          {job.status === 'completed' && (
+            <button
+              onClick={() => router.push(`/dashboard/invoices/new?jobId=${job.id}&clientId=${job.client_id}`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
+            >
+              Create Invoice
+            </button>
+          )}
+
+          <button
+            onClick={() => alert('Delete functionality coming soon')}
+            className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium"
+          >
+            Delete Job
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {[
+              { id: 'overview', label: 'Overview', count: assignments.length },
+              { id: 'time', label: 'Time Tracking', count: timeLogs.length },
+              { id: 'materials', label: 'Materials', count: materials.length },
+              { id: 'photos', label: 'Photos', count: photos.length },
+              { id: 'notes', label: 'Notes', count: notes.length },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={`
+                  whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm
+                  ${activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }
+                `}
+              >
+                {tab.label}
+                {tab.count > 0 && (
+                  <span className="ml-2 py-0.5 px-2 rounded-full text-xs bg-gray-100 text-gray-900">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Tab Content - Overview */}
+      {activeTab === 'overview' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold mb-4">Team Assignments</h3>
+          {assignments.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No team members assigned</p>
+          ) : (
+            <div className="space-y-2">
+              {assignments.map((assignment) => (
+                <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                  <div>
+                    <p className="font-medium">{assignment.user_name}</p>
+                    <p className="text-sm text-gray-600">{assignment.user_email}</p>
+                  </div>
+                  <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-100 text-blue-800">
+                    {assignment.role}
+                  </span>
                 </div>
-                <button
-                  onClick={() => setShowTimeLogForm(!showTimeLogForm)}
-                  className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-                >
-                  {showTimeLogForm ? 'Cancel' : 'Log Time'}
-                </button>
-              </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-              {showTimeLogForm && (
-                <form onSubmit={handleAddTimeLog} className="mb-6 rounded-lg bg-gray-50 p-4">
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Start Time *
-                        </label>
-                        <input
-                          type="datetime-local"
-                          required
-                          value={timeLogForm.startTime}
-                          onChange={(e) =>
-                            setTimeLogForm({ ...timeLogForm, startTime: e.target.value })
-                          }
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                        />
+      {/* Tab Content - Time Tracking */}
+      {activeTab === 'time' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Time Logs</h3>
+            <button
+              onClick={() => setShowTimeLogForm(!showTimeLogForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm"
+            >
+              {showTimeLogForm ? 'Cancel' : '+ Add Time'}
+            </button>
+          </div>
+
+          {showTimeLogForm && (
+            <form onSubmit={handleAddTimeLog} className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                  <input
+                    type="datetime-local"
+                    value={timeLogForm.startTime}
+                    onChange={(e) => setTimeLogForm({ ...timeLogForm, startTime: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                  <input
+                    type="datetime-local"
+                    value={timeLogForm.endTime}
+                    onChange={(e) => setTimeLogForm({ ...timeLogForm, endTime: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Break (minutes)</label>
+                  <input
+                    type="number"
+                    value={timeLogForm.breakDurationMinutes}
+                    onChange={(e) => setTimeLogForm({ ...timeLogForm, breakDurationMinutes: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <input
+                    type="text"
+                    value={timeLogForm.notes}
+                    onChange={(e) => setTimeLogForm({ ...timeLogForm, notes: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Optional notes..."
+                  />
+                </div>
+              </div>
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+                Add Time Log
+              </button>
+            </form>
+          )}
+
+          {timeLogs.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No time logs recorded</p>
+          ) : (
+            <div className="space-y-3">
+              {timeLogs.map((log) => (
+                <div key={log.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-medium">{log.user_name}</p>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusBadgeColor(log.status)}`}>
+                          {log.status}
+                        </span>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          End Time
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={timeLogForm.endTime}
-                          onChange={(e) =>
-                            setTimeLogForm({ ...timeLogForm, endTime: e.target.value })
-                          }
-                          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                        />
+                      <p className="text-sm text-gray-600">
+                        {formatDateTime(log.start_time)} → {log.end_time ? formatDateTime(log.end_time) : 'In progress'}
+                      </p>
+                      {log.total_hours && (
+                        <p className="text-sm text-gray-700 mt-1">
+                          <strong>{parseFloat(log.total_hours).toFixed(2)} hours</strong>
+                          {log.labor_cost && ` • ${formatCurrency(log.labor_cost)}`}
+                        </p>
+                      )}
+                      {log.notes && <p className="text-sm text-gray-600 mt-1">{log.notes}</p>}
+                    </div>
+                    {log.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveTimeLog(log.id)}
+                          className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectTimeLog(log.id)}
+                          className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                        >
+                          Reject
+                        </button>
                       </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Content - Materials */}
+      {activeTab === 'materials' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Materials & Equipment</h3>
+            <button
+              onClick={() => setShowMaterialForm(!showMaterialForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm"
+            >
+              {showMaterialForm ? 'Cancel' : '+ Add Material'}
+            </button>
+          </div>
+
+          {showMaterialForm && (
+            <form onSubmit={handleAddMaterial} className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <select
+                    value={materialForm.materialType}
+                    onChange={(e) => setMaterialForm({ ...materialForm, materialType: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                  >
+                    <option value="product">Product</option>
+                    <option value="part">Part</option>
+                    <option value="hire_equipment">Hire Equipment</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Supplier</label>
+                  <input
+                    type="text"
+                    value={materialForm.supplierName}
+                    onChange={(e) => setMaterialForm({ ...materialForm, supplierName: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Supplier name..."
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                  <input
+                    type="text"
+                    value={materialForm.description}
+                    onChange={(e) => setMaterialForm({ ...materialForm, description: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Description..."
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={materialForm.quantity}
+                    onChange={(e) => setMaterialForm({ ...materialForm, quantity: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    required
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Price *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={materialForm.unitPrice}
+                    onChange={(e) => setMaterialForm({ ...materialForm, unitPrice: e.target.value })}
+                    className="w-full rounded-md border-gray-300 shadow-sm"
+                    required
+                    min="0"
+                  />
+                </div>
+              </div>
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+                Add Material
+              </button>
+            </form>
+          )}
+
+          {materials.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No materials added</p>
+          ) : (
+            <div className="space-y-3">
+              {materials.map((material) => (
+                <div key={material.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-medium">{material.description}</p>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded ${getStatusBadgeColor(material.status)}`}>
+                          {material.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {material.material_type.replace('_', ' ')}
+                        {material.supplier_name && ` • ${material.supplier_name}`}
+                      </p>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Qty: {parseFloat(material.quantity).toFixed(2)} @ {formatCurrency(material.unit_price)} = <strong>{formatCurrency(material.total_cost)}</strong>
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Added by {material.added_by_name}</p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Break Duration (minutes)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={timeLogForm.breakDurationMinutes}
-                        onChange={(e) =>
-                          setTimeLogForm({ ...timeLogForm, breakDurationMinutes: e.target.value })
-                        }
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      />
+                    <div className="flex gap-2">
+                      {material.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApproveMaterial(material.id)}
+                            className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectMaterial(material.id)}
+                            className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleDeleteMaterial(material.id)}
+                        className="text-xs px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                      >
+                        Delete
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Notes</label>
-                      <textarea
-                        value={timeLogForm.notes}
-                        onChange={(e) =>
-                          setTimeLogForm({ ...timeLogForm, notes: e.target.value })
-                        }
-                        rows={2}
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                      />
-                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Content - Photos */}
+      {activeTab === 'photos' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Job Photos</h3>
+            <label className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm cursor-pointer">
+              {uploadingPhoto ? 'Uploading...' : '+ Upload Photo'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+                disabled={uploadingPhoto}
+              />
+            </label>
+          </div>
+
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+              <input
+                type="text"
+                value={photoForm.caption}
+                onChange={(e) => setPhotoForm({ ...photoForm, caption: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm"
+                placeholder="Optional caption..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+              <select
+                value={photoForm.photoType}
+                onChange={(e) => setPhotoForm({ ...photoForm, photoType: e.target.value })}
+                className="w-full rounded-md border-gray-300 shadow-sm text-sm"
+              >
+                <option value="before">Before</option>
+                <option value="during">During</option>
+                <option value="after">After</option>
+                <option value="issue">Issue</option>
+                <option value="completion">Completion</option>
+              </select>
+            </div>
+          </div>
+
+          {photos.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No photos uploaded</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {photos.map((photo) => (
+                <div key={photo.id} className="relative group">
+                  <img
+                    src={photo.photo_url}
+                    alt={photo.caption || 'Job photo'}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
                     <button
-                      type="submit"
-                      className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                      onClick={() => handleDeletePhoto(photo.id)}
+                      className="opacity-0 group-hover:opacity-100 px-3 py-1 bg-red-600 text-white rounded text-sm"
                     >
-                      Add Time Log
+                      Delete
                     </button>
                   </div>
-                </form>
-              )}
-
-              {timeLogs.length === 0 ? (
-                <p className="text-sm text-gray-500">No time logs yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {timeLogs.map((log) => (
-                    <div key={log.id} className="rounded-lg border border-gray-200 p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium">{log.user_name}</p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(log.start_time).toLocaleString()} -{' '}
-                            {log.end_time ? new Date(log.end_time).toLocaleString() : 'In progress'}
-                          </p>
-                          {log.notes && (
-                            <p className="mt-2 text-sm text-gray-600">{log.notes}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          {log.total_hours && (
-                            <p className="text-sm font-medium">{log.total_hours} hrs</p>
-                          )}
-                          {log.labor_cost && (
-                            <p className="text-sm text-gray-600">${log.labor_cost}</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  {photo.caption && (
+                    <p className="mt-1 text-sm text-gray-700">{photo.caption}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    {photo.photo_type} • {photo.uploaded_by_name}
+                  </p>
                 </div>
-              )}
+              ))}
             </div>
-          </div>
-
-          {/* Right Column - Client & Status */}
-          <div className="space-y-6">
-            <div className="rounded-lg bg-white p-6 shadow">
-              <h3 className="mb-4 text-lg font-semibold">Client Contact</h3>
-              <dl className="space-y-3">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Name</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{getClientName()}</dd>
-                </div>
-                {job.client_email && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Email</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      <a href={`mailto:${job.client_email}`} className="text-blue-600 hover:text-blue-800">
-                        {job.client_email}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-                {job.client_phone && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Phone</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      <a href={`tel:${job.client_phone}`} className="text-blue-600 hover:text-blue-800">
-                        {job.client_phone}
-                      </a>
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            <div className="rounded-lg bg-white p-6 shadow">
-              <h3 className="mb-4 text-lg font-semibold">Schedule</h3>
-              <dl className="space-y-3">
-                {job.scheduled_date && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500">Scheduled Date</dt>
-                    <dd className="mt-1 text-sm text-gray-900">
-                      {new Date(job.scheduled_date).toLocaleDateString()}
-                    </dd>
-                  </div>
-                )}
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Created</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(job.created_at).toLocaleDateString()}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </div>
+          )}
         </div>
+      )}
+
+      {/* Tab Content - Notes */}
+      {activeTab === 'notes' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Job Notes</h3>
+            <button
+              onClick={() => setShowNoteForm(!showNoteForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium text-sm"
+            >
+              {showNoteForm ? 'Cancel' : '+ Add Note'}
+            </button>
+          </div>
+
+          {showNoteForm && (
+            <form onSubmit={handleAddNote} className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note Type</label>
+                <select
+                  value={noteForm.noteType}
+                  onChange={(e) => setNoteForm({ ...noteForm, noteType: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm"
+                >
+                  <option value="general">General</option>
+                  <option value="issue">Issue</option>
+                  <option value="client_request">Client Request</option>
+                  <option value="internal">Internal</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note *</label>
+                <textarea
+                  value={noteForm.noteText}
+                  onChange={(e) => setNoteForm({ ...noteForm, noteText: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm"
+                  rows={3}
+                  placeholder="Enter your note..."
+                  required
+                />
+              </div>
+              <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+                Add Note
+              </button>
+            </form>
+          )}
+
+          {notes.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No notes added</p>
+          ) : (
+            <div className="space-y-3">
+              {notes.map((note) => (
+                <div key={note.id} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="font-medium text-sm">{note.user_name}</p>
+                        <span className="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">
+                          {note.note_type.replace('_', ' ')}
+                        </span>
+                        <span className="text-xs text-gray-500">{formatDateTime(note.created_at)}</span>
+                      </div>
+                      <p className="text-gray-700">{note.note_text}</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteNote(note.id)}
+                      className="text-xs px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
