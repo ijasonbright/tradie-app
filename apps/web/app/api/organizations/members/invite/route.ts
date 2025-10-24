@@ -78,16 +78,31 @@ export async function POST(request: NextRequest) {
     const orgId = userOrgs[0].organization_id
     const organizationName = userOrgs[0].organization_name
 
-    // Check if email already exists in this organization
-    const existingMember = await sql`
-      SELECT om.id
-      FROM organization_members om
-      JOIN users u ON u.id = om.user_id
-      WHERE om.organization_id = ${orgId}
-      AND u.email = ${email}
+    // Check if email already has a pending invitation
+    const existingInvitation = await sql`
+      SELECT id FROM pending_invitations
+      WHERE organization_id = ${orgId}
+      AND email = ${email}
+      AND status = 'pending'
     `
 
-    if (existingMember && existingMember.length > 0) {
+    if (existingInvitation && existingInvitation.length > 0) {
+      return NextResponse.json(
+        { error: 'An invitation for this email is already pending' },
+        { status: 400 }
+      )
+    }
+
+    // Check if user already exists in this organization
+    const existingUser = await sql`
+      SELECT u.id
+      FROM users u
+      JOIN organization_members om ON om.user_id = u.id
+      WHERE u.email = ${email}
+      AND om.organization_id = ${orgId}
+    `
+
+    if (existingUser && existingUser.length > 0) {
       return NextResponse.json(
         { error: 'A team member with this email already exists' },
         { status: 400 }
@@ -97,61 +112,55 @@ export async function POST(request: NextRequest) {
     // Generate invitation token
     const invitationToken = randomBytes(32).toString('hex')
 
-    // Create user record first (if doesn't exist)
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `
-
-    let user_id
-    if (existingUser && existingUser.length > 0) {
-      user_id = existingUser[0].id
-    } else {
-      // Create new user
-      const newUser = await sql`
-        INSERT INTO users (email, full_name, phone)
-        VALUES (${email}, ${full_name}, ${phone || null})
-        RETURNING id
-      `
-      user_id = newUser[0].id
-    }
-
-    // Create organization member record with invitation
-    const member = await sql`
-      INSERT INTO organization_members (
+    // Store invitation in pending_invitations table instead of creating user immediately
+    const invitation = await sql`
+      INSERT INTO pending_invitations (
         organization_id,
-        user_id,
+        email,
+        full_name,
+        phone,
         role,
-        status,
         employment_type,
         primary_trade_id,
         hourly_rate,
         billing_rate,
         invitation_token,
         invitation_sent_at,
+        status,
         can_create_jobs,
         can_edit_all_jobs,
         can_create_invoices,
         can_view_financials,
         can_approve_expenses,
-        can_approve_timesheets
+        can_approve_timesheets,
+        requires_trade_license,
+        requires_police_check,
+        requires_working_with_children,
+        requires_public_liability
       )
       VALUES (
         ${orgId},
-        ${user_id},
+        ${email},
+        ${full_name},
+        ${phone || null},
         ${role},
-        'invited',
         ${employment_type || null},
         ${primary_trade_id || null},
         ${hourly_rate || null},
         ${billing_rate || null},
         ${invitationToken},
         NOW(),
+        'pending',
         ${can_create_jobs || false},
         ${can_edit_all_jobs || false},
         ${can_create_invoices || false},
         ${can_view_financials || false},
         ${can_approve_expenses || false},
-        ${can_approve_timesheets || false}
+        ${can_approve_timesheets || false},
+        ${requires_trade_license || false},
+        ${requires_police_check || false},
+        ${requires_working_with_children || false},
+        ${requires_public_liability || false}
       )
       RETURNING id
     `
@@ -271,8 +280,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Invitation sent successfully',
-      member_id: member[0].id,
+      message: sesClient ? 'Invitation sent successfully' : 'Invitation created (email not sent - AWS SES not configured)',
+      invitation_id: invitation[0].id,
+      invitation_url: invitationUrl,
     })
   } catch (error) {
     console.error('Error sending invitation:', error)
