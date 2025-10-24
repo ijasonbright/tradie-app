@@ -59,6 +59,11 @@ export default function CalendarPage() {
     clientId: '',
   })
 
+  // Separate state for the new date/time picker
+  const [appointmentDate, setAppointmentDate] = useState('')
+  const [appointmentTime, setAppointmentTime] = useState('')
+  const [appointmentDuration, setAppointmentDuration] = useState('120') // default 2 hours in minutes
+
   useEffect(() => {
     fetchOrganizations()
     fetchTeamMembers()
@@ -129,6 +134,20 @@ export default function CalendarPage() {
         const data = await res.json()
         const job = data.job
 
+        // Set date/time fields if job has scheduled date
+        if (job.scheduled_date) {
+          const scheduledDate = new Date(job.scheduled_date)
+          const year = scheduledDate.getFullYear()
+          const month = String(scheduledDate.getMonth() + 1).padStart(2, '0')
+          const day = String(scheduledDate.getDate()).padStart(2, '0')
+          const hours = String(scheduledDate.getHours()).padStart(2, '0')
+          const minutes = String(scheduledDate.getMinutes()).padStart(2, '0')
+
+          setAppointmentDate(`${year}-${month}-${day}`)
+          setAppointmentTime(`${hours}:${minutes}`)
+          setAppointmentDuration('120') // default 2 hours
+        }
+
         // Pre-fill form with job details
         setFormData(prev => ({
           ...prev,
@@ -184,6 +203,66 @@ export default function CalendarPage() {
     return date
   }
 
+  // Generate time options in 15-minute increments
+  const generateTimeOptions = () => {
+    const times = []
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const hourStr = hour.toString().padStart(2, '0')
+        const minStr = minute.toString().padStart(2, '0')
+        const timeValue = `${hourStr}:${minStr}`
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+        const ampm = hour >= 12 ? 'PM' : 'AM'
+        const displayMinute = minStr
+        const label = `${displayHour}:${displayMinute} ${ampm}`
+        times.push({ value: timeValue, label })
+      }
+    }
+    return times
+  }
+
+  // Generate duration options
+  const generateDurationOptions = () => {
+    const durations = []
+
+    // 15-minute increments for first 2 hours (0-120 minutes)
+    for (let minutes = 15; minutes <= 120; minutes += 15) {
+      const hours = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      let label = ''
+      if (hours > 0) label += `${hours}h `
+      if (mins > 0) label += `${mins}m`
+      durations.push({ value: minutes.toString(), label: label.trim() })
+    }
+
+    // 30-minute increments from 2.5 hours to 8 hours (150-480 minutes)
+    for (let minutes = 150; minutes <= 480; minutes += 30) {
+      const hours = Math.floor(minutes / 60)
+      const mins = minutes % 60
+      let label = `${hours}h`
+      if (mins > 0) label += ` ${mins}m`
+      durations.push({ value: minutes.toString(), label })
+    }
+
+    return durations
+  }
+
+  // Update form data when date/time/duration changes
+  useEffect(() => {
+    if (appointmentDate && appointmentTime && appointmentDuration) {
+      // Combine date and time
+      const startDateTime = new Date(`${appointmentDate}T${appointmentTime}`)
+      const endDateTime = new Date(startDateTime.getTime() + parseInt(appointmentDuration) * 60000)
+
+      setFormData(prev => ({
+        ...prev,
+        startTime: startDateTime.toISOString().slice(0, 16),
+        endTime: endDateTime.toISOString().slice(0, 16),
+      }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointmentDate, appointmentTime, appointmentDuration])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -233,6 +312,10 @@ export default function CalendarPage() {
           jobId: '',
           clientId: '',
         })
+        // Reset new date/time/duration fields
+        setAppointmentDate('')
+        setAppointmentTime('')
+        setAppointmentDuration('120')
       } else {
         const error = await res.json()
         alert(`Error: ${error.error}`)
@@ -246,15 +329,39 @@ export default function CalendarPage() {
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment)
 
-    // Convert UTC times to local timezone for datetime-local input
+    // Convert UTC times to local timezone
+    const startDate = new Date(appointment.start_time)
+    const endDate = new Date(appointment.end_time)
+
+    // Extract date in YYYY-MM-DD format
+    const year = startDate.getFullYear()
+    const month = String(startDate.getMonth() + 1).padStart(2, '0')
+    const day = String(startDate.getDate()).padStart(2, '0')
+    const dateStr = `${year}-${month}-${day}`
+
+    // Extract time in HH:MM format
+    const hours = String(startDate.getHours()).padStart(2, '0')
+    const minutes = String(startDate.getMinutes()).padStart(2, '0')
+    const timeStr = `${hours}:${minutes}`
+
+    // Calculate duration in minutes
+    const durationMs = endDate.getTime() - startDate.getTime()
+    const durationMinutes = Math.round(durationMs / 60000)
+
+    // Set the separate fields
+    setAppointmentDate(dateStr)
+    setAppointmentTime(timeStr)
+    setAppointmentDuration(durationMinutes.toString())
+
+    // Format for datetime-local input (backup)
     const formatDateTimeLocal = (dateString: string) => {
       const date = new Date(dateString)
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, '0')
-      const day = String(date.getDate()).padStart(2, '0')
-      const hours = String(date.getHours()).padStart(2, '0')
-      const minutes = String(date.getMinutes()).padStart(2, '0')
-      return `${year}-${month}-${day}T${hours}:${minutes}`
+      const y = date.getFullYear()
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const d = String(date.getDate()).padStart(2, '0')
+      const h = String(date.getHours()).padStart(2, '0')
+      const min = String(date.getMinutes()).padStart(2, '0')
+      return `${y}-${m}-${d}T${h}:${min}`
     }
 
     setFormData({
@@ -673,6 +780,10 @@ export default function CalendarPage() {
                 onClick={() => {
                   setShowAddForm(false)
                   setEditingAppointment(null)
+                  // Reset date/time/duration fields
+                  setAppointmentDate('')
+                  setAppointmentTime('')
+                  setAppointmentDuration('120')
                 }}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -728,27 +839,51 @@ export default function CalendarPage() {
                 </div>
               </div>
 
+              {/* Date Picker */}
+              <div>
+                <label className="block text-sm font-medium">Date *</label>
+                <input
+                  type="date"
+                  required
+                  value={appointmentDate}
+                  onChange={(e) => setAppointmentDate(e.target.value)}
+                  className="mt-1 w-full rounded border px-3 py-2"
+                />
+              </div>
+
+              {/* Time and Duration */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium">Start Time *</label>
-                  <input
-                    type="datetime-local"
+                  <select
                     required
-                    value={formData.startTime}
-                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                    value={appointmentTime}
+                    onChange={(e) => setAppointmentTime(e.target.value)}
                     className="mt-1 w-full rounded border px-3 py-2"
-                  />
+                  >
+                    <option value="">Select time</option>
+                    {generateTimeOptions().map((time) => (
+                      <option key={time.value} value={time.value}>
+                        {time.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium">End Time *</label>
-                  <input
-                    type="datetime-local"
+                  <label className="block text-sm font-medium">Duration *</label>
+                  <select
                     required
-                    value={formData.endTime}
-                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    value={appointmentDuration}
+                    onChange={(e) => setAppointmentDuration(e.target.value)}
                     className="mt-1 w-full rounded border px-3 py-2"
-                  />
+                  >
+                    {generateDurationOptions().map((duration) => (
+                      <option key={duration.value} value={duration.value}>
+                        {duration.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
