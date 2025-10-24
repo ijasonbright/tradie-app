@@ -28,7 +28,7 @@ export async function GET() {
 
     // Get all members from organizations the user belongs to
     const members = await sql`
-      SELECT DISTINCT
+      SELECT
         om.id,
         u.id as user_id,
         u.full_name,
