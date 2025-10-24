@@ -200,9 +200,7 @@ export default function CalendarPage() {
       const convertLocalToUTC = (localDateTimeString: string) => {
         if (!localDateTimeString) return ''
         const date = new Date(localDateTimeString)
-        const isoString = date.toISOString()
-        console.log(`Converting: ${localDateTimeString} → ${isoString}`)
-        return isoString
+        return date.toISOString()
       }
 
       const submitData = {
@@ -210,15 +208,6 @@ export default function CalendarPage() {
         startTime: convertLocalToUTC(formData.startTime),
         endTime: convertLocalToUTC(formData.endTime),
       }
-
-      console.log('Form data times:', {
-        startLocal: formData.startTime,
-        endLocal: formData.endTime
-      })
-      console.log('Submitting times:', {
-        startUTC: submitData.startTime,
-        endUTC: submitData.endTime
-      })
 
       const res = await fetch(url, {
         method,
