@@ -5,6 +5,44 @@ import { put } from '@vercel/blob'
 
 export const dynamic = 'force-dynamic'
 
+// GET - List all documents for current user
+export async function GET() {
+  try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const sql = neon(process.env.DATABASE_URL!)
+
+    // Get user's internal ID
+    const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    const user = users[0]
+
+    // Fetch all documents for this user
+    const documents = await sql`
+      SELECT * FROM user_documents
+      WHERE user_id = ${user.id}
+      ORDER BY created_at DESC
+    `
+
+    return NextResponse.json({ documents })
+  } catch (error) {
+    console.error('Error fetching documents:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to fetch documents',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    )
+  }
+}
+
 // POST - Upload document with AI verification
 export async function POST(req: Request) {
   try {
