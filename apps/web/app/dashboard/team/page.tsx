@@ -29,6 +29,34 @@ interface TeamMember {
   expired_documents_count?: number
 }
 
+interface TradeType {
+  id: string
+  name: string
+}
+
+interface InviteFormData {
+  email: string
+  full_name: string
+  phone: string
+  role: 'employee' | 'subcontractor'
+  employment_type: string
+  primary_trade_id: string
+  hourly_rate: string
+  billing_rate: string
+  // Permissions
+  can_create_jobs: boolean
+  can_edit_all_jobs: boolean
+  can_create_invoices: boolean
+  can_view_financials: boolean
+  can_approve_expenses: boolean
+  can_approve_timesheets: boolean
+  // Compliance requirements
+  requires_trade_license: boolean
+  requires_police_check: boolean
+  requires_working_with_children: boolean
+  requires_public_liability: boolean // subcontractors only
+}
+
 export default function TeamPage() {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,9 +64,33 @@ export default function TeamPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all') // all, active, invited, suspended
   const [searchQuery, setSearchQuery] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
+  const [submitting, setSubmitting] = useState(false)
+
+  const [inviteForm, setInviteForm] = useState<InviteFormData>({
+    email: '',
+    full_name: '',
+    phone: '',
+    role: 'employee',
+    employment_type: 'full_time',
+    primary_trade_id: '',
+    hourly_rate: '',
+    billing_rate: '',
+    can_create_jobs: false,
+    can_edit_all_jobs: false,
+    can_create_invoices: false,
+    can_view_financials: false,
+    can_approve_expenses: false,
+    can_approve_timesheets: false,
+    requires_trade_license: false,
+    requires_police_check: false,
+    requires_working_with_children: false,
+    requires_public_liability: false,
+  })
 
   useEffect(() => {
     fetchTeamMembers()
+    fetchTradeTypes()
   }, [])
 
   const fetchTeamMembers = async () => {
@@ -50,6 +102,64 @@ export default function TeamPage() {
       console.error('Error fetching team members:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTradeTypes = async () => {
+    try {
+      const res = await fetch('/api/settings/trade-types')
+      const data = await res.json()
+      setTradeTypes(data.tradeTypes || [])
+    } catch (error) {
+      console.error('Error fetching trade types:', error)
+    }
+  }
+
+  const handleInviteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSubmitting(true)
+
+    try {
+      const res = await fetch('/api/organizations/members/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inviteForm),
+      })
+
+      if (res.ok) {
+        alert('Invitation sent successfully!')
+        setShowInviteModal(false)
+        // Reset form
+        setInviteForm({
+          email: '',
+          full_name: '',
+          phone: '',
+          role: 'employee',
+          employment_type: 'full_time',
+          primary_trade_id: '',
+          hourly_rate: '',
+          billing_rate: '',
+          can_create_jobs: false,
+          can_edit_all_jobs: false,
+          can_create_invoices: false,
+          can_view_financials: false,
+          can_approve_expenses: false,
+          can_approve_timesheets: false,
+          requires_trade_license: false,
+          requires_police_check: false,
+          requires_working_with_children: false,
+          requires_public_liability: false,
+        })
+        fetchTeamMembers()
+      } else {
+        const error = await res.json()
+        alert(`Error: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Error sending invitation:', error)
+      alert('Failed to send invitation')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -307,11 +417,11 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Invite Modal Placeholder */}
+      {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6">
+            <div className="mb-6 flex items-center justify-between">
               <h2 className="text-2xl font-bold">Invite Team Member</h2>
               <button
                 onClick={() => setShowInviteModal(false)}
@@ -320,7 +430,261 @@ export default function TeamPage() {
                 ✕
               </button>
             </div>
-            <p className="text-gray-600">Invite form coming next...</p>
+
+            <form onSubmit={handleInviteSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <div className="rounded-lg border p-4">
+                <h3 className="mb-4 text-lg font-semibold">Basic Information</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={inviteForm.full_name}
+                      onChange={(e) => setInviteForm({ ...inviteForm, full_name: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                      placeholder="John Smith"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={inviteForm.email}
+                      onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                      placeholder="john@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <input
+                      type="tel"
+                      value={inviteForm.phone}
+                      onChange={(e) => setInviteForm({ ...inviteForm, phone: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                      placeholder="+61 4XX XXX XXX"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Role *</label>
+                    <select
+                      required
+                      value={inviteForm.role}
+                      onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as 'employee' | 'subcontractor' })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                    >
+                      <option value="employee">Employee</option>
+                      <option value="subcontractor">Subcontractor</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employment Details */}
+              <div className="rounded-lg border p-4">
+                <h3 className="mb-4 text-lg font-semibold">Employment Details</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Employment Type</label>
+                    <select
+                      value={inviteForm.employment_type}
+                      onChange={(e) => setInviteForm({ ...inviteForm, employment_type: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                    >
+                      <option value="full_time">Full Time</option>
+                      <option value="part_time">Part Time</option>
+                      <option value="casual">Casual</option>
+                      <option value="contract">Contract</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Primary Trade</label>
+                    <select
+                      value={inviteForm.primary_trade_id}
+                      onChange={(e) => setInviteForm({ ...inviteForm, primary_trade_id: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                    >
+                      <option value="">Select trade...</option>
+                      {tradeTypes.map((trade) => (
+                        <option key={trade.id} value={trade.id}>
+                          {trade.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Hourly Rate ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={inviteForm.hourly_rate}
+                      onChange={(e) => setInviteForm({ ...inviteForm, hourly_rate: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                      placeholder="35.00"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Cost to your business</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Billing Rate ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={inviteForm.billing_rate}
+                      onChange={(e) => setInviteForm({ ...inviteForm, billing_rate: e.target.value })}
+                      className="mt-1 w-full rounded-lg border px-3 py-2"
+                      placeholder="85.00"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Rate charged to clients</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Permissions (Employees Only) */}
+              {inviteForm.role === 'employee' && (
+                <div className="rounded-lg border p-4">
+                  <h3 className="mb-4 text-lg font-semibold">Permissions</h3>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_create_jobs}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_create_jobs: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can create and manage jobs</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_edit_all_jobs}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_edit_all_jobs: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can edit all jobs (not just assigned)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_create_invoices}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_create_invoices: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can create and send invoices</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_view_financials}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_view_financials: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can view financial reports</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_approve_expenses}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_approve_expenses: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can approve expenses</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.can_approve_timesheets}
+                        onChange={(e) => setInviteForm({ ...inviteForm, can_approve_timesheets: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Can approve timesheets</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Compliance Requirements */}
+              <div className="rounded-lg border p-4">
+                <h3 className="mb-4 text-lg font-semibold">Compliance Requirements</h3>
+                <p className="mb-4 text-sm text-gray-600">
+                  Select which documents this team member must upload to complete their profile
+                </p>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={inviteForm.requires_trade_license}
+                      onChange={(e) => setInviteForm({ ...inviteForm, requires_trade_license: e.target.checked })}
+                      className="rounded"
+                    />
+                    <span className="text-sm">Trade License / Certification</span>
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={inviteForm.requires_police_check}
+                      onChange={(e) => setInviteForm({ ...inviteForm, requires_police_check: e.target.checked })}
+                      className="rounded"
+                    />
+                    <span className="text-sm">Police Check (Optional)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={inviteForm.requires_working_with_children}
+                      onChange={(e) => setInviteForm({ ...inviteForm, requires_working_with_children: e.target.checked })}
+                      className="rounded"
+                    />
+                    <span className="text-sm">Working with Children Check (Optional)</span>
+                  </label>
+
+                  {inviteForm.role === 'subcontractor' && (
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={inviteForm.requires_public_liability}
+                        onChange={(e) => setInviteForm({ ...inviteForm, requires_public_liability: e.target.checked })}
+                        className="rounded"
+                      />
+                      <span className="text-sm">Public Liability Insurance</span>
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 rounded-lg border px-4 py-2 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {submitting ? 'Sending...' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
