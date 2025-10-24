@@ -267,6 +267,8 @@ export default function CalendarPage() {
       allDay: appointment.all_day,
       assignedToUserId: appointment.assigned_to_user_id || '',
       locationAddress: appointment.location_address || '',
+      jobId: '',
+      clientId: '',
     })
     setShowAddForm(true)
   }
