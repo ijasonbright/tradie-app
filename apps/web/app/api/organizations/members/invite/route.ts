@@ -6,14 +6,19 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null
 
-// Initialize SES client
-const sesClient = new SESClient({
-  region: process.env.AWS_REGION || 'ap-southeast-2',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+// Initialize SES client only if credentials are available
+const getSESClient = () => {
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    return null
+  }
+  return new SESClient({
+    region: process.env.AWS_REGION || 'ap-southeast-2',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -228,30 +233,41 @@ export async function POST(request: NextRequest) {
       © ${new Date().getFullYear()} ${organizationName}. All rights reserved.
     `
 
-    const sendEmailCommand = new SendEmailCommand({
-      Source: process.env.AWS_SES_FROM_EMAIL || 'noreply@tradie-app.com',
-      Destination: {
-        ToAddresses: [email],
-      },
-      Message: {
-        Subject: {
-          Data: `You've been invited to join ${organizationName}`,
-          Charset: 'UTF-8',
-        },
-        Body: {
-          Html: {
-            Data: emailHtml,
-            Charset: 'UTF-8',
+    // Send email if SES is configured
+    const sesClient = getSESClient()
+    if (sesClient) {
+      try {
+        const sendEmailCommand = new SendEmailCommand({
+          Source: process.env.AWS_SES_FROM_EMAIL || 'noreply@tradie-app.com',
+          Destination: {
+            ToAddresses: [email],
           },
-          Text: {
-            Data: emailText,
-            Charset: 'UTF-8',
+          Message: {
+            Subject: {
+              Data: `You've been invited to join ${organizationName}`,
+              Charset: 'UTF-8',
+            },
+            Body: {
+              Html: {
+                Data: emailHtml,
+                Charset: 'UTF-8',
+              },
+              Text: {
+                Data: emailText,
+                Charset: 'UTF-8',
+              },
+            },
           },
-        },
-      },
-    })
+        })
 
-    await sesClient.send(sendEmailCommand)
+        await sesClient.send(sendEmailCommand)
+      } catch (emailError) {
+        console.error('Error sending email:', emailError)
+        // Continue anyway - invitation is created, just email failed
+      }
+    } else {
+      console.warn('AWS SES not configured - invitation created but email not sent')
+    }
 
     return NextResponse.json({
       success: true,

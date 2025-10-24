@@ -396,12 +396,12 @@ export default function TeamPage() {
 
                 {/* Actions */}
                 <div className="ml-4 flex flex-col gap-2">
-                  <Link
-                    href={`/dashboard/team/${member.id}`}
+                  <button
+                    onClick={() => alert('Member detail page coming soon')}
                     className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 text-center"
                   >
                     View Details
-                  </Link>
+                  </button>
                   {member.status === 'invited' && (
                     <button
                       onClick={() => alert('Resend invitation functionality coming soon')}
