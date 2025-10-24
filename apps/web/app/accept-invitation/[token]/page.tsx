@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SignUp } from '@clerk/nextjs'
+import DocumentUpload from '@/components/DocumentUpload'
 
 interface InvitationData {
   id: string
@@ -156,40 +157,44 @@ export default function AcceptInvitationPage({
             <div>
               <h2 className="mb-6 text-2xl font-bold">Upload Required Documents</h2>
               <p className="mb-6 text-gray-600">
-                Please upload the following documents to complete your profile:
+                Please upload the following documents to complete your profile. Our AI will verify the expiry dates automatically.
               </p>
 
               <div className="space-y-4">
                 {invitation.requires_trade_license && (
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-semibold">Trade License / Certification *</h3>
-                    <p className="text-sm text-gray-600">Required for verification</p>
-                    {/* Document upload component */}
-                  </div>
+                  <DocumentUpload
+                    documentType="trade_license"
+                    documentCategory="license"
+                    title="Trade License / Certification"
+                    required={true}
+                  />
                 )}
 
                 {invitation.requires_police_check && (
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-semibold">Police Check</h3>
-                    <p className="text-sm text-gray-600">Optional</p>
-                    {/* Document upload component */}
-                  </div>
+                  <DocumentUpload
+                    documentType="police_check"
+                    documentCategory="certification"
+                    title="Police Check"
+                    required={false}
+                  />
                 )}
 
                 {invitation.requires_working_with_children && (
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-semibold">Working with Children Check</h3>
-                    <p className="text-sm text-gray-600">Optional</p>
-                    {/* Document upload component */}
-                  </div>
+                  <DocumentUpload
+                    documentType="working_with_children"
+                    documentCategory="certification"
+                    title="Working with Children Check"
+                    required={false}
+                  />
                 )}
 
                 {invitation.requires_public_liability && (
-                  <div className="rounded-lg border p-4">
-                    <h3 className="font-semibold">Public Liability Insurance</h3>
-                    <p className="text-sm text-gray-600">Required for subcontractors</p>
-                    {/* Document upload component */}
-                  </div>
+                  <DocumentUpload
+                    documentType="public_liability"
+                    documentCategory="insurance"
+                    title="Public Liability Insurance"
+                    required={true}
+                  />
                 )}
               </div>
 
@@ -198,7 +203,7 @@ export default function AcceptInvitationPage({
                   onClick={() => setStep('complete')}
                   className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                 >
-                  Continue
+                  Continue to Dashboard
                 </button>
               </div>
             </div>
