@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 interface Appointment {
@@ -33,6 +34,7 @@ interface TeamMember {
 }
 
 export default function CalendarPage() {
+  const searchParams = useSearchParams()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
@@ -53,12 +55,21 @@ export default function CalendarPage() {
     allDay: false,
     assignedToUserId: '',
     locationAddress: '',
+    jobId: '',
+    clientId: '',
   })
 
   useEffect(() => {
     fetchOrganizations()
     fetchTeamMembers()
     fetchAppointments()
+
+    // Check if we're creating an appointment from a job
+    const jobId = searchParams.get('jobId')
+    const action = searchParams.get('action')
+    if (jobId && action === 'create') {
+      fetchJobAndPrefillForm(jobId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -108,6 +119,41 @@ export default function CalendarPage() {
       console.error('Error fetching appointments:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchJobAndPrefillForm = async (jobId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`)
+      if (res.ok) {
+        const data = await res.json()
+        const job = data.job
+
+        // Pre-fill form with job details
+        setFormData(prev => ({
+          ...prev,
+          title: job.title || 'Job Appointment',
+          description: job.description || '',
+          appointmentType: 'job',
+          locationAddress: [job.site_address_line1, job.site_city, job.site_state, job.site_postcode]
+            .filter(Boolean)
+            .join(', '),
+          jobId: job.id,
+          clientId: job.client_id || '',
+          // Set default times if job has scheduled date
+          startTime: job.scheduled_date
+            ? new Date(job.scheduled_date).toISOString().slice(0, 16)
+            : '',
+          endTime: job.scheduled_date
+            ? new Date(new Date(job.scheduled_date).getTime() + 2 * 60 * 60 * 1000).toISOString().slice(0, 16)
+            : '',
+        }))
+
+        // Open the form
+        setShowAddForm(true)
+      }
+    } catch (error) {
+      console.error('Error fetching job:', error)
     }
   }
 
@@ -195,6 +241,8 @@ export default function CalendarPage() {
           allDay: false,
           assignedToUserId: '',
           locationAddress: '',
+          jobId: '',
+          clientId: '',
         })
       } else {
         const error = await res.json()

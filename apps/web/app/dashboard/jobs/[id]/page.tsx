@@ -654,6 +654,13 @@ export default function JobDetailPage() {
             Edit Job
           </Link>
 
+          <Link
+            href={`/dashboard/calendar?jobId=${job.id}&action=create`}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium"
+          >
+            📅 Create Appointment
+          </Link>
+
           {job.status === 'scheduled' && (
             <button
               onClick={() => handleStatusChange('in_progress')}
