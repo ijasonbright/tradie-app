@@ -483,7 +483,7 @@ export default function CalendarPage() {
         <div className="rounded-lg bg-white shadow overflow-hidden">
           <div className="p-4 border-b bg-gray-50">
             <h3 className="text-lg font-semibold">
-              {teamMembers.find(m => m.user_id === selectedUserId)?.full_name}'s Schedule
+              {teamMembers.find(m => m.user_id === selectedUserId)?.full_name}&apos;s Schedule
             </h3>
           </div>
           <div className="p-6 overflow-x-auto">
