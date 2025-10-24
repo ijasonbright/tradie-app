@@ -361,6 +361,49 @@ export default function CalendarPage() {
     }
   }
 
+  // Get appointments for a specific team member
+  const getAppointmentsForMember = (userId: string) => {
+    return appointments.filter(apt => apt.assigned_to_user_id === userId)
+  }
+
+  // Calculate position and height for timeline view
+  const getAppointmentStyle = (startTime: string, endTime: string) => {
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const startHour = start.getHours() + start.getMinutes() / 60
+    const endHour = end.getHours() + end.getMinutes() / 60
+
+    const top = ((startHour - 6) * 60) // 60px per hour, starting at 6 AM
+    const height = (endHour - startHour) * 60
+
+    return {
+      top: `${Math.max(0, top)}px`,
+      height: `${Math.max(30, height)}px`,
+    }
+  }
+
+  // Generate hour labels for timeline
+  const getHourLabels = () => {
+    const hours = []
+    for (let i = 6; i <= 22; i++) { // 6 AM to 10 PM
+      hours.push(i)
+    }
+    return hours
+  }
+
+  // Get team member color
+  const getMemberColor = (index: number) => {
+    const colors = [
+      'bg-blue-100 border-blue-400 text-blue-800',
+      'bg-green-100 border-green-400 text-green-800',
+      'bg-purple-100 border-purple-400 text-purple-800',
+      'bg-orange-100 border-orange-400 text-orange-800',
+      'bg-pink-100 border-pink-400 text-pink-800',
+      'bg-indigo-100 border-indigo-400 text-indigo-800',
+    ]
+    return colors[index % colors.length]
+  }
+
   if (loading && appointments.length === 0) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -445,14 +488,128 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Calendar View - Simple List for now */}
-      <div className="rounded-lg bg-white p-6 shadow">
-        <h3 className="mb-4 text-lg font-semibold">Upcoming Appointments</h3>
-        {appointments.length === 0 ? (
-          <p className="text-gray-500">No appointments scheduled for this period</p>
-        ) : (
-          <div className="space-y-3">
-            {appointments.map((apt) => (
+      {/* Calendar View */}
+      {view === 'day' && selectedUserId !== 'all' ? (
+        /* Timeline View for Single Team Member */
+        <div className="rounded-lg bg-white shadow overflow-hidden">
+          <div className="p-4 border-b bg-gray-50">
+            <h3 className="text-lg font-semibold">
+              {teamMembers.find(m => m.user_id === selectedUserId)?.full_name}'s Schedule
+            </h3>
+          </div>
+          <div className="p-6 overflow-x-auto">
+            <div className="relative" style={{ minHeight: '1020px' }}>
+              {/* Hour labels and grid lines */}
+              {getHourLabels().map((hour, index) => (
+                <div
+                  key={hour}
+                  className="absolute left-0 right-0 border-t border-gray-200"
+                  style={{ top: `${index * 60}px` }}
+                >
+                  <span className="inline-block w-16 text-xs text-gray-500 -mt-2 bg-white px-1">
+                    {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                  </span>
+                </div>
+              ))}
+
+              {/* Appointments */}
+              <div className="absolute left-20 right-0">
+                {getAppointmentsForMember(selectedUserId).map((apt) => {
+                  const style = getAppointmentStyle(apt.start_time, apt.end_time)
+                  return (
+                    <div
+                      key={apt.id}
+                      className={`absolute left-0 right-2 rounded-lg border-l-4 p-2 cursor-pointer hover:shadow-lg transition-shadow ${getAppointmentTypeColor(apt.appointment_type)}`}
+                      style={style}
+                      onClick={() => handleEdit(apt)}
+                    >
+                      <div className="text-sm font-semibold truncate">{apt.title}</div>
+                      <div className="text-xs truncate">
+                        {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                        {' - '}
+                        {new Date(apt.end_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                      </div>
+                      {apt.location_address && (
+                        <div className="text-xs truncate mt-1">📍 {apt.location_address}</div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : view === 'day' ? (
+        /* Timeline View for All Team Members */
+        <div className="rounded-lg bg-white shadow overflow-hidden">
+          <div className="p-4 border-b bg-gray-50">
+            <h3 className="text-lg font-semibold">Team Schedule</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="inline-flex min-w-full">
+              {/* Time column */}
+              <div className="w-20 flex-shrink-0 border-r bg-gray-50">
+                <div className="h-16"></div>
+                {getHourLabels().map((hour) => (
+                  <div key={hour} className="h-[60px] border-t border-gray-200 text-xs text-gray-500 px-2 pt-1">
+                    {hour === 12 ? '12 PM' : hour > 12 ? `${hour - 12} PM` : `${hour} AM`}
+                  </div>
+                ))}
+              </div>
+
+              {/* Team member columns */}
+              {teamMembers.map((member, memberIndex) => (
+                <div key={member.user_id} className="flex-1 min-w-[200px] border-r relative">
+                  {/* Header */}
+                  <div className={`h-16 border-b px-3 py-2 ${getMemberColor(memberIndex)} bg-opacity-30`}>
+                    <div className="font-semibold text-sm">{member.full_name}</div>
+                    <div className="text-xs">
+                      {getAppointmentsForMember(member.user_id).length} appointments
+                    </div>
+                  </div>
+
+                  {/* Grid lines */}
+                  <div className="relative" style={{ height: '1020px' }}>
+                    {getHourLabels().map((hour, index) => (
+                      <div
+                        key={hour}
+                        className="absolute left-0 right-0 border-t border-gray-100"
+                        style={{ top: `${index * 60}px` }}
+                      />
+                    ))}
+
+                    {/* Appointments */}
+                    {getAppointmentsForMember(member.user_id).map((apt) => {
+                      const style = getAppointmentStyle(apt.start_time, apt.end_time)
+                      return (
+                        <div
+                          key={apt.id}
+                          className={`absolute left-1 right-1 rounded border-l-4 p-1.5 cursor-pointer hover:shadow-md transition-shadow text-xs ${getAppointmentTypeColor(apt.appointment_type)}`}
+                          style={style}
+                          onClick={() => handleEdit(apt)}
+                        >
+                          <div className="font-semibold truncate">{apt.title}</div>
+                          <div className="truncate opacity-75">
+                            {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* List View for Week/Month */
+        <div className="rounded-lg bg-white p-6 shadow">
+          <h3 className="mb-4 text-lg font-semibold">Upcoming Appointments</h3>
+          {appointments.length === 0 ? (
+            <p className="text-gray-500">No appointments scheduled for this period</p>
+          ) : (
+            <div className="space-y-3">
+              {appointments.map((apt) => (
               <div
                 key={apt.id}
                 className={`rounded-lg border-l-4 p-4 ${getAppointmentTypeColor(apt.appointment_type)}`}
@@ -507,10 +664,11 @@ export default function CalendarPage() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add Appointment Modal */}
       {showAddForm && (
