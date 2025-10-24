@@ -250,14 +250,26 @@ export default function CalendarPage() {
   // Update form data when date/time/duration changes
   useEffect(() => {
     if (appointmentDate && appointmentTime && appointmentDuration) {
-      // Combine date and time
+      // Create datetime-local strings (YYYY-MM-DDTHH:MM format)
+      // These represent LOCAL time, not UTC
+      const startTimeLocal = `${appointmentDate}T${appointmentTime}`
+
+      // Calculate end time by parsing as local, adding duration, then formatting back
       const startDateTime = new Date(`${appointmentDate}T${appointmentTime}`)
       const endDateTime = new Date(startDateTime.getTime() + parseInt(appointmentDuration) * 60000)
 
+      // Format end time as datetime-local string (still in local timezone)
+      const endYear = endDateTime.getFullYear()
+      const endMonth = String(endDateTime.getMonth() + 1).padStart(2, '0')
+      const endDay = String(endDateTime.getDate()).padStart(2, '0')
+      const endHours = String(endDateTime.getHours()).padStart(2, '0')
+      const endMinutes = String(endDateTime.getMinutes()).padStart(2, '0')
+      const endTimeLocal = `${endYear}-${endMonth}-${endDay}T${endHours}:${endMinutes}`
+
       setFormData(prev => ({
         ...prev,
-        startTime: startDateTime.toISOString().slice(0, 16),
-        endTime: endDateTime.toISOString().slice(0, 16),
+        startTime: startTimeLocal,
+        endTime: endTimeLocal,
       }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
