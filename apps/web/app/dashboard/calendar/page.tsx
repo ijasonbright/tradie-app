@@ -149,11 +149,30 @@ export default function CalendarPage() {
       const method = editingAppointment ? 'PUT' : 'POST'
 
       // Convert local datetime strings to ISO strings (UTC) for database storage
+      // The datetime-local input gives us a string like "2025-10-26T16:00"
+      // We need to explicitly parse it as local time and convert to UTC
+      const convertLocalToUTC = (localDateTimeString: string) => {
+        if (!localDateTimeString) return ''
+        const date = new Date(localDateTimeString)
+        const isoString = date.toISOString()
+        console.log(`Converting: ${localDateTimeString} → ${isoString}`)
+        return isoString
+      }
+
       const submitData = {
         ...formData,
-        startTime: formData.startTime ? new Date(formData.startTime).toISOString() : '',
-        endTime: formData.endTime ? new Date(formData.endTime).toISOString() : '',
+        startTime: convertLocalToUTC(formData.startTime),
+        endTime: convertLocalToUTC(formData.endTime),
       }
+
+      console.log('Form data times:', {
+        startLocal: formData.startTime,
+        endLocal: formData.endTime
+      })
+      console.log('Submitting times:', {
+        startUTC: submitData.startTime,
+        endUTC: submitData.endTime
+      })
 
       const res = await fetch(url, {
         method,
