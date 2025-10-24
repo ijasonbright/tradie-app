@@ -153,11 +153,12 @@ export default function TeamPage() {
         fetchTeamMembers()
       } else {
         const error = await res.json()
-        alert(`Error: ${error.error}`)
+        console.error('API Error:', error)
+        alert(`Error: ${error.error}\n\nDetails: ${error.details || 'No details available'}`)
       }
     } catch (error) {
       console.error('Error sending invitation:', error)
-      alert('Failed to send invitation')
+      alert(`Failed to send invitation: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSubmitting(false)
     }
