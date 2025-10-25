@@ -2,23 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { randomBytes } from 'crypto'
-import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
+import { sendEmail } from '@/lib/email/ses'
 
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null
-
-// Initialize SES client only if credentials are available
-const getSESClient = () => {
-  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
-    return null
-  }
-  return new SESClient({
-    region: process.env.AWS_REGION || 'ap-southeast-2',
-    credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    },
-  })
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -242,48 +228,38 @@ export async function POST(request: NextRequest) {
       © ${new Date().getFullYear()} ${organizationName}. All rights reserved.
     `
 
-    // Send email if SES is configured
-    const sesClient = getSESClient()
-    if (sesClient) {
-      try {
-        const sendEmailCommand = new SendEmailCommand({
-          Source: process.env.AWS_SES_FROM_EMAIL || 'noreply@tradie-app.com',
-          Destination: {
-            ToAddresses: [email],
-          },
-          Message: {
-            Subject: {
-              Data: `You've been invited to join ${organizationName}`,
-              Charset: 'UTF-8',
-            },
-            Body: {
-              Html: {
-                Data: emailHtml,
-                Charset: 'UTF-8',
-              },
-              Text: {
-                Data: emailText,
-                Charset: 'UTF-8',
-              },
-            },
-          },
-        })
+    // Send email using the same email service as invoices
+    const fromEmail = process.env.DEFAULT_FROM_EMAIL || 'hello@taskforce.com.au'
+    const replyToEmail = organizationName ? undefined : undefined // Could add org email here if available
 
-        await sesClient.send(sendEmailCommand)
-      } catch (emailError) {
-        console.error('Error sending email:', emailError)
-        // Continue anyway - invitation is created, just email failed
-      }
-    } else {
-      console.warn('AWS SES not configured - invitation created but email not sent')
+    try {
+      await sendEmail({
+        to: email,
+        from: fromEmail,
+        replyTo: replyToEmail,
+        subject: `You've been invited to join ${organizationName}`,
+        htmlBody: emailHtml,
+        textBody: emailText,
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: 'Invitation sent successfully',
+        invitation_id: invitation[0].id,
+        invitation_url: invitationUrl,
+      })
+    } catch (emailError) {
+      console.error('Error sending invitation email:', emailError)
+
+      // Return the invitation URL anyway so it can be sent manually
+      return NextResponse.json({
+        success: true,
+        message: 'Invitation created but email failed to send. Use the invitation URL to share manually.',
+        invitation_id: invitation[0].id,
+        invitation_url: invitationUrl,
+        emailError: emailError instanceof Error ? emailError.message : 'Unknown email error',
+      })
     }
-
-    return NextResponse.json({
-      success: true,
-      message: sesClient ? 'Invitation sent successfully' : 'Invitation created (email not sent - AWS SES not configured)',
-      invitation_id: invitation[0].id,
-      invitation_url: invitationUrl,
-    })
   } catch (error) {
     console.error('Error sending invitation:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'

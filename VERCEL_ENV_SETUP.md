@@ -44,10 +44,10 @@ ANTHROPIC_API_KEY=sk-ant-...
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=ap-southeast-2
-AWS_SES_FROM_EMAIL=noreply@yourdomain.com
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
 ```
 
-**⚠️ CURRENTLY MISSING - Invitations are created but emails won't send**
+**⚠️ SHOULD ALREADY BE CONFIGURED - Same service used for invoices/quotes**
 
 **To set up AWS SES:**
 
@@ -151,7 +151,7 @@ Go to your Vercel project settings and verify which of these are configured:
 - ❌ AWS_ACCESS_KEY_ID
 - ❌ AWS_SECRET_ACCESS_KEY
 - ❌ AWS_REGION
-- ❌ AWS_SES_FROM_EMAIL
+- ❌ DEFAULT_FROM_EMAIL
 - ❌ NEXT_PUBLIC_APP_URL (might be set to localhost)
 
 ---
