@@ -400,6 +400,12 @@ export async function POST() {
         UNIQUE(organization_id, template_type, is_default)
       )`,
 
+      // Add bank details to organizations table
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100)`,
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS bank_bsb VARCHAR(10)`,
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(50)`,
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS bank_account_name VARCHAR(255)`,
+
       // Add SMS credits to organizations table
       `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_credits INTEGER DEFAULT 0`,
       `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_phone_number VARCHAR(20)`,
