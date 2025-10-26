@@ -83,15 +83,28 @@ export async function POST(req: Request) {
     const formattedTo = TallBobAPI.formatPhoneNumber(to)
 
     // Send SMS via Tall Bob
+    console.log('Sending SMS via Tall Bob:', {
+      from: org.sms_phone_number,
+      to: formattedTo,
+      messageLength: message.length,
+      credits: creditsNeeded
+    })
+
     const result = await tallbob.sendSMS({
       from: org.sms_phone_number,
       to: formattedTo,
       message,
     })
 
+    console.log('Tall Bob result:', result)
+
     if (!result.success) {
+      console.error('Tall Bob SMS failed:', result.error)
       return NextResponse.json(
-        { error: result.error || 'Failed to send SMS' },
+        {
+          error: 'Failed to send SMS via Tall Bob',
+          details: result.error || 'Unknown error from SMS provider'
+        },
         { status: 500 }
       )
     }
@@ -233,8 +246,13 @@ export async function POST(req: Request) {
     })
   } catch (error) {
     console.error('Error sending SMS:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: 'Failed to send SMS', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to send SMS',
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
