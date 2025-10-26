@@ -22,6 +22,7 @@ interface Organization {
   bank_account_name: string | null
   default_hourly_rate: string | null
   default_employee_cost: string | null
+  sms_phone_number: string | null
 }
 
 interface TradeType {
@@ -83,6 +84,7 @@ export default function SettingsPage() {
     bankAccountName: '',
     defaultHourlyRate: '',
     defaultEmployeeCost: '',
+    smsPhoneNumber: '',
   })
 
   useEffect(() => {
@@ -118,6 +120,7 @@ export default function SettingsPage() {
           bankAccountName: data.organization.bank_account_name || '',
           defaultHourlyRate: data.organization.default_hourly_rate || '0',
           defaultEmployeeCost: data.organization.default_employee_cost || '0',
+          smsPhoneNumber: data.organization.sms_phone_number || '',
         })
       }
     } catch (error) {
@@ -398,6 +401,20 @@ export default function SettingsPage() {
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">SMS Phone Number (Tall Bob)</label>
+                <input
+                  type="tel"
+                  value={formData.smsPhoneNumber}
+                  onChange={(e) => setFormData({ ...formData, smsPhoneNumber: e.target.value })}
+                  placeholder="+61412345678"
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  The phone number provisioned from Tall Bob for sending SMS. Include country code (e.g., +61 for Australia).
+                </p>
               </div>
 
               <div>

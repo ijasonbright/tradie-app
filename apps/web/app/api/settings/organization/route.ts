@@ -103,6 +103,7 @@ export async function PUT(req: Request) {
         bank_account_name = COALESCE(${body.bankAccountName}, bank_account_name),
         default_hourly_rate = COALESCE(${body.defaultHourlyRate}, default_hourly_rate),
         default_employee_cost = COALESCE(${body.defaultEmployeeCost}, default_employee_cost),
+        sms_phone_number = COALESCE(${body.smsPhoneNumber}, sms_phone_number),
         updated_at = NOW()
       WHERE id = ${org.id}
       RETURNING *
