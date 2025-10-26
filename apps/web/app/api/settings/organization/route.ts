@@ -84,6 +84,7 @@ export async function PUT(req: Request) {
     const org = orgs[0]
 
     // Update organization - handle nullable fields properly
+    // For numeric fields, cast to DECIMAL or use NULL
     const updated = await sql`
       UPDATE organizations
       SET
@@ -101,8 +102,8 @@ export async function PUT(req: Request) {
         bank_bsb = COALESCE(NULLIF(${body.bankBsb}, ''), bank_bsb),
         bank_account_number = COALESCE(NULLIF(${body.bankAccountNumber}, ''), bank_account_number),
         bank_account_name = COALESCE(NULLIF(${body.bankAccountName}, ''), bank_account_name),
-        default_hourly_rate = COALESCE(NULLIF(${body.defaultHourlyRate}, ''), default_hourly_rate),
-        default_employee_cost = COALESCE(NULLIF(${body.defaultEmployeeCost}, ''), default_employee_cost),
+        default_hourly_rate = CASE WHEN ${body.defaultHourlyRate} IS NOT NULL AND ${body.defaultHourlyRate} != '' THEN CAST(${body.defaultHourlyRate} AS DECIMAL(10,2)) ELSE default_hourly_rate END,
+        default_employee_cost = CASE WHEN ${body.defaultEmployeeCost} IS NOT NULL AND ${body.defaultEmployeeCost} != '' THEN CAST(${body.defaultEmployeeCost} AS DECIMAL(10,2)) ELSE default_employee_cost END,
         sms_phone_number = COALESCE(NULLIF(${body.smsPhoneNumber}, ''), sms_phone_number),
         updated_at = NOW()
       WHERE id = ${org.id}
