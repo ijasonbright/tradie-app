@@ -202,3 +202,50 @@ openssl rand -base64 32
 curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
   https://tradie-app-web.vercel.app/api/cron/check-document-expiry
 ```
+
+---
+
+## 📱 SMS INTEGRATION (Tall Bob + Stripe)
+
+### Stripe for SMS Credit Purchases
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+**Setup:**
+1. Create account at https://stripe.com
+2. Get API keys from Dashboard → Developers → API keys
+3. Set up webhook endpoint: `/api/webhooks/stripe`
+4. Webhook events needed: `checkout.session.completed`
+5. Copy webhook secret
+
+**Testing:**
+- Use test mode keys for development
+- Use test card: 4242 4242 4242 4242
+
+### Tall Bob SMS API
+```
+TALLBOB_API_KEY=...
+TALLBOB_API_URL=https://api.tallbob.com
+TALLBOB_WEBHOOK_SECRET=...
+```
+
+**Setup:**
+1. Create account at Tall Bob
+2. Get API key from dashboard
+3. Set up webhook endpoints:
+   - `/api/webhooks/tallbob` for inbound messages
+   - `/api/webhooks/tallbob` for delivery status
+4. Purchase or set up SMS phone numbers for organizations
+
+**Features enabled:**
+- ✅ Send SMS from invoices/quotes
+- ✅ Two-way SMS conversations
+- ✅ SMS credit purchases (5¢ per 160 chars)
+- ✅ Delivery tracking
+- ✅ Message templates
+- ✅ Client reply notifications
+
+**Cost:** $5 per 100 credits, $25 per 500 credits, etc.
