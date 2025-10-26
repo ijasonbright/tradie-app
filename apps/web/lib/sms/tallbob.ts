@@ -25,15 +25,17 @@ interface SMSStatusResponse {
 }
 
 export class TallBobAPI {
+  private apiUsername: string
   private apiKey: string
   private apiUrl: string
 
   constructor() {
+    this.apiUsername = process.env.TALLBOB_API_USERNAME || ''
     this.apiKey = process.env.TALLBOB_API_KEY || ''
-    this.apiUrl = process.env.TALLBOB_API_URL || 'https://api.tallbob.com'
+    this.apiUrl = process.env.TALLBOB_API_URL || 'https://api.tallbob.com/v2'
 
-    if (!this.apiKey) {
-      console.warn('TALLBOB_API_KEY not configured')
+    if (!this.apiKey || !this.apiUsername) {
+      console.warn('TALLBOB_API_USERNAME or TALLBOB_API_KEY not configured')
     }
   }
 
@@ -45,8 +47,8 @@ export class TallBobAPI {
       // Calculate credits needed (1 credit per 160 characters)
       const credits = Math.ceil(message.length / 160)
 
-      // If API key not configured, use test mode
-      if (!this.apiKey || this.apiKey === '') {
+      // If API credentials not configured, use test mode
+      if (!this.apiKey || !this.apiUsername || this.apiKey === '' || this.apiUsername === '') {
         console.log('[TEST MODE] SMS would be sent:', { from, to, message })
         return {
           success: true,
@@ -55,18 +57,21 @@ export class TallBobAPI {
         }
       }
 
+      // Create Basic Auth header
+      const authString = Buffer.from(`${this.apiUsername}:${this.apiKey}`).toString('base64')
+
       console.log('Calling Tall Bob API:', {
-        url: `${this.apiUrl}/v1/sms/send`,
+        url: `${this.apiUrl}/sms/send`,
         from,
         to,
         messageLength: message.length,
-        hasApiKey: !!this.apiKey
+        hasCredentials: !!this.apiKey && !!this.apiUsername
       })
 
-      const response = await fetch(`${this.apiUrl}/v1/sms/send`, {
+      const response = await fetch(`${this.apiUrl}/sms/send`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Basic ${authString}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
