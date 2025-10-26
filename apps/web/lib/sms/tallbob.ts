@@ -55,6 +55,14 @@ export class TallBobAPI {
         }
       }
 
+      console.log('Calling Tall Bob API:', {
+        url: `${this.apiUrl}/v1/sms/send`,
+        from,
+        to,
+        messageLength: message.length,
+        hasApiKey: !!this.apiKey
+      })
+
       const response = await fetch(`${this.apiUrl}/v1/sms/send`, {
         method: 'POST',
         headers: {
@@ -69,22 +77,29 @@ export class TallBobAPI {
         }),
       })
 
+      console.log('Tall Bob API response status:', response.status)
+
       if (!response.ok) {
         const errorText = await response.text()
+        console.error('Tall Bob API error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        })
+
         let errorMessage = 'Failed to send SMS'
         try {
           const error = JSON.parse(errorText)
-          errorMessage = error.message || errorMessage
+          errorMessage = error.message || error.error || errorMessage
         } catch {
           errorMessage = errorText || errorMessage
         }
 
-        console.error('Tall Bob API error response:', errorText)
         return {
           success: false,
           messageId: messageId || '',
           credits: 0,
-          error: errorMessage,
+          error: `Tall Bob API error (${response.status}): ${errorMessage}`,
         }
       }
 
