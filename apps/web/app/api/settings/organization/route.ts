@@ -83,28 +83,31 @@ export async function PUT(req: Request) {
 
     const org = orgs[0]
 
-    // Update organization - handle nullable fields properly
-    // For numeric fields, cast to DECIMAL or use NULL
+    // Convert numeric strings to numbers or null
+    const defaultHourlyRate = body.defaultHourlyRate && body.defaultHourlyRate !== '' ? parseFloat(body.defaultHourlyRate) : null
+    const defaultEmployeeCost = body.defaultEmployeeCost && body.defaultEmployeeCost !== '' ? parseFloat(body.defaultEmployeeCost) : null
+
+    // Update organization
     const updated = await sql`
       UPDATE organizations
       SET
-        name = COALESCE(NULLIF(${body.name}, ''), name),
-        abn = COALESCE(NULLIF(${body.abn}, ''), abn),
-        trade_type = COALESCE(NULLIF(${body.tradeType}, ''), trade_type),
-        phone = COALESCE(NULLIF(${body.phone}, ''), phone),
-        email = COALESCE(NULLIF(${body.email}, ''), email),
-        address_line1 = COALESCE(NULLIF(${body.addressLine1}, ''), address_line1),
-        address_line2 = COALESCE(NULLIF(${body.addressLine2}, ''), address_line2),
-        city = COALESCE(NULLIF(${body.city}, ''), city),
-        state = COALESCE(NULLIF(${body.state}, ''), state),
-        postcode = COALESCE(NULLIF(${body.postcode}, ''), postcode),
-        bank_name = COALESCE(NULLIF(${body.bankName}, ''), bank_name),
-        bank_bsb = COALESCE(NULLIF(${body.bankBsb}, ''), bank_bsb),
-        bank_account_number = COALESCE(NULLIF(${body.bankAccountNumber}, ''), bank_account_number),
-        bank_account_name = COALESCE(NULLIF(${body.bankAccountName}, ''), bank_account_name),
-        default_hourly_rate = CASE WHEN ${body.defaultHourlyRate} IS NOT NULL AND ${body.defaultHourlyRate} != '' THEN CAST(${body.defaultHourlyRate} AS DECIMAL(10,2)) ELSE default_hourly_rate END,
-        default_employee_cost = CASE WHEN ${body.defaultEmployeeCost} IS NOT NULL AND ${body.defaultEmployeeCost} != '' THEN CAST(${body.defaultEmployeeCost} AS DECIMAL(10,2)) ELSE default_employee_cost END,
-        sms_phone_number = COALESCE(NULLIF(${body.smsPhoneNumber}, ''), sms_phone_number),
+        name = ${body.name || null},
+        abn = ${body.abn || null},
+        trade_type = ${body.tradeType || null},
+        phone = ${body.phone || null},
+        email = ${body.email || null},
+        address_line1 = ${body.addressLine1 || null},
+        address_line2 = ${body.addressLine2 || null},
+        city = ${body.city || null},
+        state = ${body.state || null},
+        postcode = ${body.postcode || null},
+        bank_name = ${body.bankName || null},
+        bank_bsb = ${body.bankBsb || null},
+        bank_account_number = ${body.bankAccountNumber || null},
+        bank_account_name = ${body.bankAccountName || null},
+        default_hourly_rate = ${defaultHourlyRate},
+        default_employee_cost = ${defaultEmployeeCost},
+        sms_phone_number = ${body.smsPhoneNumber || null},
         updated_at = NOW()
       WHERE id = ${org.id}
       RETURNING *
