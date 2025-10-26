@@ -155,6 +155,11 @@ export default function SMSPage() {
       })
 
       const data = await res.json()
+      if (res.status === 500 && data.error === 'Service not configured') {
+        alert('SMS credit purchases are not yet configured. You have been given 2000 free credits to get started!')
+        setShowPurchaseModal(false)
+        return
+      }
       if (data.url) {
         window.location.href = data.url
       } else {
@@ -348,6 +353,9 @@ export default function SMSPage() {
               <p className="text-gray-600">
                 Each SMS message costs <strong>5¢</strong> per 160 characters.
                 Choose a credit bundle below:
+              </p>
+              <p className="mt-2 text-sm text-blue-600">
+                Note: All new organizations start with 2000 free SMS credits!
               </p>
             </div>
 

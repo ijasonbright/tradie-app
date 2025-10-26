@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         ${body.bankAccountNumber || null},
         ${body.bankAccountName || null},
         ${user.id},
-        0,
+        2000,
         NOW(),
         NOW()
       )
