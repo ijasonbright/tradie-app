@@ -148,7 +148,11 @@ export default function AcceptInvitationPage({
                     },
                   }}
                   forceRedirectUrl="/dashboard"
+                  fallbackRedirectUrl="/dashboard"
                   signInUrl="/sign-in"
+                  initialValues={{
+                    emailAddress: invitation.email,
+                  }}
                 />
               </div>
               <div className="mt-4 text-center text-sm text-gray-600">
