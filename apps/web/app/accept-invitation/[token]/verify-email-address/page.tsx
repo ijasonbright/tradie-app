@@ -7,10 +7,10 @@ export default function VerifyEmailPage() {
         <div className="mb-4 text-6xl">✉️</div>
         <h1 className="mb-2 text-2xl font-bold text-gray-900">Check your email</h1>
         <p className="mb-6 text-gray-600">
-          We've sent you an email with a verification link. Please click the link in your email to complete your registration.
+          We&apos;ve sent you an email with a verification link. Please click the link in your email to complete your registration.
         </p>
         <p className="text-sm text-gray-500">
-          After verifying your email, you'll be able to sign in and access your dashboard.
+          After verifying your email, you&apos;ll be able to sign in and access your dashboard.
         </p>
       </div>
     </div>
