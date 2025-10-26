@@ -317,6 +317,104 @@ export async function POST() {
       // Create indexes
       `CREATE INDEX IF NOT EXISTS xero_connections_organization_id_idx ON xero_connections(organization_id)`,
       `CREATE INDEX IF NOT EXISTS xero_connections_tenant_id_idx ON xero_connections(tenant_id)`,
+
+      // ========== SMS SYSTEM ==========
+
+      // SMS Transactions - Track all SMS credits (purchases and usage)
+      `CREATE TABLE IF NOT EXISTS sms_transactions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('purchase', 'usage', 'adjustment', 'refund')),
+        credits_amount INTEGER NOT NULL,
+        cost_amount DECIMAL(10, 2) DEFAULT 0,
+        balance_after INTEGER NOT NULL,
+        description TEXT,
+        recipient_phone VARCHAR(20),
+        sender_user_id UUID REFERENCES users(id),
+        sms_type VARCHAR(50),
+        message_preview TEXT,
+        tallbob_message_id VARCHAR(255),
+        delivery_status VARCHAR(50),
+        related_invoice_id UUID REFERENCES invoices(id),
+        related_quote_id UUID REFERENCES quotes(id),
+        related_job_id UUID REFERENCES jobs(id),
+        stripe_payment_intent_id VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // SMS Conversations - Thread SMS messages by phone number
+      `CREATE TABLE IF NOT EXISTS sms_conversations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        phone_number VARCHAR(20) NOT NULL,
+        client_id UUID REFERENCES clients(id),
+        last_message_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        UNIQUE(organization_id, phone_number)
+      )`,
+
+      // SMS Messages - Individual messages in conversations
+      `CREATE TABLE IF NOT EXISTS sms_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        conversation_id UUID REFERENCES sms_conversations(id) ON DELETE CASCADE NOT NULL,
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        direction VARCHAR(20) NOT NULL CHECK (direction IN ('outbound', 'inbound')),
+        sender_user_id UUID REFERENCES users(id),
+        recipient_phone VARCHAR(20),
+        sender_phone VARCHAR(20),
+        message_body TEXT NOT NULL,
+        character_count INTEGER NOT NULL,
+        credits_used INTEGER DEFAULT 0,
+        tallbob_message_id VARCHAR(255) UNIQUE,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        job_id UUID REFERENCES jobs(id),
+        invoice_id UUID REFERENCES invoices(id),
+        quote_id UUID REFERENCES quotes(id),
+        sent_at TIMESTAMP,
+        delivered_at TIMESTAMP,
+        read_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Tall Bob Webhooks - Log all webhook events
+      `CREATE TABLE IF NOT EXISTS tallbob_webhooks (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        webhook_type VARCHAR(50) NOT NULL,
+        tallbob_message_id VARCHAR(255),
+        payload JSONB NOT NULL,
+        processed BOOLEAN DEFAULT FALSE,
+        processed_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // SMS Templates - Customizable SMS templates
+      `CREATE TABLE IF NOT EXISTS sms_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        template_type VARCHAR(50) NOT NULL,
+        message_template TEXT NOT NULL,
+        is_default BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        UNIQUE(organization_id, template_type, is_default)
+      )`,
+
+      // Add SMS credits to organizations table
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_credits INTEGER DEFAULT 0`,
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_phone_number VARCHAR(20)`,
+
+      // Create indexes for SMS tables
+      `CREATE INDEX IF NOT EXISTS sms_transactions_organization_id_idx ON sms_transactions(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS sms_transactions_created_at_idx ON sms_transactions(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS sms_conversations_organization_id_idx ON sms_conversations(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS sms_conversations_phone_number_idx ON sms_conversations(phone_number)`,
+      `CREATE INDEX IF NOT EXISTS sms_messages_conversation_id_idx ON sms_messages(conversation_id)`,
+      `CREATE INDEX IF NOT EXISTS sms_messages_organization_id_idx ON sms_messages(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS sms_messages_created_at_idx ON sms_messages(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS sms_messages_tallbob_message_id_idx ON sms_messages(tallbob_message_id)`,
+      `CREATE INDEX IF NOT EXISTS tallbob_webhooks_processed_idx ON tallbob_webhooks(processed)`,
+      `CREATE INDEX IF NOT EXISTS tallbob_webhooks_created_at_idx ON tallbob_webhooks(created_at DESC)`,
     ]
 
     const results = []
