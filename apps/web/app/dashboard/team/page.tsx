@@ -506,7 +506,9 @@ export default function TeamPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Primary Trade</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Primary Trade <span className="text-gray-400">(Optional)</span>
+                    </label>
                     <select
                       value={inviteForm.primary_trade_id}
                       onChange={(e) => setInviteForm({ ...inviteForm, primary_trade_id: e.target.value })}
@@ -519,6 +521,11 @@ export default function TeamPage() {
                         </option>
                       ))}
                     </select>
+                    {tradeTypes.length === 0 && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        No trades configured yet. You can set up trades in Settings later.
+                      </p>
+                    )}
                   </div>
 
                   <div>
