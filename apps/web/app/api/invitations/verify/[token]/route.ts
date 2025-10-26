@@ -7,6 +7,7 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ token: string }> }
 ) {
+  console.log('Invitation verification endpoint called')
   try {
     if (!sql) {
       return NextResponse.json(
@@ -16,6 +17,7 @@ export async function GET(
     }
 
     const { token } = await context.params
+    console.log('Verifying invitation token:', token.substring(0, 10) + '...')
 
     // Find invitation by token in pending_invitations table
     const result = await sql`
