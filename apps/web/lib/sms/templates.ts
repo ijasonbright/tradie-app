@@ -19,42 +19,42 @@ export interface SMSTemplateVariables {
 export const DEFAULT_TEMPLATES = {
   invoice_sent: {
     name: 'Invoice Sent',
-    template: `Hi {{clientName}}, your invoice #{{invoiceNumber}} for ${{totalAmount}} is ready. View and pay here: {{link}} - {{businessName}}`,
+    template: 'Hi {{clientName}}, your invoice #{{invoiceNumber}} for ${{totalAmount}} is ready. View and pay here: {{link}} - {{businessName}}',
     variables: ['clientName', 'invoiceNumber', 'totalAmount', 'link', 'businessName'],
   },
   invoice_reminder: {
     name: 'Invoice Reminder',
-    template: `Hi {{clientName}}, friendly reminder that invoice #{{invoiceNumber}} for ${{totalAmount}} is due on {{dueDate}}. Pay here: {{link}} - {{businessName}}`,
+    template: 'Hi {{clientName}}, friendly reminder that invoice #{{invoiceNumber}} for ${{totalAmount}} is due on {{dueDate}}. Pay here: {{link}} - {{businessName}}',
     variables: ['clientName', 'invoiceNumber', 'totalAmount', 'dueDate', 'link', 'businessName'],
   },
   invoice_overdue: {
     name: 'Invoice Overdue',
-    template: `Hi {{clientName}}, invoice #{{invoiceNumber}} for ${{totalAmount}} is now overdue. Please pay at your earliest convenience: {{link}} - {{businessName}}`,
+    template: 'Hi {{clientName}}, invoice #{{invoiceNumber}} for ${{totalAmount}} is now overdue. Please pay at your earliest convenience: {{link}} - {{businessName}}',
     variables: ['clientName', 'invoiceNumber', 'totalAmount', 'link', 'businessName'],
   },
   quote_sent: {
     name: 'Quote Sent',
-    template: `Hi {{clientName}}, your quote #{{quoteNumber}} for {{jobTitle}} is ready to view: {{link}}. Valid until {{validUntil}}. - {{businessName}}`,
+    template: 'Hi {{clientName}}, your quote #{{quoteNumber}} for {{jobTitle}} is ready to view: {{link}}. Valid until {{validUntil}}. - {{businessName}}',
     variables: ['clientName', 'quoteNumber', 'jobTitle', 'link', 'validUntil', 'businessName'],
   },
   job_scheduled: {
     name: 'Job Scheduled',
-    template: `Hi {{clientName}}, your job is scheduled for {{appointmentDate}} at {{appointmentTime}}. We'll see you then! - {{businessName}}`,
+    template: 'Hi {{clientName}}, your job is scheduled for {{appointmentDate}} at {{appointmentTime}}. We will see you then! - {{businessName}}',
     variables: ['clientName', 'appointmentDate', 'appointmentTime', 'businessName'],
   },
   job_on_way: {
     name: 'On Our Way',
-    template: `Hi {{clientName}}, we're on our way to your property. ETA: {{appointmentTime}}. - {{businessName}}`,
+    template: 'Hi {{clientName}}, we are on our way to your property. ETA: {{appointmentTime}}. - {{businessName}}',
     variables: ['clientName', 'appointmentTime', 'businessName'],
   },
   job_completed: {
     name: 'Job Completed',
-    template: `Hi {{clientName}}, we've completed work on {{jobTitle}}. Thank you for choosing {{businessName}}!`,
+    template: 'Hi {{clientName}}, we have completed work on {{jobTitle}}. Thank you for choosing {{businessName}}!',
     variables: ['clientName', 'jobTitle', 'businessName'],
   },
   payment_received: {
     name: 'Payment Received',
-    template: `Hi {{clientName}}, thank you! We've received your payment of ${{totalAmount}} for invoice #{{invoiceNumber}}. - {{businessName}}`,
+    template: 'Hi {{clientName}}, thank you! We have received your payment of ${{totalAmount}} for invoice #{{invoiceNumber}}. - {{businessName}}',
     variables: ['clientName', 'totalAmount', 'invoiceNumber', 'businessName'],
   },
 }
