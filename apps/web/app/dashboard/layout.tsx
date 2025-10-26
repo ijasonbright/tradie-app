@@ -3,6 +3,7 @@
 import { useUser, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import ExpiryNotifications from '@/components/ExpiryNotifications'
 
 export default function DashboardLayout({
   children,
@@ -57,6 +58,7 @@ export default function DashboardLayout({
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <ExpiryNotifications />
               <span className="text-sm text-gray-600">
                 {user?.emailAddresses[0]?.emailAddress}
               </span>
