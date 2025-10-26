@@ -147,9 +147,9 @@ export default function AcceptInvitationPage({
                       card: 'shadow-none',
                     },
                   }}
-                  forceRedirectUrl="/dashboard"
-                  fallbackRedirectUrl="/dashboard"
+                  afterSignUpUrl="/dashboard"
                   signInUrl="/sign-in"
+                  routing="hash"
                 />
               </div>
               <div className="mt-4 text-center text-sm text-gray-600">
