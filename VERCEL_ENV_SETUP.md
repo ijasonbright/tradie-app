@@ -177,3 +177,28 @@ Go to your Vercel project settings and verify which of these are configured:
 **AI verification not working:**
 - ANTHROPIC_API_KEY is missing or invalid
 - Check API key in Anthropic console
+
+---
+
+## 🕐 REQUIRED FOR CRON JOBS - Document Expiry Alerts
+
+### Cron Job Authentication
+```
+CRON_SECRET=your_random_secret_here
+```
+
+**How to generate:**
+```bash
+openssl rand -base64 32
+```
+
+- This secret authenticates Vercel Cron jobs
+- Prevents unauthorized access to scheduled tasks
+- Used for daily document expiry email alerts (runs at 9 AM daily)
+- ⚠️ **ACTION NEEDED**: Generate a new secret and add to Vercel environment variables
+
+**To test the cron job manually:**
+```bash
+curl -H "Authorization: Bearer YOUR_CRON_SECRET" \
+  https://tradie-app-web.vercel.app/api/cron/check-document-expiry
+```
