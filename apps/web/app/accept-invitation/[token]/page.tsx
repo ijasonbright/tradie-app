@@ -149,7 +149,6 @@ export default function AcceptInvitationPage({
                   }}
                   afterSignUpUrl="/dashboard"
                   signInUrl="/sign-in"
-                  routing="hash"
                 />
               </div>
               <div className="mt-4 text-center text-sm text-gray-600">
