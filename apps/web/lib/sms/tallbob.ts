@@ -45,6 +45,16 @@ export class TallBobAPI {
       // Calculate credits needed (1 credit per 160 characters)
       const credits = Math.ceil(message.length / 160)
 
+      // If API key not configured, use test mode
+      if (!this.apiKey || this.apiKey === '') {
+        console.log('[TEST MODE] SMS would be sent:', { from, to, message })
+        return {
+          success: true,
+          messageId: messageId || `test_${Date.now()}`,
+          credits,
+        }
+      }
+
       const response = await fetch(`${this.apiUrl}/v1/sms/send`, {
         method: 'POST',
         headers: {
@@ -60,12 +70,21 @@ export class TallBobAPI {
       })
 
       if (!response.ok) {
-        const error = await response.json()
+        const errorText = await response.text()
+        let errorMessage = 'Failed to send SMS'
+        try {
+          const error = JSON.parse(errorText)
+          errorMessage = error.message || errorMessage
+        } catch {
+          errorMessage = errorText || errorMessage
+        }
+
+        console.error('Tall Bob API error response:', errorText)
         return {
           success: false,
           messageId: messageId || '',
           credits: 0,
-          error: error.message || 'Failed to send SMS',
+          error: errorMessage,
         }
       }
 
@@ -73,7 +92,7 @@ export class TallBobAPI {
 
       return {
         success: true,
-        messageId: data.messageId || messageId || '',
+        messageId: data.messageId || messageId || `msg_${Date.now()}`,
         credits,
       }
     } catch (error) {
