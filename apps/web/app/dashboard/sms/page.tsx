@@ -46,6 +46,9 @@ export default function SMSPage() {
   const [credits, setCredits] = useState(0)
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [purchasing, setPurchasing] = useState(false)
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false)
+  const [newMessagePhone, setNewMessagePhone] = useState('')
+  const [newMessageText, setNewMessageText] = useState('')
 
   useEffect(() => {
     fetchCredits()
@@ -178,6 +181,46 @@ export default function SMSPage() {
     return credits
   }
 
+  const handleSendNewMessage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newMessagePhone.trim() || !newMessageText.trim()) return
+
+    setSending(true)
+    try {
+      const res = await fetch('/api/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: newMessagePhone,
+          message: newMessageText,
+          smsType: 'manual',
+        }),
+      })
+
+      if (res.ok) {
+        setNewMessagePhone('')
+        setNewMessageText('')
+        setShowNewMessageModal(false)
+        fetchConversations()
+        fetchCredits()
+        alert('Message sent successfully!')
+      } else {
+        const error = await res.json()
+        if (res.status === 402) {
+          alert(`Insufficient SMS credits. You need ${error.required} credits but only have ${error.available}.`)
+          setShowPurchaseModal(true)
+        } else {
+          alert(error.error || 'Failed to send message')
+        }
+      }
+    } catch (error) {
+      console.error('Error sending message:', error)
+      alert('Failed to send message')
+    } finally {
+      setSending(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -200,6 +243,12 @@ export default function SMSPage() {
             <div className="text-2xl font-bold">{credits.toLocaleString()}</div>
             <div className="text-xs text-gray-500">5¢ per message</div>
           </div>
+          <button
+            onClick={() => setShowNewMessageModal(true)}
+            className="rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
+          >
+            New Message
+          </button>
           <button
             onClick={() => setShowPurchaseModal(true)}
             className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
@@ -381,6 +430,80 @@ export default function SMSPage() {
               <strong>Note:</strong> Credits never expire and can be used for any SMS messages
               including invoices, quotes, job updates, and manual messages.
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Message Modal */}
+      {showNewMessageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6">
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Send New SMS</h2>
+              <button
+                onClick={() => setShowNewMessageModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSendNewMessage}>
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={newMessagePhone}
+                  onChange={(e) => setNewMessagePhone(e.target.value)}
+                  placeholder="+61412345678 or 0412345678"
+                  className="w-full rounded-lg border px-4 py-2"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Include country code (e.g., +61 for Australia) or use 04 format
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Message
+                </label>
+                <textarea
+                  value={newMessageText}
+                  onChange={(e) => setNewMessageText(e.target.value)}
+                  placeholder="Type your message here..."
+                  className="w-full resize-none rounded-lg border px-4 py-2"
+                  rows={4}
+                  required
+                />
+                {newMessageText && (
+                  <p className="mt-1 text-sm text-gray-600">
+                    {newMessageText.length} characters • {calculateMessageCost(newMessageText)} credit
+                    {calculateMessageCost(newMessageText) !== 1 ? 's' : ''} (
+                    {(calculateMessageCost(newMessageText) * 0.05).toFixed(2)} AUD)
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowNewMessageModal(false)}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sending || !newMessagePhone.trim() || !newMessageText.trim()}
+                  className="flex-1 rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                >
+                  {sending ? 'Sending...' : 'Send SMS'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
