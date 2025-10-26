@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
       if (existingUsers.length === 0) {
         // Create new user
-        await sql`
+        const newUsers = await sql`
           INSERT INTO users (
             clerk_user_id, email, phone, full_name, profile_photo_url, created_at, updated_at
           ) VALUES (
@@ -74,8 +74,74 @@ export async function POST(req: Request) {
             NOW(),
             NOW()
           )
+          RETURNING id
         `
         console.log('Created user:', id, email)
+
+        const newUserId = newUsers[0].id
+
+        // Check if this user has a pending invitation
+        const pendingInvitations = await sql`
+          SELECT * FROM pending_invitations
+          WHERE email = ${email}
+          AND status = 'pending'
+          LIMIT 1
+        `
+
+        if (pendingInvitations.length > 0) {
+          const invitation = pendingInvitations[0]
+          console.log('Found pending invitation for', email)
+
+          // Create organization member with all the permissions from the invitation
+          await sql`
+            INSERT INTO organization_members (
+              organization_id,
+              user_id,
+              role,
+              status,
+              employment_type,
+              primary_trade_id,
+              hourly_rate,
+              billing_rate,
+              can_create_jobs,
+              can_edit_all_jobs,
+              can_create_invoices,
+              can_view_financials,
+              can_approve_expenses,
+              can_approve_timesheets,
+              joined_at,
+              created_at,
+              updated_at
+            ) VALUES (
+              ${invitation.organization_id},
+              ${newUserId},
+              ${invitation.role},
+              'active',
+              ${invitation.employment_type},
+              ${invitation.primary_trade_id},
+              ${invitation.hourly_rate},
+              ${invitation.billing_rate},
+              ${invitation.can_create_jobs},
+              ${invitation.can_edit_all_jobs},
+              ${invitation.can_create_invoices},
+              ${invitation.can_view_financials},
+              ${invitation.can_approve_expenses},
+              ${invitation.can_approve_timesheets},
+              NOW(),
+              NOW(),
+              NOW()
+            )
+          `
+
+          // Mark invitation as accepted
+          await sql`
+            UPDATE pending_invitations
+            SET status = 'accepted'
+            WHERE id = ${invitation.id}
+          `
+
+          console.log('Created organization member from invitation for', email)
+        }
       } else {
         // Update existing user
         await sql`

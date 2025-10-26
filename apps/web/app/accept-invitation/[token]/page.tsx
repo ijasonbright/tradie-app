@@ -147,8 +147,12 @@ export default function AcceptInvitationPage({
                       card: 'shadow-none',
                     },
                   }}
-                  redirectUrl={`/accept-invitation/${resolvedParams.token}/documents`}
+                  afterSignUpUrl="/dashboard"
+                  signInUrl="/sign-in"
                 />
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-600">
+                <p>After creating your account, you&apos;ll be able to upload required documents from your dashboard.</p>
               </div>
             </div>
           )}
