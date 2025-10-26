@@ -66,7 +66,7 @@ export async function GET() {
       LIMIT 1
     `
 
-    let teamExpiringDocs = []
+    let teamExpiringDocs: any[] = []
     if (orgMembership.length > 0) {
       const orgId = orgMembership[0].organization_id
 
