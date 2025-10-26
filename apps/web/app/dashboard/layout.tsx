@@ -28,6 +28,7 @@ export default function DashboardLayout({
     { href: '/dashboard/expenses', label: 'Expenses' },
     { href: '/dashboard/quotes', label: 'Quotes' },
     { href: '/dashboard/invoices', label: 'Invoices' },
+    { href: '/dashboard/sms', label: 'SMS' },
     { href: '/dashboard/team', label: 'Team' },
     { href: '/dashboard/settings', label: 'Settings' },
   ]
