@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { SignUp } from '@clerk/nextjs'
+import { SignUp, useUser } from '@clerk/nextjs'
 import DocumentUpload from '@/components/DocumentUpload'
 
 interface InvitationData {
@@ -25,6 +25,7 @@ export default function AcceptInvitationPage({
 }) {
   const resolvedParams = use(params)
   const router = useRouter()
+  const { isSignedIn, user } = useUser()
   const [invitation, setInvitation] = useState<InvitationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -34,6 +35,24 @@ export default function AcceptInvitationPage({
     verifyInvitation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // When user signs in/up successfully, move to documents step
+  useEffect(() => {
+    if (isSignedIn && user && step === 'signup') {
+      // Check if this invitation requires any documents
+      if (
+        invitation?.requires_trade_license ||
+        invitation?.requires_police_check ||
+        invitation?.requires_working_with_children ||
+        invitation?.requires_public_liability
+      ) {
+        setStep('documents')
+      } else {
+        // No documents required, go straight to complete
+        setStep('complete')
+      }
+    }
+  }, [isSignedIn, user, step, invitation])
 
   const verifyInvitation = async () => {
     try {
@@ -147,8 +166,6 @@ export default function AcceptInvitationPage({
                       card: 'shadow-none',
                     },
                   }}
-                  forceRedirectUrl="/dashboard"
-                  fallbackRedirectUrl="/dashboard"
                   signInUrl="/sign-in"
                   initialValues={{
                     emailAddress: invitation.email,
@@ -156,7 +173,7 @@ export default function AcceptInvitationPage({
                 />
               </div>
               <div className="mt-4 text-center text-sm text-gray-600">
-                <p>After creating your account, you&apos;ll be able to upload required documents from your dashboard.</p>
+                <p>After creating your account, you&apos;ll be asked to upload any required documents.</p>
               </div>
             </div>
           )}
