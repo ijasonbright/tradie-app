@@ -83,27 +83,27 @@ export async function PUT(req: Request) {
 
     const org = orgs[0]
 
-    // Update organization
+    // Update organization - handle nullable fields properly
     const updated = await sql`
       UPDATE organizations
       SET
-        name = COALESCE(${body.name}, name),
-        abn = COALESCE(${body.abn}, abn),
-        trade_type = COALESCE(${body.tradeType}, trade_type),
-        phone = COALESCE(${body.phone}, phone),
-        email = COALESCE(${body.email}, email),
-        address_line1 = COALESCE(${body.addressLine1}, address_line1),
-        address_line2 = COALESCE(${body.addressLine2}, address_line2),
-        city = COALESCE(${body.city}, city),
-        state = COALESCE(${body.state}, state),
-        postcode = COALESCE(${body.postcode}, postcode),
-        bank_name = COALESCE(${body.bankName}, bank_name),
-        bank_bsb = COALESCE(${body.bankBsb}, bank_bsb),
-        bank_account_number = COALESCE(${body.bankAccountNumber}, bank_account_number),
-        bank_account_name = COALESCE(${body.bankAccountName}, bank_account_name),
-        default_hourly_rate = COALESCE(${body.defaultHourlyRate}, default_hourly_rate),
-        default_employee_cost = COALESCE(${body.defaultEmployeeCost}, default_employee_cost),
-        sms_phone_number = COALESCE(${body.smsPhoneNumber}, sms_phone_number),
+        name = COALESCE(NULLIF(${body.name}, ''), name),
+        abn = COALESCE(NULLIF(${body.abn}, ''), abn),
+        trade_type = COALESCE(NULLIF(${body.tradeType}, ''), trade_type),
+        phone = COALESCE(NULLIF(${body.phone}, ''), phone),
+        email = COALESCE(NULLIF(${body.email}, ''), email),
+        address_line1 = COALESCE(NULLIF(${body.addressLine1}, ''), address_line1),
+        address_line2 = COALESCE(NULLIF(${body.addressLine2}, ''), address_line2),
+        city = COALESCE(NULLIF(${body.city}, ''), city),
+        state = COALESCE(NULLIF(${body.state}, ''), state),
+        postcode = COALESCE(NULLIF(${body.postcode}, ''), postcode),
+        bank_name = COALESCE(NULLIF(${body.bankName}, ''), bank_name),
+        bank_bsb = COALESCE(NULLIF(${body.bankBsb}, ''), bank_bsb),
+        bank_account_number = COALESCE(NULLIF(${body.bankAccountNumber}, ''), bank_account_number),
+        bank_account_name = COALESCE(NULLIF(${body.bankAccountName}, ''), bank_account_name),
+        default_hourly_rate = COALESCE(NULLIF(${body.defaultHourlyRate}, ''), default_hourly_rate),
+        default_employee_cost = COALESCE(NULLIF(${body.defaultEmployeeCost}, ''), default_employee_cost),
+        sms_phone_number = COALESCE(NULLIF(${body.smsPhoneNumber}, ''), sms_phone_number),
         updated_at = NOW()
       WHERE id = ${org.id}
       RETURNING *
