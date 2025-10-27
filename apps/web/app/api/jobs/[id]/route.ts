@@ -163,6 +163,13 @@ export async function PUT(
     const user = users[0]
     const body = await req.json()
 
+    // Helper function to convert empty strings to null for timestamps
+    const parseTimestamp = (value: any) => {
+      if (value === undefined) return undefined
+      if (value === null || value === '') return null
+      return value
+    }
+
     // Verify user has access to this job's organization
     const jobs = await sql`
       SELECT j.*, om.role, om.can_edit_all_jobs
@@ -204,12 +211,12 @@ export async function PUT(
         site_access_notes = ${body.siteAccessNotes !== undefined ? body.siteAccessNotes : job.site_access_notes},
         quoted_amount = ${body.quotedAmount !== undefined ? body.quotedAmount : job.quoted_amount},
         actual_amount = ${body.actualAmount !== undefined ? body.actualAmount : job.actual_amount},
-        scheduled_date = ${body.scheduledDate !== undefined ? body.scheduledDate : job.scheduled_date},
-        scheduled_start_time = ${body.scheduledStartTime !== undefined ? body.scheduledStartTime : job.scheduled_start_time},
-        scheduled_end_time = ${body.scheduledEndTime !== undefined ? body.scheduledEndTime : job.scheduled_end_time},
-        actual_start_time = ${body.actualStartTime !== undefined ? body.actualStartTime : job.actual_start_time},
-        actual_end_time = ${body.actualEndTime !== undefined ? body.actualEndTime : job.actual_end_time},
-        completed_at = ${body.completedAt !== undefined ? body.completedAt : job.completed_at},
+        scheduled_date = ${parseTimestamp(body.scheduledDate) !== undefined ? parseTimestamp(body.scheduledDate) : job.scheduled_date},
+        scheduled_start_time = ${parseTimestamp(body.scheduledStartTime) !== undefined ? parseTimestamp(body.scheduledStartTime) : job.scheduled_start_time},
+        scheduled_end_time = ${parseTimestamp(body.scheduledEndTime) !== undefined ? parseTimestamp(body.scheduledEndTime) : job.scheduled_end_time},
+        actual_start_time = ${parseTimestamp(body.actualStartTime) !== undefined ? parseTimestamp(body.actualStartTime) : job.actual_start_time},
+        actual_end_time = ${parseTimestamp(body.actualEndTime) !== undefined ? parseTimestamp(body.actualEndTime) : job.actual_end_time},
+        completed_at = ${parseTimestamp(body.completedAt) !== undefined ? parseTimestamp(body.completedAt) : job.completed_at},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *
