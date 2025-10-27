@@ -8,7 +8,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -16,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const jobId = params.id
+    const { id: jobId } = await params
 
     // Get user's internal ID
     const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
