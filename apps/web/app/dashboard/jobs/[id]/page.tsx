@@ -35,6 +35,7 @@ interface TimeLog {
   end_time: string | null
   total_hours: string | null
   labor_cost: string | null
+  billing_amount: string | null
   notes: string | null
   status: string
 }
@@ -647,7 +648,11 @@ export default function JobDetailPage() {
 
   const totalHours = timeLogs.reduce((sum, log) => sum + (parseFloat(log.total_hours || '0')), 0)
   const totalLaborCost = timeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
+  const totalBillingAmount = timeLogs.reduce((sum, log) => sum + (parseFloat(log.billing_amount || '0')), 0)
   const totalMaterialCost = materials.reduce((sum, mat) => sum + (parseFloat(mat.total_cost || '0')), 0)
+  const totalProjectCost = totalLaborCost + totalMaterialCost
+  const totalProjectBilling = totalBillingAmount + totalMaterialCost
+  const profitMargin = totalProjectBilling > 0 ? (((totalProjectBilling - totalProjectCost) / totalProjectBilling) * 100).toFixed(1) : '0'
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -711,20 +716,41 @@ export default function JobDetailPage() {
           </div>
         )}
 
-        {/* Cost Summary */}
-        <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-gray-600">Labor Cost</p>
-            <p className="text-lg font-bold text-gray-900">{formatCurrency(totalLaborCost.toString())}</p>
-            <p className="text-xs text-gray-500">{totalHours.toFixed(2)} hours</p>
+        {/* Cost & Billing Summary */}
+        <div className="mt-4 pt-4 border-t">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Project Financials</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-red-50 rounded-lg p-3">
+              <p className="text-xs text-red-600 font-medium uppercase">Labor Cost</p>
+              <p className="text-xl font-bold text-red-700">{formatCurrency(totalLaborCost.toString())}</p>
+              <p className="text-xs text-red-600 mt-1">{totalHours.toFixed(2)} hours</p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-3">
+              <p className="text-xs text-orange-600 font-medium uppercase">Materials</p>
+              <p className="text-xl font-bold text-orange-700">{formatCurrency(totalMaterialCost.toString())}</p>
+            </div>
+            <div className="bg-green-50 rounded-lg p-3">
+              <p className="text-xs text-green-600 font-medium uppercase">Labor Billing</p>
+              <p className="text-xl font-bold text-green-700">{formatCurrency(totalBillingAmount.toString())}</p>
+              <p className="text-xs text-green-600 mt-1">to client</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3">
+              <p className="text-xs text-blue-600 font-medium uppercase">Profit Margin</p>
+              <p className="text-xl font-bold text-blue-700">{profitMargin}%</p>
+              <p className="text-xs text-blue-600 mt-1">
+                ${(totalProjectBilling - totalProjectCost).toFixed(2)} profit
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-gray-600">Materials Cost</p>
-            <p className="text-lg font-bold text-gray-900">{formatCurrency(totalMaterialCost.toString())}</p>
-          </div>
-          <div>
-            <p className="text-sm text-gray-600">Total Cost</p>
-            <p className="text-lg font-bold text-green-600">{formatCurrency((totalLaborCost + totalMaterialCost).toString())}</p>
+          <div className="mt-3 pt-3 border-t flex justify-between items-center">
+            <div>
+              <span className="text-sm text-gray-600">Total Project Cost:</span>
+              <span className="ml-2 text-lg font-bold text-red-700">{formatCurrency(totalProjectCost.toString())}</span>
+            </div>
+            <div>
+              <span className="text-sm text-gray-600">Total Project Billing:</span>
+              <span className="ml-2 text-lg font-bold text-green-700">{formatCurrency(totalProjectBilling.toString())}</span>
+            </div>
           </div>
         </div>
 
