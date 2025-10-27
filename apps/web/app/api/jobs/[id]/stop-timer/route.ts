@@ -66,7 +66,19 @@ export async function POST(
 
     const totalMinutes = totalMinutesWorked - breakMinutes
     const totalHours = (totalMinutes / 60).toFixed(2)
-    const laborCost = (parseFloat(totalHours) * parseFloat(timeLog.hourly_rate || 0)).toFixed(2)
+    const costRate = parseFloat(timeLog.hourly_rate || 0)
+    const laborCost = (parseFloat(totalHours) * costRate).toFixed(2)
+
+    // Get billing rate from job's trade type
+    const jobRates = await sql`
+      SELECT tt.client_hourly_rate as billing_rate
+      FROM jobs j
+      JOIN trade_types tt ON tt.id = j.trade_type_id
+      WHERE j.id = ${jobId}
+      LIMIT 1
+    `
+    const billingRate = jobRates.length > 0 ? parseFloat(jobRates[0].billing_rate || 0) : 0
+    const billingAmount = (parseFloat(totalHours) * billingRate).toFixed(2)
 
     // Update time log with end time and calculations
     const updatedTimeLog = await sql`
@@ -76,6 +88,7 @@ export async function POST(
         break_duration_minutes = ${breakDurationMinutes},
         total_hours = ${totalHours},
         labor_cost = ${laborCost},
+        billing_amount = ${billingAmount},
         notes = ${notes || timeLog.notes},
         updated_at = NOW()
       WHERE id = ${timeLog.id}

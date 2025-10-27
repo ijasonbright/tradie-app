@@ -2,6 +2,7 @@ import { pgTable, uuid, varchar, text, timestamp, decimal, integer, boolean } fr
 import { organizations } from './organizations'
 import { clients } from './clients'
 import { users } from './users'
+import { tradeTypes } from './trade-types'
 
 export const jobs = pgTable('jobs', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -10,6 +11,7 @@ export const jobs = pgTable('jobs', {
   clientId: uuid('client_id').references(() => clients.id).notNull(),
   createdByUserId: uuid('created_by_user_id').references(() => users.id).notNull(),
   assignedToUserId: uuid('assigned_to_user_id').references(() => users.id),
+  tradeTypeId: uuid('trade_type_id').references(() => tradeTypes.id),
   // Job details
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
@@ -67,8 +69,9 @@ export const jobTimeLogs = pgTable('job_time_logs', {
   endTime: timestamp('end_time'),
   breakDurationMinutes: integer('break_duration_minutes').default(0),
   totalHours: decimal('total_hours', { precision: 5, scale: 2 }),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }),
-  laborCost: decimal('labor_cost', { precision: 10, scale: 2 }),
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }), // Cost rate - what we pay the worker
+  laborCost: decimal('labor_cost', { precision: 10, scale: 2 }), // Total cost to business
+  billingAmount: decimal('billing_amount', { precision: 10, scale: 2 }), // What we charge the client
   notes: text('notes'),
   status: varchar('status', { length: 50 }).default('pending'), // pending/approved/rejected
   approvedByUserId: uuid('approved_by_user_id').references(() => users.id),

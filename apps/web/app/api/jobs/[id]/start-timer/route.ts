@@ -41,17 +41,20 @@ export async function POST(
       )
     }
 
-    // Get user's hourly rate from organization_members
-    const members = await sql`
-      SELECT om.hourly_rate
-      FROM organization_members om
-      JOIN jobs j ON j.organization_id = om.organization_id
+    // Get hourly rates from job's trade type
+    const jobRates = await sql`
+      SELECT
+        tt.default_employee_hourly_rate as cost_rate,
+        tt.client_hourly_rate as billing_rate
+      FROM jobs j
+      JOIN trade_types tt ON tt.id = j.trade_type_id
       WHERE j.id = ${jobId}
-      AND om.user_id = ${user.id}
       LIMIT 1
     `
 
-    const hourlyRate = members.length > 0 ? members[0].hourly_rate : 0
+    // If no trade type or rates not set, use 0 (will show warning)
+    const costRate = jobRates.length > 0 ? (jobRates[0].cost_rate || 0) : 0
+    const billingRate = jobRates.length > 0 ? (jobRates[0].billing_rate || 0) : 0
 
     // Create new time log with start time
     const newTimeLog = await sql`
@@ -69,7 +72,7 @@ export async function POST(
         ${user.id},
         'timer',
         NOW(),
-        ${hourlyRate},
+        ${costRate},
         'pending',
         NOW(),
         NOW()
@@ -80,6 +83,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       timeLog: newTimeLog[0],
+      billingRate: billingRate, // Return billing rate for reference
       message: 'Timer started successfully',
     })
   } catch (error) {
