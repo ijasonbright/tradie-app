@@ -153,6 +153,10 @@ export default function JobDetailPage() {
     notes: '',
   })
 
+  // Completion modal state
+  const [showCompletionModal, setShowCompletionModal] = useState(false)
+  const [completionNotes, setCompletionNotes] = useState('')
+
   useEffect(() => {
     if (params.id) {
       fetchAllData()
@@ -328,24 +332,41 @@ export default function JobDetailPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Job completion handler
-  const handleCompleteJob = async () => {
-    if (!confirm('Are you sure you want to mark this job as completed?')) {
-      return
-    }
+  // Job completion handler - show modal first
+  const handleCompleteJob = () => {
+    setShowCompletionModal(true)
+  }
 
+  const confirmCompleteJob = async () => {
     try {
       const res = await fetch(`/api/jobs/${params.id}/complete`, {
         method: 'POST',
       })
       if (res.ok) {
         const data = await res.json()
+
+        // Add completion note if provided
+        if (completionNotes.trim()) {
+          await fetch(`/api/jobs/${params.id}/notes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              noteText: completionNotes,
+              noteType: 'completion',
+            }),
+          })
+        }
+
+        setShowCompletionModal(false)
+        setCompletionNotes('')
+
         if (data.warnings && data.warnings.length > 0) {
           alert(`Job completed!\n\nWarnings:\n${data.warnings.join('\n')}`)
         } else {
           alert('Job completed successfully!')
         }
         fetchJob()
+        fetchNotes()
       } else {
         const error = await res.json()
         alert(error.error || 'Failed to complete job')
@@ -827,53 +848,15 @@ export default function JobDetailPage() {
               Create Invoice
             </Link>
           )}
-        </div>
-        <h3 className="text-lg font-semibold mb-4 mt-6">Existing Actions</h3>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/dashboard/jobs/${params.id}/edit`}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
-          >
-            Edit Job
-          </Link>
-
           <Link
             href={`/dashboard/calendar?jobId=${job.id}&action=create`}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium"
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
           >
             📅 Create Appointment
           </Link>
-
-          {job.status === 'scheduled' && (
-            <button
-              onClick={() => handleStatusChange('in_progress')}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 font-medium"
-            >
-              Start Job
-            </button>
-          )}
-
-          {job.status === 'in_progress' && (
-            <button
-              onClick={() => handleStatusChange('completed')}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium"
-            >
-              Mark Complete
-            </button>
-          )}
-
-          {job.status === 'completed' && (
-            <button
-              onClick={() => router.push(`/dashboard/invoices/new?jobId=${job.id}&clientId=${job.client_id}`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-            >
-              Create Invoice
-            </button>
-          )}
-
           <button
             onClick={() => alert('Delete functionality coming soon')}
-            className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-medium"
+            className="px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold"
           >
             Delete Job
           </button>
@@ -1338,6 +1321,106 @@ export default function JobDetailPage() {
       )}
 
       {/* Stop Timer Modal */}
+      {/* Completion Modal */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6">
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">Complete Job</h2>
+
+            {/* Checklist */}
+            <div className="mb-6 space-y-3">
+              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="flex-1">
+                  <p className="font-semibold text-blue-900">Before completing:</p>
+                  <ul className="mt-2 space-y-1 text-sm text-blue-800">
+                    <li>✓ All work has been finished</li>
+                    <li>✓ Clock out if timer is running</li>
+                    <li>✓ Add completion photos (recommended)</li>
+                    <li>✓ Add any final notes below</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Quick link to upload photos */}
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-700">
+                    {photos.length} photo(s) uploaded
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCompletionModal(false)
+                    setActiveTab('photos')
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Add Photos
+                </button>
+              </div>
+
+              {/* Pending approvals warning */}
+              {(timeLogs.some(log => log.status === 'pending') || materials.some(mat => mat.status === 'pending')) && (
+                <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <svg className="w-5 h-5 text-yellow-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="font-semibold text-yellow-900">Pending Approvals</p>
+                    <p className="text-sm text-yellow-800 mt-1">
+                      You have unapproved time logs or materials. You can still complete the job.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Completion notes */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Completion Notes (optional)
+              </label>
+              <textarea
+                value={completionNotes}
+                onChange={(e) => setCompletionNotes(e.target.value)}
+                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                rows={3}
+                placeholder="Any final notes about the completed job..."
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCompletionModal(false)
+                  setCompletionNotes('')
+                }}
+                className="flex-1 rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmCompleteJob}
+                className="flex-1 rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+              >
+                Complete Job
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showStopTimerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6">
