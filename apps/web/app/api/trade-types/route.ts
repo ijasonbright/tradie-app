@@ -9,24 +9,39 @@ const sql = neon(process.env.DATABASE_URL!)
 // GET /api/trade-types - List all trade types for organization
 export async function GET() {
   try {
-    const { userId, orgId } = await auth()
-    if (!userId || !orgId) {
+    const { userId: clerkUserId } = await auth()
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Get user from database
+    const users = await sql`
+      SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+    `
+
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const user = users[0]
+
+    // Get trade types for organizations the user is a member of
     const tradeTypes = await sql`
-      SELECT
-        id,
-        name,
-        client_hourly_rate,
-        default_employee_hourly_rate,
-        client_callout_fee,
-        is_active,
-        created_at
-      FROM trade_types
-      WHERE organization_id = ${orgId}
-      AND is_active = true
-      ORDER BY name ASC
+      SELECT DISTINCT
+        tt.id,
+        tt.name,
+        tt.client_hourly_rate,
+        tt.default_employee_hourly_rate,
+        tt.client_callout_fee,
+        tt.is_active,
+        tt.created_at
+      FROM trade_types tt
+      INNER JOIN organizations o ON tt.organization_id = o.id
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE om.user_id = ${user.id}
+      AND om.status = 'active'
+      AND tt.is_active = true
+      ORDER BY tt.name ASC
     `
 
     console.log('Fetched trade types:', tradeTypes)
@@ -43,10 +58,21 @@ export async function GET() {
 // PUT /api/trade-types - Update a trade type's rates
 export async function PUT(req: Request) {
   try {
-    const { userId, orgId } = await auth()
-    if (!userId || !orgId) {
+    const { userId: clerkUserId } = await auth()
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    // Get user from database
+    const users = await sql`
+      SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+    `
+
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const user = users[0]
 
     const {
       id,
@@ -62,10 +88,15 @@ export async function PUT(req: Request) {
       )
     }
 
-    // Verify this trade type belongs to the user's organization
+    // Verify this trade type belongs to an organization the user is a member of
     const existing = await sql`
-      SELECT id FROM trade_types
-      WHERE id = ${id} AND organization_id = ${orgId}
+      SELECT tt.id
+      FROM trade_types tt
+      INNER JOIN organizations o ON tt.organization_id = o.id
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE tt.id = ${id}
+      AND om.user_id = ${user.id}
+      AND om.status = 'active'
       LIMIT 1
     `
 
