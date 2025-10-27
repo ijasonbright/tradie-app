@@ -157,6 +157,8 @@ export default function JobDetailPage() {
   // Completion modal state
   const [showCompletionModal, setShowCompletionModal] = useState(false)
   const [completionNotes, setCompletionNotes] = useState('')
+  const [completionPhotos, setCompletionPhotos] = useState<File[]>([])
+  const [uploadingCompletionPhotos, setUploadingCompletionPhotos] = useState(false)
 
   useEffect(() => {
     if (params.id) {
@@ -339,7 +341,24 @@ export default function JobDetailPage() {
   }
 
   const confirmCompleteJob = async () => {
+    setUploadingCompletionPhotos(true)
     try {
+      // Upload completion photos first
+      if (completionPhotos.length > 0) {
+        for (const photo of completionPhotos) {
+          const formData = new FormData()
+          formData.append('photo', photo)
+          formData.append('photoType', 'completion')
+          formData.append('caption', 'Job completion photo')
+
+          await fetch(`/api/jobs/${params.id}/photos`, {
+            method: 'POST',
+            body: formData,
+          })
+        }
+      }
+
+      // Mark job as complete
       const res = await fetch(`/api/jobs/${params.id}/complete`, {
         method: 'POST',
       })
@@ -360,6 +379,7 @@ export default function JobDetailPage() {
 
         setShowCompletionModal(false)
         setCompletionNotes('')
+        setCompletionPhotos([])
 
         if (data.warnings && data.warnings.length > 0) {
           alert(`Job completed!\n\nWarnings:\n${data.warnings.join('\n')}`)
@@ -368,6 +388,7 @@ export default function JobDetailPage() {
         }
         fetchJob()
         fetchNotes()
+        fetchPhotos()
       } else {
         const error = await res.json()
         alert(error.error || 'Failed to complete job')
@@ -375,7 +396,20 @@ export default function JobDetailPage() {
     } catch (error) {
       console.error('Error completing job:', error)
       alert('Failed to complete job')
+    } finally {
+      setUploadingCompletionPhotos(false)
     }
+  }
+
+  const handleCompletionPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      setCompletionPhotos(prev => [...prev, ...newFiles])
+    }
+  }
+
+  const removeCompletionPhoto = (index: number) => {
+    setCompletionPhotos(prev => prev.filter((_, i) => i !== index))
   }
 
   // Time log handlers
@@ -1370,28 +1404,67 @@ export default function JobDetailPage() {
                 </div>
               </div>
 
-              {/* Quick link to upload photos */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-2">
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">
-                    {photos.length} photo(s) uploaded
-                  </span>
+              {/* Photo Upload Section */}
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span className="text-sm font-semibold text-gray-900">Completion Photos</span>
+                  </div>
+                  <label className="px-3 py-1 bg-blue-600 text-white text-sm rounded cursor-pointer hover:bg-blue-700">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleCompletionPhotoSelect}
+                      className="hidden"
+                    />
+                    Add Photos
+                  </label>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCompletionModal(false)
-                    setActiveTab('photos')
-                  }}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Add Photos
-                </button>
+
+                {completionPhotos.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {completionPhotos.map((photo, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={URL.createObjectURL(photo)}
+                          alt={`Completion photo ${index + 1}`}
+                          className="w-full h-24 object-cover rounded"
+                        />
+                        <button
+                          onClick={() => removeCompletionPhoto(index)}
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-2">
+                    No photos added yet. Click "Add Photos" to upload completion photos.
+                  </p>
+                )}
               </div>
+
+              {/* Timer running warning */}
+              {activeTimer && (
+                <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                  <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="font-semibold text-red-900">Timer Still Running</p>
+                    <p className="text-sm text-red-800 mt-1">
+                      You have an active timer. Please clock out before completing the job.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Pending approvals warning */}
               {(timeLogs.some(log => log.status === 'pending') || materials.some(mat => mat.status === 'pending')) && (
@@ -1430,17 +1503,30 @@ export default function JobDetailPage() {
                 onClick={() => {
                   setShowCompletionModal(false)
                   setCompletionNotes('')
+                  setCompletionPhotos([])
                 }}
-                className="flex-1 rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50"
+                disabled={uploadingCompletionPhotos}
+                className="flex-1 rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmCompleteJob}
-                className="flex-1 rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700"
+                disabled={uploadingCompletionPhotos}
+                className="flex-1 rounded-md bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Complete Job
+                {uploadingCompletionPhotos ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Completing...
+                  </>
+                ) : (
+                  'Complete Job'
+                )}
               </button>
             </div>
           </div>
