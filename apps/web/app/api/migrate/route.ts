@@ -424,6 +424,9 @@ export async function POST() {
 
       // ========== PRICING TYPE & QUOTE VARIATIONS ==========
 
+      // Add billing_amount to job_time_logs for client billing rate
+      `ALTER TABLE job_time_logs ADD COLUMN IF NOT EXISTS billing_amount DECIMAL(10, 2)`,
+
       // Add pricing_type to jobs table
       `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(50) DEFAULT 'time_and_materials'`,
 
