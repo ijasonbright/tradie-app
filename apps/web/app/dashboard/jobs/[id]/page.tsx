@@ -327,6 +327,34 @@ export default function JobDetailPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Job completion handler
+  const handleCompleteJob = async () => {
+    if (!confirm('Are you sure you want to mark this job as completed?')) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/complete`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.warnings && data.warnings.length > 0) {
+          alert(`Job completed!\n\nWarnings:\n${data.warnings.join('\n')}`)
+        } else {
+          alert('Job completed successfully!')
+        }
+        fetchJob()
+      } else {
+        const error = await res.json()
+        alert(error.error || 'Failed to complete job')
+      }
+    } catch (error) {
+      console.error('Error completing job:', error)
+      alert('Failed to complete job')
+    }
+  }
+
   // Time log handlers
   const handleAddTimeLog = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -769,6 +797,37 @@ export default function JobDetailPage() {
       {/* Actions */}
       <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          {job.status !== 'completed' && job.status !== 'cancelled' && (
+            <button
+              onClick={handleCompleteJob}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Complete Job
+            </button>
+          )}
+          <Link
+            href={`/dashboard/jobs/${params.id}/edit`}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          >
+            Edit Job
+          </Link>
+          {!invoice && job.status === 'completed' && (
+            <Link
+              href={`/dashboard/invoices/new?jobId=${params.id}`}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Create Invoice
+            </Link>
+          )}
+        </div>
+        <h3 className="text-lg font-semibold mb-4 mt-6">Existing Actions</h3>
         <div className="flex flex-wrap gap-3">
           <Link
             href={`/dashboard/jobs/${params.id}/edit`}
