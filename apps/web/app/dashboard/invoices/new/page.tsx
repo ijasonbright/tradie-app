@@ -147,6 +147,7 @@ export default function NewInvoicePage() {
 
       console.log('Job data:', job)
       console.log('Quote data:', quote)
+      console.log('Job pricing type:', job.pricing_type)
 
       // Pre-fill form with job/client data
       setFormData(prev => ({
@@ -157,43 +158,150 @@ export default function NewInvoicePage() {
         notes: quote ? `Invoice for ${quote.quote_number} - ${quote.title}` : `Invoice for ${job.title}`,
       }))
 
-      // If there's a quote, fetch its line items and pre-fill
-      if (quote) {
-        console.log('Fetching line items for quote:', quote.id)
-        const quoteLineItemsRes = await fetch(`/api/quotes/${quote.id}/line-items`)
-        console.log('Line items response status:', quoteLineItemsRes.status)
+      // Check pricing type to determine how to populate invoice
+      if (job.pricing_type === 'fixed_price') {
+        // Fixed Price: Use quoted amount (single line item)
+        console.log('Fixed price job - using quoted amount:', job.quoted_amount)
 
-        if (quoteLineItemsRes.ok) {
-          const quoteLineItemsData = await quoteLineItemsRes.json()
-          const quoteLineItems = quoteLineItemsData.lineItems || []
-
-          console.log('Quote line items:', quoteLineItems)
-          console.log('Number of line items:', quoteLineItems.length)
-
-          if (quoteLineItems.length > 0) {
-            // Convert quote line items to invoice line items
-            const invoiceLineItems: LineItem[] = quoteLineItems.map((item: any) => ({
-              itemType: item.item_type,
-              description: item.description,
-              quantity: item.quantity.toString(),
-              unitPrice: item.unit_price.toString(),
-              lineTotal: parseFloat(item.line_total),
-            }))
-            console.log('Converted invoice line items:', invoiceLineItems)
-            setLineItems(invoiceLineItems)
-            console.log('Line items set successfully')
-          } else {
-            console.log('No line items found in quote')
+        const quotedAmount = parseFloat(job.quoted_amount || '0')
+        if (quotedAmount > 0) {
+          // Create a single line item for the fixed price
+          const fixedPriceLineItem: LineItem = {
+            itemType: 'other',
+            description: job.title || 'Job completion',
+            quantity: '1',
+            unitPrice: (quotedAmount / 1.1).toFixed(2), // Remove GST for unit price (will be added back)
+            lineTotal: quotedAmount,
           }
-        } else {
-          const errorText = await quoteLineItemsRes.text()
-          console.error('Failed to fetch line items:', errorText)
+          setLineItems([fixedPriceLineItem])
+          console.log('Fixed price line item created:', fixedPriceLineItem)
+        } else if (quote) {
+          // Fallback: if no quoted amount but quote exists, use quote line items
+          console.log('No quoted amount, fetching quote line items')
+          await fetchQuoteLineItems(quote.id)
         }
       } else {
-        console.log('No quote found for this job')
+        // Time & Materials: Pull actual time logs and materials
+        console.log('Time & materials job - fetching time logs and materials')
+
+        const invoiceLineItems: LineItem[] = []
+
+        // Fetch time logs
+        const timeLogsRes = await fetch(`/api/jobs/${jobId}/time-logs`)
+        if (timeLogsRes.ok) {
+          const timeLogsData = await timeLogsRes.json()
+          const timeLogs = timeLogsData.timeLogs || []
+          console.log('Time logs:', timeLogs)
+
+          // Group time logs by user and create line items
+          const userTimeMap = new Map<string, { hours: number; rate: number; name: string }>()
+
+          timeLogs.forEach((log: any) => {
+            if (log.status === 'approved') {
+              const userId = log.user_id
+              const hours = parseFloat(log.total_hours || '0')
+              // Try billing_amount first, fallback to hourly_rate (which is cost rate)
+              const billingAmount = parseFloat(log.billing_amount || '0')
+              const billingRate = billingAmount > 0 ? billingAmount / hours : parseFloat(log.hourly_rate || '0')
+              const userName = log.user_name || 'Team Member'
+
+              if (!userTimeMap.has(userId)) {
+                userTimeMap.set(userId, { hours: 0, rate: billingRate, name: userName })
+              }
+              const existing = userTimeMap.get(userId)!
+              existing.hours += hours
+            }
+          })
+
+          // Create line items for each user's time
+          userTimeMap.forEach((data, userId) => {
+            if (data.hours > 0) {
+              const lineTotal = data.hours * data.rate
+              invoiceLineItems.push({
+                itemType: 'labor',
+                description: `Labor - ${data.name} (${data.hours.toFixed(2)} hours @ $${data.rate.toFixed(2)}/hr)`,
+                quantity: data.hours.toFixed(2),
+                unitPrice: data.rate.toFixed(2),
+                lineTotal: lineTotal * 1.1, // Add GST
+              })
+            }
+          })
+        }
+
+        // Fetch materials
+        const materialsRes = await fetch(`/api/jobs/${jobId}/materials`)
+        if (materialsRes.ok) {
+          const materialsData = await materialsRes.json()
+          const materials = materialsData.materials || []
+          console.log('Materials:', materials)
+
+          materials.forEach((material: any) => {
+            if (material.status === 'approved') {
+              const qty = parseFloat(material.quantity || '0')
+              const unitPrice = parseFloat(material.unit_price || '0')
+              const totalCost = parseFloat(material.total_cost || '0')
+
+              invoiceLineItems.push({
+                itemType: 'material',
+                description: material.description || 'Material',
+                quantity: qty.toString(),
+                unitPrice: unitPrice.toString(),
+                lineTotal: totalCost,
+              })
+            }
+          })
+        }
+
+        if (invoiceLineItems.length > 0) {
+          setLineItems(invoiceLineItems)
+          console.log('Time & materials line items created:', invoiceLineItems)
+        } else {
+          console.log('No approved time logs or materials found')
+          // Fallback to quote line items if available
+          if (quote) {
+            await fetchQuoteLineItems(quote.id)
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching job/quote data:', error)
+    }
+  }
+
+  const fetchQuoteLineItems = async (quoteId: string) => {
+    try {
+      console.log('Fetching line items for quote:', quoteId)
+      const quoteLineItemsRes = await fetch(`/api/quotes/${quoteId}/line-items`)
+      console.log('Line items response status:', quoteLineItemsRes.status)
+
+      if (quoteLineItemsRes.ok) {
+        const quoteLineItemsData = await quoteLineItemsRes.json()
+        const quoteLineItems = quoteLineItemsData.lineItems || []
+
+        console.log('Quote line items:', quoteLineItems)
+        console.log('Number of line items:', quoteLineItems.length)
+
+        if (quoteLineItems.length > 0) {
+          // Convert quote line items to invoice line items
+          const invoiceLineItems: LineItem[] = quoteLineItems.map((item: any) => ({
+            itemType: item.item_type,
+            description: item.description,
+            quantity: item.quantity.toString(),
+            unitPrice: item.unit_price.toString(),
+            lineTotal: parseFloat(item.line_total),
+          }))
+          console.log('Converted invoice line items:', invoiceLineItems)
+          setLineItems(invoiceLineItems)
+          console.log('Line items set successfully')
+        } else {
+          console.log('No line items found in quote')
+        }
+      } else {
+        const errorText = await quoteLineItemsRes.text()
+        console.error('Failed to fetch line items:', errorText)
+      }
+    } catch (error) {
+      console.error('Error fetching quote line items:', error)
     }
   }
 

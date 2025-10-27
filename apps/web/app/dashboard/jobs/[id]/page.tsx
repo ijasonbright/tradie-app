@@ -1029,7 +1029,7 @@ export default function JobDetailPage() {
           </Link>
           {!invoice && job.status === 'completed' && (
             <Link
-              href={`/dashboard/invoices/new?jobId=${params.id}`}
+              href={`/dashboard/invoices/new?jobId=${params.id}&clientId=${job.client_id}`}
               className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
