@@ -19,13 +19,26 @@ export async function POST(
 
     const { id: jobId } = await params
     const body = await req.json()
-    const { tradeTypeId } = body
+    let { tradeTypeId } = body
 
+    // If no tradeTypeId provided, get it from the job
     if (!tradeTypeId) {
-      return NextResponse.json(
-        { error: 'tradeTypeId is required' },
-        { status: 400 }
-      )
+      const jobs = await sql`
+        SELECT trade_type_id FROM jobs WHERE id = ${jobId} LIMIT 1
+      `
+
+      if (jobs.length === 0) {
+        return NextResponse.json({ error: 'Job not found' }, { status: 404 })
+      }
+
+      tradeTypeId = jobs[0].trade_type_id
+
+      if (!tradeTypeId) {
+        return NextResponse.json(
+          { error: 'Job has no trade type set. Please edit the job and select a trade type first.' },
+          { status: 400 }
+        )
+      }
     }
 
     // Get trade type rates

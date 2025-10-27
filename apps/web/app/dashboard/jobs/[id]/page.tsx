@@ -796,6 +796,46 @@ export default function JobDetailPage() {
               <span className="ml-2 text-lg font-bold text-green-700">{formatCurrency(totalProjectBilling.toString())}</span>
             </div>
           </div>
+
+          {/* Show recalculate button if there are time logs with $0 costs but job has trade type */}
+          {totalHours > 0 && totalLaborCost === 0 && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-900">⚠️ Time logs need recalculation</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    This job has {totalHours.toFixed(2)} hours logged but shows $0.00 costs.
+                    Click below to recalculate using the trade type rates.
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (!confirm('Recalculate all time logs using the current trade type rates?')) return
+                    try {
+                      const res = await fetch(`/api/jobs/${params.id}/fix-rates`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                      })
+                      const data = await res.json()
+                      if (res.ok) {
+                        alert(`Success! Recalculated ${data.timeLogsUpdated} time logs. Refreshing...`)
+                        window.location.reload()
+                      } else {
+                        alert(`Error: ${data.error || 'Failed to recalculate'}`)
+                      }
+                    } catch (error) {
+                      alert('Failed to recalculate rates')
+                      console.error(error)
+                    }
+                  }}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium text-sm whitespace-nowrap"
+                >
+                  Recalculate Now
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Timer Widget */}
