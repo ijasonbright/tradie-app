@@ -312,7 +312,8 @@ export default function JobDetailPage() {
         fetchTimeLogs()
         alert('Timer stopped successfully!')
       } else {
-        alert('Failed to stop timer')
+        const error = await res.json()
+        alert(error.details || error.error || 'Failed to stop timer')
       }
     } catch (error) {
       console.error('Error stopping timer:', error)

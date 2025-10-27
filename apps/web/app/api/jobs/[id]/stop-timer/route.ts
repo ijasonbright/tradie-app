@@ -50,9 +50,23 @@ export async function POST(
     const startTime = new Date(timeLog.start_time)
     const endTime = new Date()
     const totalMilliseconds = endTime.getTime() - startTime.getTime()
-    const totalMinutes = Math.floor(totalMilliseconds / 60000) - parseInt(breakDurationMinutes)
+    const totalMinutesWorked = Math.floor(totalMilliseconds / 60000)
+    const breakMinutes = parseInt(breakDurationMinutes) || 0
+
+    // Validate break duration doesn't exceed time worked
+    if (breakMinutes > totalMinutesWorked) {
+      return NextResponse.json(
+        {
+          error: 'Break duration cannot exceed time worked',
+          details: `You worked ${totalMinutesWorked} minute(s) but entered ${breakMinutes} minute(s) break time`
+        },
+        { status: 400 }
+      )
+    }
+
+    const totalMinutes = totalMinutesWorked - breakMinutes
     const totalHours = (totalMinutes / 60).toFixed(2)
-    const laborCost = (parseFloat(totalHours) * parseFloat(timeLog.hourly_rate)).toFixed(2)
+    const laborCost = (parseFloat(totalHours) * parseFloat(timeLog.hourly_rate || 0)).toFixed(2)
 
     // Update time log with end time and calculations
     const updatedTimeLog = await sql`
