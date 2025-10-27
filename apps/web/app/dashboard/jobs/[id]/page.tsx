@@ -98,7 +98,35 @@ interface Invoice {
   paid_amount: string
 }
 
-type Tab = 'overview' | 'time' | 'materials' | 'photos' | 'notes'
+interface VariationLineItem {
+  id: string
+  item_type: string
+  description: string
+  quantity: string
+  unit_price: string
+  gst_amount: string
+  line_total: string
+  line_order: number
+}
+
+interface Variation {
+  id: string
+  variation_number: string
+  title: string
+  description: string | null
+  status: string
+  subtotal: string
+  gst_amount: string
+  total_amount: string
+  created_by_name: string
+  approved_by_client_at: string | null
+  rejected_by_client_at: string | null
+  rejection_reason: string | null
+  created_at: string
+  line_items: VariationLineItem[]
+}
+
+type Tab = 'overview' | 'time' | 'materials' | 'photos' | 'notes' | 'variations'
 
 export default function JobDetailPage() {
   const params = useParams()
@@ -112,6 +140,7 @@ export default function JobDetailPage() {
   const [photos, setPhotos] = useState<Photo[]>([])
   const [notes, setNotes] = useState<Note[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [variations, setVariations] = useState<Variation[]>([])
   const [loading, setLoading] = useState(true)
 
   // Time log form
@@ -190,6 +219,7 @@ export default function JobDetailPage() {
       fetchPhotos(),
       fetchNotes(),
       fetchAssignments(),
+      fetchVariations(),
     ])
     setLoading(false)
   }
@@ -265,6 +295,18 @@ export default function JobDetailPage() {
       }
     } catch (error) {
       console.error('Error fetching assignments:', error)
+    }
+  }
+
+  const fetchVariations = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/variations`)
+      if (res.ok) {
+        const data = await res.json()
+        setVariations(data.variations || [])
+      }
+    } catch (error) {
+      console.error('Error fetching variations:', error)
     }
   }
 
@@ -1021,6 +1063,7 @@ export default function JobDetailPage() {
               { id: 'materials', label: 'Materials', count: materials.length },
               { id: 'photos', label: 'Photos', count: photos.length },
               { id: 'notes', label: 'Notes', count: notes.length },
+              { id: 'variations', label: 'Variations', count: variations.length },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1462,6 +1505,189 @@ export default function JobDetailPage() {
                     >
                       Delete
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Content - Variations */}
+      {activeTab === 'variations' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">Quote Variations</h3>
+              <p className="text-sm text-gray-600 mt-1">Change orders for additional work beyond original scope</p>
+            </div>
+            <Link
+              href={`/dashboard/jobs/${params.id}/variations/new`}
+              className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium text-sm"
+            >
+              + New Variation
+            </Link>
+          </div>
+
+          {variations.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 mb-4">No variations created yet</p>
+              <Link
+                href={`/dashboard/jobs/${params.id}/variations/new`}
+                className="inline-block px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold"
+              >
+                Create First Variation
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {variations.map((variation) => (
+                <div
+                  key={variation.id}
+                  className={`p-4 rounded-lg border-2 ${
+                    variation.status === 'approved'
+                      ? 'bg-green-50 border-green-200'
+                      : variation.status === 'rejected'
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-semibold text-gray-900">{variation.variation_number}</h4>
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded ${
+                            variation.status === 'approved'
+                              ? 'bg-green-100 text-green-800'
+                              : variation.status === 'rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}
+                        >
+                          {variation.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <h5 className="font-medium text-gray-900">{variation.title}</h5>
+                      {variation.description && (
+                        <p className="text-sm text-gray-600 mt-1">{variation.description}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-purple-700">
+                        {formatCurrency(variation.total_amount)}
+                      </p>
+                      <p className="text-xs text-gray-500">inc. GST</p>
+                    </div>
+                  </div>
+
+                  {/* Line Items */}
+                  <div className="mt-3 border-t pt-3">
+                    <p className="text-xs font-medium text-gray-700 mb-2 uppercase">Line Items:</p>
+                    <div className="space-y-1">
+                      {variation.line_items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-sm">
+                          <div className="flex-1">
+                            <span className="text-gray-700">{item.description}</span>
+                            <span className="text-gray-500 ml-2">
+                              ({item.quantity} × {formatCurrency(item.unit_price)})
+                            </span>
+                          </div>
+                          <span className="font-medium text-gray-900">
+                            {formatCurrency(item.line_total)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-2 pt-2 border-t flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-medium">{formatCurrency(variation.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">GST:</span>
+                      <span className="font-medium">{formatCurrency(variation.gst_amount)}</span>
+                    </div>
+                  </div>
+
+                  {/* Metadata */}
+                  <div className="mt-3 pt-3 border-t flex items-center justify-between">
+                    <div className="text-xs text-gray-600">
+                      <p>Created by {variation.created_by_name}</p>
+                      <p>{formatDateTime(variation.created_at)}</p>
+                      {variation.approved_by_client_at && (
+                        <p className="text-green-600 font-medium mt-1">
+                          Approved: {formatDateTime(variation.approved_by_client_at)}
+                        </p>
+                      )}
+                      {variation.rejected_by_client_at && (
+                        <p className="text-red-600 font-medium mt-1">
+                          Rejected: {formatDateTime(variation.rejected_by_client_at)}
+                          {variation.rejection_reason && ` - ${variation.rejection_reason}`}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    {variation.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Approve variation ${variation.variation_number}? This will add ${formatCurrency(variation.total_amount)} to the job's quoted amount.`)) return
+                            try {
+                              const res = await fetch(`/api/jobs/${params.id}/variations/${variation.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'approve' }),
+                              })
+                              if (res.ok) {
+                                alert('Variation approved successfully')
+                                fetchVariations()
+                                fetchJob() // Refresh job to show updated quoted_amount
+                              } else {
+                                const error = await res.json()
+                                alert(`Error: ${error.error}`)
+                              }
+                            } catch (error) {
+                              console.error('Error approving variation:', error)
+                              alert('Failed to approve variation')
+                            }
+                          }}
+                          className="px-3 py-1 bg-green-600 text-white rounded text-sm font-medium hover:bg-green-700"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const reason = prompt('Rejection reason (optional):')
+                            if (reason === null) return // User cancelled
+
+                            try {
+                              const res = await fetch(`/api/jobs/${params.id}/variations/${variation.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  action: 'reject',
+                                  rejectionReason: reason,
+                                }),
+                              })
+                              if (res.ok) {
+                                alert('Variation rejected')
+                                fetchVariations()
+                              } else {
+                                const error = await res.json()
+                                alert(`Error: ${error.error}`)
+                              }
+                            } catch (error) {
+                              console.error('Error rejecting variation:', error)
+                              alert('Failed to reject variation')
+                            }
+                          }}
+                          className="px-3 py-1 bg-red-600 text-white rounded text-sm font-medium hover:bg-red-700"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
