@@ -572,6 +572,7 @@ export default function ExpensesPage() {
                 )}
                 {receiptPreview && (
                   <div className="mt-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={receiptPreview}
                       alt="Receipt preview"

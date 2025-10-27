@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Job {
   id: string
@@ -1278,9 +1279,11 @@ export default function JobDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {photos.map((photo) => (
                 <div key={photo.id} className="relative group">
-                  <img
+                  <Image
                     src={photo.photo_url}
                     alt={photo.caption || 'Job photo'}
+                    width={400}
+                    height={300}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity rounded-lg flex items-center justify-center">
@@ -1430,6 +1433,7 @@ export default function JobDetailPage() {
                   <div className="grid grid-cols-3 gap-2">
                     {completionPhotos.map((photo, index) => (
                       <div key={index} className="relative group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={URL.createObjectURL(photo)}
                           alt={`Completion photo ${index + 1}`}
@@ -1446,7 +1450,7 @@ export default function JobDetailPage() {
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 text-center py-2">
-                    No photos added yet. Click "Add Photos" to upload completion photos.
+                    No photos added yet. Click &quot;Add Photos&quot; to upload completion photos.
                   </p>
                 )}
               </div>
