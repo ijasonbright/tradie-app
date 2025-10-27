@@ -54,7 +54,7 @@ export async function POST(
     const { id: jobId } = await params
 
     // Get user's internal ID
-    const users = await sql\`SELECT id FROM users WHERE clerk_user_id = \${userId} LIMIT 1\`
+    const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
@@ -74,12 +74,12 @@ export async function POST(
     }
 
     // Upload to Vercel Blob
-    const blob = await put(\`jobs/\${jobId}/\${Date.now()}-\${photo.name}\`, photo, {
+    const blob = await put(`jobs/${jobId}/${Date.now()}-${photo.name}`, photo, {
       access: 'public',
     })
 
     // Save to database
-    const newPhoto = await sql\`
+    const newPhoto = await sql`
       INSERT INTO job_photos (
         job_id,
         uploaded_by_user_id,
@@ -88,15 +88,15 @@ export async function POST(
         photo_type,
         uploaded_at
       ) VALUES (
-        \${jobId},
-        \${user.id},
-        \${blob.url},
-        \${caption || null},
-        \${photoType},
+        ${jobId},
+        ${user.id},
+        ${blob.url},
+        ${caption || null},
+        ${photoType},
         NOW()
       )
       RETURNING *
-    \`
+    `
 
     return NextResponse.json({
       success: true,
