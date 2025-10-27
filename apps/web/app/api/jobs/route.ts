@@ -192,6 +192,7 @@ export async function POST(req: Request) {
       INSERT INTO jobs (
         organization_id, client_id, created_by_user_id, assigned_to_user_id,
         job_number, title, description, job_type, status, priority,
+        pricing_type,
         site_address_line1, site_address_line2,
         site_city, site_state, site_postcode, site_access_notes,
         quoted_amount, quote_id, scheduled_date,
@@ -209,6 +210,7 @@ export async function POST(req: Request) {
         ${body.jobType},
         ${body.status || 'quoted'},
         ${body.priority || 'medium'},
+        ${body.pricingType || 'time_and_materials'},
         ${body.siteAddressLine1 || null},
         ${body.siteAddressLine2 || null},
         ${body.siteCity || null},

@@ -40,6 +40,7 @@ export default function NewJobPage() {
     jobType: 'repair',
     status: 'quoted',
     priority: 'medium',
+    pricingType: 'time_and_materials',
     siteAddressLine1: '',
     siteAddressLine2: '',
     siteCity: '',
@@ -292,6 +293,35 @@ export default function NewJobPage() {
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
                     placeholder="Describe the job details..."
                   />
+                </div>
+
+                {/* Pricing Type Selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Pricing Type *
+                  </label>
+                  <select
+                    required
+                    value={formData.pricingType}
+                    onChange={(e) =>
+                      setFormData({ ...formData, pricingType: e.target.value })
+                    }
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  >
+                    <option value="fixed_price">Fixed Price (From Quote)</option>
+                    <option value="time_and_materials">Time & Materials</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formData.pricingType === 'fixed_price' ? (
+                      <>
+                        <strong>Fixed Price:</strong> Invoice amount comes from the quote. Time tracking is for internal costing only.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Time & Materials:</strong> Invoice amount calculated from actual hours worked + materials used.
+                      </>
+                    )}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

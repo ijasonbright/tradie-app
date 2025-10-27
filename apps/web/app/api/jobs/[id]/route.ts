@@ -202,6 +202,7 @@ export async function PUT(
         job_type = COALESCE(${body.jobType}, job_type),
         status = COALESCE(${body.status}, status),
         priority = COALESCE(${body.priority}, priority),
+        pricing_type = COALESCE(${body.pricingType}, pricing_type),
         assigned_to_user_id = ${body.assignedToUserId !== undefined ? body.assignedToUserId : job.assigned_to_user_id},
         trade_type_id = ${body.tradeTypeId !== undefined ? body.tradeTypeId : job.trade_type_id},
         site_address_line1 = ${body.siteAddressLine1 !== undefined ? body.siteAddressLine1 : job.site_address_line1},

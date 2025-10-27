@@ -13,6 +13,7 @@ interface Job {
   status: string
   priority: string
   job_type: string
+  pricing_type: string
   client_id: string
   company_name: string | null
   first_name: string | null
@@ -694,8 +695,15 @@ export default function JobDetailPage() {
   const totalLaborCost = timeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
   const totalBillingAmount = timeLogs.reduce((sum, log) => sum + (parseFloat(log.billing_amount || '0')), 0)
   const totalMaterialCost = materials.reduce((sum, mat) => sum + (parseFloat(mat.total_cost || '0')), 0)
+
+  // Calculate project cost (always actual costs)
   const totalProjectCost = totalLaborCost + totalMaterialCost
-  const totalProjectBilling = totalBillingAmount + totalMaterialCost
+
+  // Calculate project billing based on pricing type
+  const totalProjectBilling = job.pricing_type === 'fixed_price'
+    ? parseFloat(job.quoted_amount || '0')  // Fixed price: use quote amount
+    : totalBillingAmount + totalMaterialCost // Time & Materials: use actual hours + materials
+
   const profitMargin = totalProjectBilling > 0 ? (((totalProjectBilling - totalProjectCost) / totalProjectBilling) * 100).toFixed(1) : '0'
 
   return (
@@ -762,7 +770,16 @@ export default function JobDetailPage() {
 
         {/* Cost & Billing Summary */}
         <div className="mt-4 pt-4 border-t">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3">Project Financials</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-gray-700">Project Financials</h4>
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+              job.pricing_type === 'fixed_price'
+                ? 'bg-purple-100 text-purple-700'
+                : 'bg-blue-100 text-blue-700'
+            }`}>
+              {job.pricing_type === 'fixed_price' ? 'Fixed Price' : 'Time & Materials'}
+            </span>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-red-50 rounded-lg p-3">
               <p className="text-xs text-red-600 font-medium uppercase">Labor Cost</p>
@@ -774,9 +791,13 @@ export default function JobDetailPage() {
               <p className="text-xl font-bold text-orange-700">{formatCurrency(totalMaterialCost.toString())}</p>
             </div>
             <div className="bg-green-50 rounded-lg p-3">
-              <p className="text-xs text-green-600 font-medium uppercase">Labor Billing</p>
+              <p className="text-xs text-green-600 font-medium uppercase">
+                {job.pricing_type === 'fixed_price' ? 'Labor Value' : 'Labor Billing'}
+              </p>
               <p className="text-xl font-bold text-green-700">{formatCurrency(totalBillingAmount.toString())}</p>
-              <p className="text-xs text-green-600 mt-1">to client</p>
+              <p className="text-xs text-green-600 mt-1">
+                {job.pricing_type === 'fixed_price' ? 'internal only' : 'to client'}
+              </p>
             </div>
             <div className="bg-blue-50 rounded-lg p-3">
               <p className="text-xs text-blue-600 font-medium uppercase">Profit Margin</p>
@@ -796,6 +817,23 @@ export default function JobDetailPage() {
               <span className="ml-2 text-lg font-bold text-green-700">{formatCurrency(totalProjectBilling.toString())}</span>
             </div>
           </div>
+
+          {/* Pricing type explanation */}
+          {job.pricing_type === 'fixed_price' && (
+            <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-xs text-purple-900">
+                <strong>Fixed Price Job:</strong> Invoice amount is based on the quoted amount ({formatCurrency(job.quoted_amount || '0')}).
+                Time tracking is for internal costing and subcontractor payments only.
+              </p>
+            </div>
+          )}
+          {job.pricing_type === 'time_and_materials' && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-900">
+                <strong>Time & Materials Job:</strong> Invoice amount is calculated from actual hours worked plus materials used.
+              </p>
+            </div>
+          )}
 
           {/* Show recalculate button if there are time logs with $0 costs but job has trade type */}
           {totalHours > 0 && totalLaborCost === 0 && (

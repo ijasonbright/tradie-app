@@ -9,6 +9,7 @@ interface Job {
   organization_id: string
   client_id: string
   trade_type_id: string | null
+  pricing_type: string
   title: string
   description: string | null
   job_type: string
@@ -48,6 +49,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     jobType: 'repair',
     status: 'quoted',
     priority: 'medium',
+    pricingType: 'time_and_materials',
     tradeTypeId: '',
     siteAddressLine1: '',
     siteAddressLine2: '',
@@ -97,6 +99,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           jobType: jobData.job_type || 'repair',
           status: jobData.status || 'quoted',
           priority: jobData.priority || 'medium',
+          pricingType: jobData.pricing_type || 'time_and_materials',
           tradeTypeId: jobData.trade_type_id || '',
           siteAddressLine1: jobData.site_address_line1 || '',
           siteAddressLine2: jobData.site_address_line2 || '',
@@ -265,6 +268,35 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Pricing Type Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Pricing Type *
+                </label>
+                <select
+                  required
+                  value={formData.pricingType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, pricingType: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                >
+                  <option value="fixed_price">Fixed Price (From Quote)</option>
+                  <option value="time_and_materials">Time & Materials</option>
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formData.pricingType === 'fixed_price' ? (
+                    <>
+                      <strong>Fixed Price:</strong> Invoice amount comes from the quote. Time tracking is for internal costing only.
+                    </>
+                  ) : (
+                    <>
+                      <strong>Time & Materials:</strong> Invoice amount calculated from actual hours worked + materials used.
+                    </>
+                  )}
+                </p>
               </div>
 
               <div>

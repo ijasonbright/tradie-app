@@ -421,6 +421,60 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS sms_messages_tallbob_message_id_idx ON sms_messages(tallbob_message_id)`,
       `CREATE INDEX IF NOT EXISTS tallbob_webhooks_processed_idx ON tallbob_webhooks(processed)`,
       `CREATE INDEX IF NOT EXISTS tallbob_webhooks_created_at_idx ON tallbob_webhooks(created_at DESC)`,
+
+      // ========== PRICING TYPE & QUOTE VARIATIONS ==========
+
+      // Add pricing_type to jobs table
+      `ALTER TABLE jobs ADD COLUMN IF NOT EXISTS pricing_type VARCHAR(50) DEFAULT 'time_and_materials'`,
+
+      // Update existing jobs based on whether they have a quote
+      `UPDATE jobs
+       SET pricing_type = CASE
+         WHEN quote_id IS NOT NULL THEN 'fixed_price'
+         ELSE 'time_and_materials'
+       END
+       WHERE pricing_type IS NULL OR pricing_type = 'time_and_materials'`,
+
+      // Create quote_variations table
+      `CREATE TABLE IF NOT EXISTS quote_variations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        quote_id UUID NOT NULL,
+        job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        variation_number VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        gst_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        created_by_user_id UUID NOT NULL REFERENCES users(id),
+        approved_by_client_at TIMESTAMP,
+        rejected_by_client_at TIMESTAMP,
+        rejection_reason TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      // Create quote_variation_line_items table
+      `CREATE TABLE IF NOT EXISTS quote_variation_line_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        variation_id UUID NOT NULL REFERENCES quote_variations(id) ON DELETE CASCADE,
+        item_type VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        quantity DECIMAL(10, 2) NOT NULL DEFAULT 1,
+        unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        gst_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        line_total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        line_order INTEGER NOT NULL DEFAULT 0
+      )`,
+
+      // Create indexes for quote variations
+      `CREATE INDEX IF NOT EXISTS idx_quote_variations_quote_id ON quote_variations(quote_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_quote_variations_job_id ON quote_variations(job_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_quote_variations_organization_id ON quote_variations(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_quote_variations_status ON quote_variations(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_quote_variation_line_items_variation_id ON quote_variation_line_items(variation_id)`,
     ]
 
     const results = []
