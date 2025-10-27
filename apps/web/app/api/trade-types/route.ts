@@ -25,9 +25,11 @@ export async function GET() {
         created_at
       FROM trade_types
       WHERE organization_id = ${orgId}
+      AND is_active = true
       ORDER BY name ASC
     `
 
+    console.log('Fetched trade types:', tradeTypes)
     return NextResponse.json({ tradeTypes })
   } catch (error) {
     console.error('Error fetching trade types:', error)

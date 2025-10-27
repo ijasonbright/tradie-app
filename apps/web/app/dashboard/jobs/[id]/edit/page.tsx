@@ -84,6 +84,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
         // Fetch trade types
         const tradeTypesRes = await fetch('/api/trade-types')
         const tradeTypesData = await tradeTypesRes.json()
+        console.log('Trade types response:', tradeTypesData)
         setTradeTypes(tradeTypesData.tradeTypes || [])
 
         // Pre-fill form

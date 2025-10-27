@@ -94,6 +94,7 @@ export default function NewJobPage() {
     try {
       const res = await fetch('/api/trade-types')
       const data = await res.json()
+      console.log('Trade types response:', data)
       setTradeTypes(data.tradeTypes || [])
     } catch (error) {
       console.error('Error fetching trade types:', error)
