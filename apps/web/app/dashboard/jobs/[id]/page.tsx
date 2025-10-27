@@ -144,12 +144,34 @@ export default function JobDetailPage() {
     noteType: 'general',
   })
 
+  // Timer state
+  const [activeTimer, setActiveTimer] = useState<any>(null)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const [showStopTimerModal, setShowStopTimerModal] = useState(false)
+  const [stopTimerForm, setStopTimerForm] = useState({
+    breakDurationMinutes: '0',
+    notes: '',
+  })
+
   useEffect(() => {
     if (params.id) {
       fetchAllData()
+      fetchActiveTimer()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
+
+  // Update elapsed time every second when timer is active
+  useEffect(() => {
+    if (activeTimer) {
+      const interval = setInterval(() => {
+        const start = new Date(activeTimer.start_time).getTime()
+        const now = Date.now()
+        setElapsedTime(Math.floor((now - start) / 1000))
+      }, 1000)
+      return () => clearInterval(interval)
+    }
+  }, [activeTimer])
 
   const fetchAllData = async () => {
     await Promise.all([
@@ -235,6 +257,74 @@ export default function JobDetailPage() {
     } catch (error) {
       console.error('Error fetching assignments:', error)
     }
+  }
+
+  const fetchActiveTimer = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/active-timer`)
+      if (res.ok) {
+        const data = await res.json()
+        if (data.hasActiveTimer) {
+          setActiveTimer(data.activeTimer)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching active timer:', error)
+    }
+  }
+
+  // Timer handlers
+  const handleStartTimer = async () => {
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/start-timer`, {
+        method: 'POST',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setActiveTimer(data.timeLog)
+        alert('Timer started successfully!')
+      } else {
+        const error = await res.json()
+        alert(error.error || 'Failed to start timer')
+      }
+    } catch (error) {
+      console.error('Error starting timer:', error)
+      alert('Failed to start timer')
+    }
+  }
+
+  const handleStopTimer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await fetch(`/api/jobs/${params.id}/stop-timer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          breakDurationMinutes: parseInt(stopTimerForm.breakDurationMinutes),
+          notes: stopTimerForm.notes,
+        }),
+      })
+      if (res.ok) {
+        setActiveTimer(null)
+        setElapsedTime(0)
+        setShowStopTimerModal(false)
+        setStopTimerForm({ breakDurationMinutes: '0', notes: '' })
+        fetchTimeLogs()
+        alert('Timer stopped successfully!')
+      } else {
+        alert('Failed to stop timer')
+      }
+    } catch (error) {
+      console.error('Error stopping timer:', error)
+      alert('Failed to stop timer')
+    }
+  }
+
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   // Time log handlers
@@ -586,6 +676,39 @@ export default function JobDetailPage() {
             <p className="text-sm text-gray-600">Total Cost</p>
             <p className="text-lg font-bold text-green-600">{formatCurrency((totalLaborCost + totalMaterialCost).toString())}</p>
           </div>
+        </div>
+
+        {/* Timer Widget */}
+        <div className="mt-4 pt-4 border-t">
+          {activeTimer ? (
+            <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-semibold text-green-900">Timer Running</span>
+                </div>
+                <div className="text-3xl font-mono font-bold text-green-700">
+                  {formatElapsedTime(elapsedTime)}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStopTimerModal(true)}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
+              >
+                Clock Out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleStartTimer}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white rounded-lg px-6 py-3 hover:bg-blue-700 font-semibold text-lg"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Clock In - Start Timer
+            </button>
+          )}
         </div>
 
         {/* Linked Quote & Invoice */}
@@ -1151,6 +1274,62 @@ export default function JobDetailPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Stop Timer Modal */}
+      {showStopTimerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-6">
+            <h2 className="mb-4 text-xl font-bold">Clock Out</h2>
+            <form onSubmit={handleStopTimer}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Total Time: {formatElapsedTime(elapsedTime)}
+                </label>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Break Duration (minutes)
+                </label>
+                <input
+                  type="number"
+                  value={stopTimerForm.breakDurationMinutes}
+                  onChange={(e) => setStopTimerForm({ ...stopTimerForm, breakDurationMinutes: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm"
+                  min="0"
+                  placeholder="0"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes (optional)
+                </label>
+                <textarea
+                  value={stopTimerForm.notes}
+                  onChange={(e) => setStopTimerForm({ ...stopTimerForm, notes: e.target.value })}
+                  className="w-full rounded-md border-gray-300 shadow-sm"
+                  rows={3}
+                  placeholder="Any notes about this work session..."
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowStopTimerModal(false)}
+                  className="flex-1 rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-md bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700"
+                >
+                  Stop Timer
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
