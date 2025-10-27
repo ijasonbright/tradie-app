@@ -26,6 +26,7 @@ export const jobs = pgTable('jobs', {
   sitePostcode: varchar('site_postcode', { length: 20 }),
   siteAccessNotes: text('site_access_notes'),
   // Pricing
+  pricingType: varchar('pricing_type', { length: 50 }).default('time_and_materials'), // fixed_price/time_and_materials
   quotedAmount: decimal('quoted_amount', { precision: 10, scale: 2 }),
   actualAmount: decimal('actual_amount', { precision: 10, scale: 2 }),
   // Scheduling
