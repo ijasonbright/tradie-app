@@ -158,7 +158,7 @@ export default function JobDetailPage() {
   // Completion modal state
   const [showCompletionModal, setShowCompletionModal] = useState(false)
   const [completionNotes, setCompletionNotes] = useState('')
-  const [completionPhotos, setCompletionPhotos] = useState<File[]>([])
+  const [completionPhotos, setCompletionPhotos] = useState<Array<{ file: File; type: string }>>([])
   const [uploadingCompletionPhotos, setUploadingCompletionPhotos] = useState(false)
 
   useEffect(() => {
@@ -346,11 +346,11 @@ export default function JobDetailPage() {
     try {
       // Upload completion photos first
       if (completionPhotos.length > 0) {
-        for (const photo of completionPhotos) {
+        for (const photoData of completionPhotos) {
           const formData = new FormData()
-          formData.append('photo', photo)
-          formData.append('photoType', 'completion')
-          formData.append('caption', 'Job completion photo')
+          formData.append('photo', photoData.file)
+          formData.append('photoType', photoData.type)
+          formData.append('caption', `${photoData.type.replace('_', ' ')} photo`)
 
           await fetch(`/api/jobs/${params.id}/photos`, {
             method: 'POST',
@@ -404,13 +404,22 @@ export default function JobDetailPage() {
 
   const handleCompletionPhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles = Array.from(e.target.files)
+      const newFiles = Array.from(e.target.files).map(file => ({
+        file,
+        type: 'completion' // default to completion type
+      }))
       setCompletionPhotos(prev => [...prev, ...newFiles])
     }
   }
 
   const removeCompletionPhoto = (index: number) => {
     setCompletionPhotos(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const updateCompletionPhotoType = (index: number, type: string) => {
+    setCompletionPhotos(prev => prev.map((photo, i) =>
+      i === index ? { ...photo, type } : photo
+    ))
   }
 
   // Time log handlers
@@ -1430,20 +1439,36 @@ export default function JobDetailPage() {
                 </div>
 
                 {completionPhotos.length > 0 ? (
-                  <div className="grid grid-cols-3 gap-2">
-                    {completionPhotos.map((photo, index) => (
-                      <div key={index} className="relative group">
+                  <div className="space-y-3">
+                    {completionPhotos.map((photoData, index) => (
+                      <div key={index} className="flex items-start gap-3 p-2 bg-white rounded border border-gray-200">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={URL.createObjectURL(photo)}
+                          src={URL.createObjectURL(photoData.file)}
                           alt={`Completion photo ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
+                          className="w-20 h-20 object-cover rounded"
                         />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 mb-2">{photoData.file.name}</p>
+                          <select
+                            value={photoData.type}
+                            onChange={(e) => updateCompletionPhotoType(index, e.target.value)}
+                            className="text-sm border-gray-300 rounded px-2 py-1 w-full"
+                          >
+                            <option value="before">Before</option>
+                            <option value="during">During</option>
+                            <option value="after">After</option>
+                            <option value="completion">Completion</option>
+                            <option value="issue">Issue</option>
+                          </select>
+                        </div>
                         <button
                           onClick={() => removeCompletionPhoto(index)}
-                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="text-red-600 hover:text-red-700 p-1"
                         >
-                          ×
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ))}
