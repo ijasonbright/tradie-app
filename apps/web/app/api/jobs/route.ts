@@ -196,6 +196,7 @@ export async function POST(req: Request) {
         site_city, site_state, site_postcode, site_access_notes,
         quoted_amount, quote_id, scheduled_date,
         scheduled_start_time, scheduled_end_time,
+        trade_type_id,
         created_at, updated_at
       ) VALUES (
         ${body.organizationId},
@@ -219,6 +220,7 @@ export async function POST(req: Request) {
         ${body.scheduledDate || null},
         ${body.scheduledStartTime || null},
         ${body.scheduledEndTime || null},
+        ${body.tradeTypeId || null},
         NOW(),
         NOW()
       )

@@ -17,15 +17,24 @@ interface Client {
   is_company: boolean
 }
 
+interface TradeType {
+  id: string
+  name: string
+  client_hourly_rate: string
+  default_employee_hourly_rate: string
+}
+
 export default function NewJobPage() {
   const router = useRouter()
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     organizationId: '',
     clientId: '',
+    tradeTypeId: '',
     title: '',
     description: '',
     jobType: 'repair',
@@ -50,6 +59,7 @@ export default function NewJobPage() {
   useEffect(() => {
     if (formData.organizationId) {
       fetchClients()
+      fetchTradeTypes()
     }
   }, [formData.organizationId])
 
@@ -77,6 +87,16 @@ export default function NewJobPage() {
       setClients(data.clients || [])
     } catch (error) {
       console.error('Error fetching clients:', error)
+    }
+  }
+
+  const fetchTradeTypes = async () => {
+    try {
+      const res = await fetch('/api/trade-types')
+      const data = await res.json()
+      setTradeTypes(data.tradeTypes || [])
+    } catch (error) {
+      console.error('Error fetching trade types:', error)
     }
   }
 
@@ -201,6 +221,37 @@ export default function NewJobPage() {
                   </Link>
                 </p>
               )}
+            </div>
+
+            {/* Trade Type Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Trade Type *
+              </label>
+              <select
+                required
+                value={formData.tradeTypeId}
+                onChange={(e) =>
+                  setFormData({ ...formData, tradeTypeId: e.target.value })
+                }
+                disabled={!formData.organizationId}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 disabled:bg-gray-100"
+              >
+                <option value="">Select a trade type</option>
+                {tradeTypes.map((tradeType) => (
+                  <option key={tradeType.id} value={tradeType.id}>
+                    {tradeType.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">
+                This determines the hourly rates used for time tracking and invoicing.
+                {tradeTypes.length === 0 && formData.organizationId && (
+                  <span className="block mt-1 text-amber-600">
+                    No trade types found. <Link href="/dashboard/settings/trades" className="text-blue-600 hover:text-blue-800">Configure trade rates</Link> first.
+                  </span>
+                )}
+              </p>
             </div>
 
             {/* Job Details */}

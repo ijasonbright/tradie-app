@@ -8,6 +8,7 @@ interface Job {
   id: string
   organization_id: string
   client_id: string
+  trade_type_id: string | null
   title: string
   description: string | null
   job_type: string
@@ -27,10 +28,18 @@ interface Job {
   client_name: string
 }
 
+interface TradeType {
+  id: string
+  name: string
+  client_hourly_rate: string
+  default_employee_hourly_rate: string
+}
+
 export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [jobId, setJobId] = useState<string | null>(null)
   const [job, setJob] = useState<Job | null>(null)
+  const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -39,6 +48,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
     jobType: 'repair',
     status: 'quoted',
     priority: 'medium',
+    tradeTypeId: '',
     siteAddressLine1: '',
     siteAddressLine2: '',
     siteCity: '',
@@ -71,6 +81,11 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
 
         setJob(jobData)
 
+        // Fetch trade types
+        const tradeTypesRes = await fetch('/api/trade-types')
+        const tradeTypesData = await tradeTypesRes.json()
+        setTradeTypes(tradeTypesData.tradeTypes || [])
+
         // Pre-fill form
         setFormData({
           title: jobData.title || '',
@@ -78,6 +93,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
           jobType: jobData.job_type || 'repair',
           status: jobData.status || 'quoted',
           priority: jobData.priority || 'medium',
+          tradeTypeId: jobData.trade_type_id || '',
           siteAddressLine1: jobData.site_address_line1 || '',
           siteAddressLine2: jobData.site_address_line2 || '',
           siteCity: jobData.site_city || '',
@@ -245,6 +261,36 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
                     <option value="cancelled">Cancelled</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Trade Type *</label>
+                <select
+                  required
+                  value={formData.tradeTypeId}
+                  onChange={(e) => setFormData({ ...formData, tradeTypeId: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                >
+                  <option value="">Select a trade type</option>
+                  {tradeTypes.map((tradeType) => (
+                    <option key={tradeType.id} value={tradeType.id}>
+                      {tradeType.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  This determines the hourly rates used for time tracking and invoicing.
+                  {tradeTypes.length === 0 && (
+                    <span className="block mt-1 text-amber-600">
+                      No trade types found. <Link href="/dashboard/settings/trades" className="text-blue-600 hover:text-blue-800">Configure trade rates</Link> first.
+                    </span>
+                  )}
+                  {!formData.tradeTypeId && job?.trade_type_id === null && (
+                    <span className="block mt-1 text-amber-600">
+                      ⚠️ This job has no trade type set. Time tracking will show $0.00 costs until a trade type is selected.
+                    </span>
+                  )}
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
