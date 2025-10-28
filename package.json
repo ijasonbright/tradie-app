@@ -25,5 +25,9 @@
   },
   "dependencies": {
     "expo-linking": "~8.0.8"
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }
