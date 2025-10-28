@@ -24,6 +24,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "expo-linking": "~8.0.8"
+    "expo-linking": "~8.0.8",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }
