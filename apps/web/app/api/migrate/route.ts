@@ -478,6 +478,51 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_quote_variations_organization_id ON quote_variations(organization_id)`,
       `CREATE INDEX IF NOT EXISTS idx_quote_variations_status ON quote_variations(status)`,
       `CREATE INDEX IF NOT EXISTS idx_quote_variation_line_items_variation_id ON quote_variation_line_items(variation_id)`,
+
+      // ========== SUBCONTRACTOR PAYMENTS ==========
+
+      // Create subcontractor_payments table
+      `CREATE TABLE IF NOT EXISTS subcontractor_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+        subcontractor_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        payment_period_start DATE NOT NULL,
+        payment_period_end DATE NOT NULL,
+        labor_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        materials_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        equipment_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        paid_amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        status VARCHAR(50) NOT NULL DEFAULT 'pending',
+        paid_date DATE,
+        payment_method VARCHAR(50),
+        reference_number VARCHAR(100),
+        notes TEXT,
+        xero_bill_id VARCHAR(255),
+        last_synced_at TIMESTAMP,
+        created_by_user_id UUID REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create subcontractor_payment_items table
+      `CREATE TABLE IF NOT EXISTS subcontractor_payment_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        payment_id UUID NOT NULL REFERENCES subcontractor_payments(id) ON DELETE CASCADE,
+        item_type VARCHAR(50) NOT NULL,
+        source_id TEXT,
+        description TEXT NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for subcontractor payments
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payments_organization_id ON subcontractor_payments(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payments_subcontractor_user_id ON subcontractor_payments(subcontractor_user_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payments_status ON subcontractor_payments(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payments_created_at ON subcontractor_payments(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payment_items_payment_id ON subcontractor_payment_items(payment_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_subcontractor_payment_items_source_id ON subcontractor_payment_items(source_id)`,
     ]
 
     const results = []
