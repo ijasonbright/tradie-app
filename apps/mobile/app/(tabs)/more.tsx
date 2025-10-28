@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
 import { Avatar, List, Divider, Button } from 'react-native-paper'
-import { useUser, useAuth } from '@clerk/clerk-expo'
+import { useUser, useAuth } from '../../lib/auth'
 import { useRouter } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 

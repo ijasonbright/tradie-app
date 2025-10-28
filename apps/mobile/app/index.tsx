@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
-import { useAuth } from '@clerk/clerk-expo'
+import { useAuth } from '../lib/auth'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 

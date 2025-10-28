@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native'
 import { TextInput, Button } from 'react-native-paper'
-import { useSignUp } from '@clerk/clerk-expo'
+import { useSignUp } from '../../lib/auth'
 import { useRouter, Link } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
