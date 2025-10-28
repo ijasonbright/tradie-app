@@ -492,7 +492,7 @@ export default function ExpensesPage() {
                 <div className="ml-4 text-right">
                   <div className="text-xl font-bold">{formatCurrency(expense.total_amount)}</div>
                   <div className="mt-1 text-xs text-gray-500">
-                    +${parseFloat(expense.gst_amount).toFixed(2)} GST
+                    (inc ${parseFloat(expense.gst_amount).toFixed(2)} GST)
                   </div>
                   <div className="mt-2">
                     <span className={`rounded px-2 py-1 text-xs font-semibold ${getStatusColor(expense.status)}`}>

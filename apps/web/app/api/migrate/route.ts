@@ -523,6 +523,15 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_subcontractor_payments_created_at ON subcontractor_payments(created_at DESC)`,
       `CREATE INDEX IF NOT EXISTS idx_subcontractor_payment_items_payment_id ON subcontractor_payment_items(payment_id)`,
       `CREATE INDEX IF NOT EXISTS idx_subcontractor_payment_items_source_id ON subcontractor_payment_items(source_id)`,
+
+      // ========== FIX INCORRECT GST CALCULATIONS ==========
+
+      // Fix expenses where GST is 0 but total_amount > 0 (calculate GST from total)
+      `UPDATE expenses
+       SET gst_amount = ROUND(total_amount / 11, 2),
+           amount = ROUND(total_amount - (total_amount / 11), 2)
+       WHERE gst_amount = 0
+       AND total_amount > 0`,
     ]
 
     const results = []
