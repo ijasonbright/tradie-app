@@ -4,6 +4,7 @@ import { neon } from '@neondatabase/serverless'
 import { SignJWT } from 'jose'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 /**
  * Mobile Authentication - Sign In

@@ -3,6 +3,7 @@ import { jwtVerify } from 'jose'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 /**
  * Mobile Authentication - Verify Token
