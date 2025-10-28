@@ -1,21 +1,28 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { useEffect } from 'react'
+import { View, ActivityIndicator, StyleSheet } from 'react-native'
+import { useAuth } from '@clerk/clerk-expo'
+import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { Button } from 'react-native-paper'
 
 export default function Index() {
+  const { isLoaded, isSignedIn } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoaded) return
+
+    if (isSignedIn) {
+      // User is signed in, redirect to main app (tabs)
+      router.replace('/(tabs)/jobs')
+    } else {
+      // User is not signed in, redirect to sign in
+      router.replace('/(auth)/sign-in')
+    }
+  }, [isLoaded, isSignedIn])
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🔨 Tradie App</Text>
-      <Text style={styles.subtitle}>Mobile Version</Text>
-      <Text style={styles.info}>React Native + Expo</Text>
-      <Text style={styles.info}>Ready to build! 🚀</Text>
-      <Button
-        mode="contained"
-        style={styles.button}
-        onPress={() => alert('Phase 1 Coming Soon!')}
-      >
-        Get Started
-      </Button>
+      <ActivityIndicator size="large" color="#2563eb" />
       <StatusBar style="auto" />
     </View>
   )
@@ -27,26 +34,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#2563eb',
-  },
-  subtitle: {
-    fontSize: 20,
-    color: '#666',
-    marginBottom: 10,
-  },
-  info: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 8,
-  },
-  button: {
-    marginTop: 30,
-    paddingHorizontal: 20,
   },
 })
