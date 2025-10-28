@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import * as SecureStore from 'expo-secure-store'
+import * as WebBrowser from 'expo-web-browser'
+import * as Linking from 'expo-linking'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://tradie-app-web.vercel.app/api'
+const WEB_URL = 'https://tradie-app-web.vercel.app'
+
+WebBrowser.maybeCompleteAuthSession()
 
 type User = {
   id: string
@@ -16,6 +21,7 @@ type AuthContextType = {
   isSignedIn: boolean
   user: User | null
   signIn: (email: string, password: string) => Promise<void>
+  signInWithOAuth: () => Promise<void>
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -26,7 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isSignedIn, setIsSignedIn] = useState(false)
   const [user, setUser] = useState<User | null>(null)
-  const [sessionToken, setSessionToken] = useState<string | null>(null)
 
   // Load session on mount
   useEffect(() => {
@@ -36,7 +41,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const storedUser = await SecureStore.getItemAsync('user_data')
 
         if (storedToken && storedUser) {
-          setSessionToken(storedToken)
           setUser(JSON.parse(storedUser))
           setIsSignedIn(true)
         }
@@ -48,6 +52,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     loadSession()
   }, [])
+
+  // Handle deep link OAuth callback
+  useEffect(() => {
+    const handleUrl = async (event: { url: string }) => {
+      const url = event.url
+
+      if (url.startsWith('tradieapp://auth-callback')) {
+        const params = new URL(url).searchParams
+        const token = params.get('token')
+        const userJson = params.get('user')
+
+        if (token && userJson) {
+          try {
+            const userData = JSON.parse(decodeURIComponent(userJson))
+
+            const user: User = {
+              id: userData.id,
+              firstName: userData.firstName || null,
+              lastName: userData.lastName || null,
+              email: userData.email,
+              fullName: userData.fullName,
+            }
+
+            await SecureStore.setItemAsync('session_token', token)
+            await SecureStore.setItemAsync('user_data', JSON.stringify(user))
+
+            setUser(user)
+            setIsSignedIn(true)
+          } catch (error) {
+            console.error('Failed to process OAuth callback:', error)
+          }
+        }
+      }
+    }
+
+    // Listen for deep link events
+    const subscription = Linking.addEventListener('url', handleUrl)
+
+    // Check if app was opened with a URL
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleUrl({ url })
+      }
+    })
+
+    return () => {
+      subscription.remove()
+    }
+  }, [])
+
+  const signInWithOAuth = async () => {
+    try {
+      // Open the web app's OAuth callback page in browser
+      // User will sign in with Apple/Google/etc, then redirect back to mobile app
+      const result = await WebBrowser.openAuthSessionAsync(
+        `${WEB_URL}/api/mobile-auth/oauth-callback`,
+        'tradieapp://auth-callback'
+      )
+
+      if (result.type === 'success' && result.url) {
+        // URL will be handled by the deep link listener above
+        console.log('OAuth success, waiting for callback...')
+      } else if (result.type === 'cancel') {
+        throw new Error('Sign in cancelled')
+      }
+    } catch (error) {
+      console.error('OAuth sign in failed:', error)
+      throw error
+    }
+  }
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -77,7 +151,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.setItemAsync('session_token', token)
       await SecureStore.setItemAsync('user_data', JSON.stringify(user))
 
-      setSessionToken(token)
       setUser(user)
       setIsSignedIn(true)
     } catch (error) {
@@ -88,8 +161,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
-      // Note: Currently using sign-in endpoint as Clerk doesn't support
-      // password-based sign-up via API. Users should be created via web app first.
       const response = await fetch(`${API_URL}/mobile-auth/sign-in`, {
         method: 'POST',
         headers: {
@@ -116,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.setItemAsync('session_token', token)
       await SecureStore.setItemAsync('user_data', JSON.stringify(user))
 
-      setSessionToken(token)
       setUser(user)
       setIsSignedIn(true)
     } catch (error) {
@@ -130,7 +200,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.deleteItemAsync('session_token')
       await SecureStore.deleteItemAsync('user_data')
 
-      setSessionToken(null)
       setUser(null)
       setIsSignedIn(false)
     } catch (error) {
@@ -139,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isLoaded, isSignedIn, user, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ isLoaded, isSignedIn, user, signIn, signInWithOAuth, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   )
@@ -181,6 +250,7 @@ export function useSignIn() {
         return { createdSessionId: '1' }
       }
     },
+    signInWithOAuth: context.signInWithOAuth,
     setActive: async () => {},
     isLoaded: context.isLoaded,
   }
