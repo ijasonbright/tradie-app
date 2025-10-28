@@ -2,14 +2,13 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
-
 // GET /api/subcontractors/[id]/summary - Get subcontractor payment summary
 export async function GET(
   req: Request,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
