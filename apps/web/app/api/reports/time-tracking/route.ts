@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     // Get user from database
     const users = await sql`
       SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
-    `)
+    `
 
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -32,10 +32,10 @@ export async function GET(req: Request) {
     const members = await sql`
       SELECT organization_id, role
       FROM organization_members
-      WHERE user_id = '${user.id}'
+      WHERE user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
-    `)
+    `
 
     if (members.length === 0) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
@@ -85,7 +85,7 @@ export async function GET(req: Request) {
     `)
 
     // Hours by job
-    const hoursByJob = await sql`
+    const hoursByJob = await sql(`
       SELECT
         j.id as job_id,
         j.job_number,
@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     // Hours by time period
     let hoursByPeriod: any[] = []
     if (groupBy === 'day') {
-      hoursByPeriod = await sql`
+      hoursByPeriod = await sql(`
         SELECT
           DATE_TRUNC('day', tl.start_time) as period,
           TO_CHAR(DATE_TRUNC('day', tl.start_time), 'YYYY-MM-DD') as period_label,
@@ -137,7 +137,7 @@ export async function GET(req: Request) {
         ORDER BY period DESC
       `)
     } else if (groupBy === 'week') {
-      hoursByPeriod = await sql`
+      hoursByPeriod = await sql(`
         SELECT
           DATE_TRUNC('week', tl.start_time) as period,
           TO_CHAR(DATE_TRUNC('week', tl.start_time), 'YYYY-MM-DD') as period_label,
@@ -155,7 +155,7 @@ export async function GET(req: Request) {
         ORDER BY period DESC
       `)
     } else if (groupBy === 'month') {
-      hoursByPeriod = await sql`
+      hoursByPeriod = await sql(`
         SELECT
           DATE_TRUNC('month', tl.start_time) as period,
           TO_CHAR(DATE_TRUNC('month', tl.start_time), 'YYYY-MM') as period_label,
@@ -175,7 +175,7 @@ export async function GET(req: Request) {
     }
 
     // Summary statistics
-    const summary = await sql`
+    const summary = await sql(`
       SELECT
         COUNT(tl.id)::INTEGER as total_logs,
         SUM(tl.total_hours)::DECIMAL(10,2) as total_hours,
