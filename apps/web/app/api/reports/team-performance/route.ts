@@ -106,7 +106,7 @@ export async function GET(req: Request) {
     `
 
     // Add calculated metrics to each team member
-    const teamPerformanceWithMetrics = teamPerformance.map(member => {
+    const teamPerformanceWithMetrics = teamPerformance.map((member: any) => {
       const profitMargin = member.total_billing_amount && member.total_labor_cost
         ? (((parseFloat(member.total_billing_amount) - parseFloat(member.total_labor_cost)) / parseFloat(member.total_billing_amount)) * 100).toFixed(2)
         : '0.00'
@@ -162,12 +162,12 @@ export async function GET(req: Request) {
 
     // Top performers by revenue
     const topPerformersByRevenue = teamPerformanceWithMetrics
-      .sort((a, b) => parseFloat(b.total_billing_amount) - parseFloat(a.total_billing_amount))
+      .sort((a: any, b: any) => parseFloat(b.total_billing_amount) - parseFloat(a.total_billing_amount))
       .slice(0, 5)
 
     // Top performers by jobs completed
     const topPerformersByJobs = teamPerformanceWithMetrics
-      .sort((a, b) => b.jobs_completed - a.jobs_completed)
+      .sort((a: any, b: any) => b.jobs_completed - a.jobs_completed)
       .slice(0, 5)
 
     // Organization summary
