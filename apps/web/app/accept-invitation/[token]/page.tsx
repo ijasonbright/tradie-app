@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SignUp, useUser } from '@clerk/nextjs'
 import DocumentUpload from '@/components/DocumentUpload'
@@ -21,9 +21,9 @@ interface InvitationData {
 export default function AcceptInvitationPage({
   params,
 }: {
-  params: Promise<{ token: string }>
+  params: { token: string }
 }) {
-  const resolvedParams = use(params)
+  const resolvedParams = params
   const router = useRouter()
   const { isSignedIn, user } = useUser()
   const [invitation, setInvitation] = useState<InvitationData | null>(null)
