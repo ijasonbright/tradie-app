@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
 
 // Helper function to convert array of objects to CSV
 function convertToCSV(data: any[], headers: string[]): string {
@@ -29,6 +28,7 @@ function convertToCSV(data: any[], headers: string[]): string {
 // POST /api/reports/export/csv - Export report data to CSV
 export async function POST(req: Request) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

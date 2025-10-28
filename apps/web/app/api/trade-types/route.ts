@@ -4,11 +4,11 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
-const sql = neon(process.env.DATABASE_URL!)
 
 // GET /api/trade-types - List all trade types for organization
 export async function GET() {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -58,6 +58,7 @@ export async function GET() {
 // PUT /api/trade-types - Update a trade type's rates
 export async function PUT(req: Request) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

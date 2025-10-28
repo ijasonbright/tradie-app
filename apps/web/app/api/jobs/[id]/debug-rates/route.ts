@@ -4,7 +4,6 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
-const sql = neon(process.env.DATABASE_URL!)
 
 // GET /api/jobs/[id]/debug-rates - Debug rate calculation
 export async function GET(
@@ -12,6 +11,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

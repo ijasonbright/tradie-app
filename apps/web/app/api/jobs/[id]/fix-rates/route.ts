@@ -4,7 +4,6 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
-const sql = neon(process.env.DATABASE_URL!)
 
 // POST /api/jobs/[id]/fix-rates - Fix rates for a job and its time logs
 export async function POST(
@@ -12,6 +11,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId } = await auth()
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

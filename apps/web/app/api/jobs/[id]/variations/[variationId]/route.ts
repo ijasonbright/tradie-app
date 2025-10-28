@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
 
 // GET /api/jobs/[id]/variations/[variationId] - Get a single variation
 export async function GET(
@@ -10,6 +9,7 @@ export async function GET(
   context: { params: Promise<{ id: string; variationId: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -91,6 +91,7 @@ export async function PUT(
   context: { params: Promise<{ id: string; variationId: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -303,6 +304,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string; variationId: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
