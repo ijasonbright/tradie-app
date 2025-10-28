@@ -34,7 +34,7 @@ export default function SignIn() {
         password,
       })
 
-      await setActive({ session: completeSignIn.createdSessionId })
+      await setActive()
       router.replace('/(tabs)/jobs')
     } catch (err: any) {
       setError(err.errors?.[0]?.message || 'Invalid email or password')
@@ -51,13 +51,13 @@ export default function SignIn() {
 
     try {
       await signInWithOAuth()
-      // Deep link handler will redirect to jobs after successful sign-in
-      router.replace('/(tabs)/jobs')
+      // Browser will open for sign-in
+      // Don't redirect here - the deep link handler in auth.tsx will handle it
     } catch (err: any) {
       setError(err.message || 'Sign in failed')
-    } finally {
       setOAuthLoading(false)
     }
+    // Keep loading state active until deep link callback completes
   }
 
   return (
