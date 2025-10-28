@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     // Get user from database
     const users = await sql`
       SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
-    `)
+    `
 
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -31,10 +31,10 @@ export async function GET(req: Request) {
     const members = await sql`
       SELECT organization_id, role
       FROM organization_members
-      WHERE user_id = '${user.id}'
+      WHERE user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
-    `)
+    `
 
     if (members.length === 0) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
     const timeLogDateFilter = timeLogDateConditions.length > 0 ? `AND ${timeLogDateConditions.join(' AND ')}` : ''
 
     // Team member performance summary
-    const teamPerformance = await sql`
+    const teamPerformance = await sql(`
       SELECT
         u.id as user_id,
         u.full_name,
@@ -128,7 +128,7 @@ export async function GET(req: Request) {
     })
 
     // Job completion by status (organization-wide)
-    const jobsByStatus = await sql`
+    const jobsByStatus = await sql(`
       SELECT
         j.status,
         COUNT(j.id)::INTEGER as count,
@@ -141,7 +141,7 @@ export async function GET(req: Request) {
     `)
 
     // Job completion by type
-    const jobsByType = await sql`
+    const jobsByType = await sql(`
       SELECT
         j.job_type,
         COUNT(j.id)::INTEGER as count,

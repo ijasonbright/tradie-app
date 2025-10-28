@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     // Get user from database
     const users = await sql`
       SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
-    `)
+    `
 
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -32,10 +32,10 @@ export async function GET(req: Request) {
     const members = await sql`
       SELECT organization_id, role
       FROM organization_members
-      WHERE user_id = '${user.id}'
+      WHERE user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
-    `)
+    `
 
     if (members.length === 0) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     const userFilter = !canViewAll ? `AND e.user_id = '${user.id}'` : ''
 
     // Expenses by category
-    const expensesByCategory = await sql`
+    const expensesByCategory = await sql(`
       SELECT
         e.category,
         COUNT(e.id)::INTEGER as expense_count,
@@ -81,7 +81,7 @@ export async function GET(req: Request) {
     `)
 
     // Expenses by user
-    const expensesByUser = await sql`
+    const expensesByUser = await sql(`
       SELECT
         u.id as user_id,
         u.full_name,
@@ -104,7 +104,7 @@ export async function GET(req: Request) {
     `)
 
     // Expenses by job
-    const expensesByJob = await sql`
+    const expensesByJob = await sql(`
       SELECT
         j.id as job_id,
         j.job_number,
@@ -131,7 +131,7 @@ export async function GET(req: Request) {
     // Expenses by time period
     let expensesByPeriod: any[] = []
     if (groupBy === 'month') {
-      expensesByPeriod = await sql`
+      expensesByPeriod = await sql(`
         SELECT
           DATE_TRUNC('month', e.expense_date) as period,
           TO_CHAR(DATE_TRUNC('month', e.expense_date), 'YYYY-MM') as period_label,
@@ -147,7 +147,7 @@ export async function GET(req: Request) {
         ORDER BY period DESC
       `)
     } else if (groupBy === 'week') {
-      expensesByPeriod = await sql`
+      expensesByPeriod = await sql(`
         SELECT
           DATE_TRUNC('week', e.expense_date) as period,
           TO_CHAR(DATE_TRUNC('week', e.expense_date), 'YYYY-MM-DD') as period_label,
@@ -165,7 +165,7 @@ export async function GET(req: Request) {
     }
 
     // Summary statistics
-    const summary = await sql`
+    const summary = await sql(`
       SELECT
         COUNT(e.id)::INTEGER as total_expenses,
         SUM(e.amount)::DECIMAL(10,2) as total_amount_ex_gst,
@@ -188,7 +188,7 @@ export async function GET(req: Request) {
     `)
 
     // Reimbursement summary (by user)
-    const reimbursementSummary = await sql`
+    const reimbursementSummary = await sql(`
       SELECT
         u.id as user_id,
         u.full_name,
