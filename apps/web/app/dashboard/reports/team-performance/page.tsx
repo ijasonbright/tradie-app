@@ -54,6 +54,7 @@ export default function TeamPerformanceReportPage() {
 
   useEffect(() => {
     fetchReport()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate])
 
   const fetchReport = async () => {

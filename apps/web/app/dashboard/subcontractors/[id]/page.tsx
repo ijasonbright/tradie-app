@@ -26,6 +26,7 @@ export default function SubcontractorDetailPage() {
     if (id) {
       fetchSummary()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const fetchSummary = async () => {

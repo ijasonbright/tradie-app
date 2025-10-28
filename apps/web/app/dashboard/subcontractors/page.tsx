@@ -151,8 +151,8 @@ export default function SubcontractorsPage() {
         <ul className="mt-3 space-y-2 text-sm text-blue-800">
           <li>• Subcontractors log hours and materials on assigned jobs</li>
           <li>• You approve time logs and material costs</li>
-          <li>• Approved amounts automatically add to "Amount Owed"</li>
-          <li>• Record payments to track what's been paid</li>
+          <li>• Approved amounts automatically add to &ldquo;Amount Owed&rdquo;</li>
+          <li>• Record payments to track what&apos;s been paid</li>
           <li>• Optionally sync payments to Xero as Bills</li>
         </ul>
       </div>

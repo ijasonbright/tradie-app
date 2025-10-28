@@ -46,6 +46,7 @@ export default function RevenueReportPage() {
 
   useEffect(() => {
     fetchReport()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate, groupBy])
 
   const fetchReport = async () => {
