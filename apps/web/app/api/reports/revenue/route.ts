@@ -49,20 +49,20 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Build date filter
-    let dateFilter = sql``
-    if (startDate && endDate) {
-      dateFilter = sql`AND i.issue_date >= ${startDate} AND i.issue_date <= ${endDate}`
-    } else if (startDate) {
-      dateFilter = sql`AND i.issue_date >= ${startDate}`
-    } else if (endDate) {
-      dateFilter = sql`AND i.issue_date <= ${endDate}`
+    // Build date filter conditions
+    const dateConditions = []
+    if (startDate) {
+      dateConditions.push(`i.issue_date >= '${startDate}'`)
     }
+    if (endDate) {
+      dateConditions.push(`i.issue_date <= '${endDate}'`)
+    }
+    const dateFilter = dateConditions.length > 0 ? `AND ${dateConditions.join(' AND ')}` : ''
 
     // Revenue by time period
     let revenueByPeriod: any[] = []
     if (groupBy === 'month') {
-      revenueByPeriod = await sql`
+      revenueByPeriod = await sql(`
         SELECT
           DATE_TRUNC('month', i.issue_date) as period,
           TO_CHAR(DATE_TRUNC('month', i.issue_date), 'YYYY-MM') as period_label,
@@ -71,14 +71,14 @@ export async function GET(req: Request) {
           SUM(i.paid_amount)::DECIMAL(10,2) as paid_amount,
           SUM(i.total_amount - COALESCE(i.paid_amount, 0))::DECIMAL(10,2) as outstanding_amount
         FROM invoices i
-        WHERE i.organization_id = ${organization_id}
+        WHERE i.organization_id = '${organization_id}'
         AND i.status != 'cancelled'
         ${dateFilter}
         GROUP BY period
         ORDER BY period DESC
-      `
+      `)
     } else if (groupBy === 'week') {
-      revenueByPeriod = await sql`
+      revenueByPeriod = await sql(`
         SELECT
           DATE_TRUNC('week', i.issue_date) as period,
           TO_CHAR(DATE_TRUNC('week', i.issue_date), 'YYYY-MM-DD') as period_label,
@@ -87,16 +87,16 @@ export async function GET(req: Request) {
           SUM(i.paid_amount)::DECIMAL(10,2) as paid_amount,
           SUM(i.total_amount - COALESCE(i.paid_amount, 0))::DECIMAL(10,2) as outstanding_amount
         FROM invoices i
-        WHERE i.organization_id = ${organization_id}
+        WHERE i.organization_id = '${organization_id}'
         AND i.status != 'cancelled'
         ${dateFilter}
         GROUP BY period
         ORDER BY period DESC
-      `
+      `)
     }
 
     // Revenue by client
-    const revenueByClient = await sql`
+    const revenueByClient = await sql(`
       SELECT
         c.id as client_id,
         CASE
@@ -109,16 +109,16 @@ export async function GET(req: Request) {
         SUM(i.total_amount - COALESCE(i.paid_amount, 0))::DECIMAL(10,2) as outstanding_amount
       FROM invoices i
       INNER JOIN clients c ON i.client_id = c.id
-      WHERE i.organization_id = ${organization_id}
+      WHERE i.organization_id = '${organization_id}'
       AND i.status != 'cancelled'
       ${dateFilter}
       GROUP BY c.id, client_name
       ORDER BY total_revenue DESC
       LIMIT 20
-    `
+    `)
 
     // Revenue by job type
-    const revenueByJobType = await sql`
+    const revenueByJobType = await sql(`
       SELECT
         j.job_type,
         COUNT(DISTINCT i.id)::INTEGER as invoice_count,
@@ -126,15 +126,15 @@ export async function GET(req: Request) {
         SUM(i.paid_amount)::DECIMAL(10,2) as paid_amount
       FROM invoices i
       LEFT JOIN jobs j ON i.job_id = j.id
-      WHERE i.organization_id = ${organization_id}
+      WHERE i.organization_id = '${organization_id}'
       AND i.status != 'cancelled'
       ${dateFilter}
       GROUP BY j.job_type
       ORDER BY total_revenue DESC
-    `
+    `)
 
     // Summary statistics
-    const summary = await sql`
+    const summary = await sql(`
       SELECT
         COUNT(*)::INTEGER as total_invoices,
         SUM(i.total_amount)::DECIMAL(10,2) as total_revenue,
@@ -144,10 +144,10 @@ export async function GET(req: Request) {
         COUNT(CASE WHEN i.status = 'paid' THEN 1 END)::INTEGER as paid_invoices,
         COUNT(CASE WHEN i.status = 'overdue' THEN 1 END)::INTEGER as overdue_invoices
       FROM invoices i
-      WHERE i.organization_id = ${organization_id}
+      WHERE i.organization_id = '${organization_id}'
       AND i.status != 'cancelled'
       ${dateFilter}
-    `
+    `)
 
     return NextResponse.json({
       success: true,

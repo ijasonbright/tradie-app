@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     // Get user from database
     const users = await sql`
       SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
-    `
+    `)
 
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -31,10 +31,10 @@ export async function GET(req: Request) {
     const members = await sql`
       SELECT organization_id, role
       FROM organization_members
-      WHERE user_id = ${user.id}
+      WHERE user_id = '${user.id}'
       AND status = 'active'
       LIMIT 1
-    `
+    `)
 
     if (members.length === 0) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
@@ -49,24 +49,24 @@ export async function GET(req: Request) {
     }
 
     // Build date filter for jobs
-    let jobDateFilter = sql``
-    if (startDate && endDate) {
-      jobDateFilter = sql`AND j.completed_at >= ${startDate}::timestamp AND j.completed_at <= ${endDate}::timestamp`
-    } else if (startDate) {
-      jobDateFilter = sql`AND j.completed_at >= ${startDate}::timestamp`
-    } else if (endDate) {
-      jobDateFilter = sql`AND j.completed_at <= ${endDate}::timestamp`
+    const jobDateConditions = []
+    if (startDate) {
+      jobDateConditions.push(`j.completed_at >= '${startDate}'::timestamp`)
     }
+    if (endDate) {
+      jobDateConditions.push(`j.completed_at <= '${endDate}'::timestamp`)
+    }
+    const jobDateFilter = jobDateConditions.length > 0 ? `AND ${jobDateConditions.join(' AND ')}` : ''
 
     // Build date filter for time logs
-    let timeLogDateFilter = sql``
-    if (startDate && endDate) {
-      timeLogDateFilter = sql`AND tl.start_time >= ${startDate}::timestamp AND tl.start_time <= ${endDate}::timestamp`
-    } else if (startDate) {
-      timeLogDateFilter = sql`AND tl.start_time >= ${startDate}::timestamp`
-    } else if (endDate) {
-      timeLogDateFilter = sql`AND tl.start_time <= ${endDate}::timestamp`
+    const timeLogDateConditions = []
+    if (startDate) {
+      timeLogDateConditions.push(`tl.start_time >= '${startDate}'::timestamp`)
     }
+    if (endDate) {
+      timeLogDateConditions.push(`tl.start_time <= '${endDate}'::timestamp`)
+    }
+    const timeLogDateFilter = timeLogDateConditions.length > 0 ? `AND ${timeLogDateConditions.join(' AND ')}` : ''
 
     // Team member performance summary
     const teamPerformance = await sql`
@@ -99,11 +99,11 @@ export async function GET(req: Request) {
       LEFT JOIN job_assignments ja ON u.id = ja.user_id AND ja.removed_at IS NULL
       LEFT JOIN jobs j ON ja.job_id = j.id ${jobDateFilter}
       LEFT JOIN job_time_logs tl ON j.id = tl.job_id AND tl.user_id = u.id ${timeLogDateFilter}
-      WHERE om.organization_id = ${organization_id}
+      WHERE om.organization_id = '${organization_id}'
       AND om.status = 'active'
       GROUP BY u.id, u.full_name, u.email, om.role, om.hourly_rate
       ORDER BY jobs_completed DESC, total_hours DESC
-    `
+    `)
 
     // Add calculated metrics to each team member
     const teamPerformanceWithMetrics = teamPerformance.map((member: any) => {
@@ -134,11 +134,11 @@ export async function GET(req: Request) {
         COUNT(j.id)::INTEGER as count,
         SUM(j.quoted_amount)::DECIMAL(10,2) as total_quoted_amount
       FROM jobs j
-      WHERE j.organization_id = ${organization_id}
+      WHERE j.organization_id = '${organization_id}'
       ${jobDateFilter}
       GROUP BY j.status
       ORDER BY count DESC
-    `
+    `)
 
     // Job completion by type
     const jobsByType = await sql`
@@ -154,11 +154,11 @@ export async function GET(req: Request) {
         )::DECIMAL(10,2) as avg_completion_days,
         SUM(j.quoted_amount)::DECIMAL(10,2) as total_quoted_amount
       FROM jobs j
-      WHERE j.organization_id = ${organization_id}
+      WHERE j.organization_id = '${organization_id}'
       ${jobDateFilter}
       GROUP BY j.job_type
       ORDER BY count DESC
-    `
+    `)
 
     // Top performers by revenue
     const topPerformersByRevenue = teamPerformanceWithMetrics

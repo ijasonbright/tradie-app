@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     // Get user from database
     const users = await sql`
       SELECT * FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
-    `
+    `)
 
     if (users.length === 0) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -32,10 +32,10 @@ export async function GET(req: Request) {
     const members = await sql`
       SELECT organization_id, role
       FROM organization_members
-      WHERE user_id = ${user.id}
+      WHERE user_id = '${user.id}'
       AND status = 'active'
       LIMIT 1
-    `
+    `)
 
     if (members.length === 0) {
       return NextResponse.json({ error: 'No organization found' }, { status: 404 })
@@ -47,20 +47,17 @@ export async function GET(req: Request) {
     const canViewAll = role === 'owner' || role === 'admin'
 
     // Build date filter
-    let dateFilter = sql``
-    if (startDate && endDate) {
-      dateFilter = sql`AND e.expense_date >= ${startDate}::date AND e.expense_date <= ${endDate}::date`
-    } else if (startDate) {
-      dateFilter = sql`AND e.expense_date >= ${startDate}::date`
-    } else if (endDate) {
-      dateFilter = sql`AND e.expense_date <= ${endDate}::date`
+    const dateConditions = []
+    if (startDate) {
+      dateConditions.push(`e.expense_date >= '${startDate}'::date`)
     }
+    if (endDate) {
+      dateConditions.push(`e.expense_date <= '${endDate}'::date`)
+    }
+    const dateFilter = dateConditions.length > 0 ? `AND ${dateConditions.join(' AND ')}` : ''
 
     // Build user filter for employees
-    let userFilter = sql``
-    if (!canViewAll) {
-      userFilter = sql`AND e.user_id = ${user.id}`
-    }
+    const userFilter = !canViewAll ? `AND e.user_id = '${user.id}'` : ''
 
     // Expenses by category
     const expensesByCategory = await sql`
@@ -76,12 +73,12 @@ export async function GET(req: Request) {
         SUM(CASE WHEN e.status = 'approved' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as approved_amount,
         SUM(CASE WHEN e.status = 'pending' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as pending_amount
       FROM expenses e
-      WHERE e.organization_id = ${organization_id}
+      WHERE e.organization_id = '${organization_id}'
       ${dateFilter}
       ${userFilter}
       GROUP BY e.category
       ORDER BY total_with_gst DESC
-    `
+    `)
 
     // Expenses by user
     const expensesByUser = await sql`
@@ -99,12 +96,12 @@ export async function GET(req: Request) {
       FROM expenses e
       INNER JOIN users u ON e.user_id = u.id
       INNER JOIN organization_members om ON u.id = om.user_id AND om.organization_id = e.organization_id
-      WHERE e.organization_id = ${organization_id}
+      WHERE e.organization_id = '${organization_id}'
       ${dateFilter}
       ${userFilter}
       GROUP BY u.id, u.full_name, om.role
       ORDER BY total_amount DESC
-    `
+    `)
 
     // Expenses by job
     const expensesByJob = await sql`
@@ -122,14 +119,14 @@ export async function GET(req: Request) {
       FROM expenses e
       INNER JOIN jobs j ON e.job_id = j.id
       LEFT JOIN clients c ON j.client_id = c.id
-      WHERE e.organization_id = ${organization_id}
+      WHERE e.organization_id = '${organization_id}'
       AND e.job_id IS NOT NULL
       ${dateFilter}
       ${userFilter}
       GROUP BY j.id, j.job_number, j.title, j.status, c.company_name, c.first_name, c.last_name
       ORDER BY total_amount DESC
       LIMIT 50
-    `
+    `)
 
     // Expenses by time period
     let expensesByPeriod: any[] = []
@@ -143,12 +140,12 @@ export async function GET(req: Request) {
           SUM(CASE WHEN e.status = 'approved' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as approved_amount,
           SUM(CASE WHEN e.status = 'pending' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as pending_amount
         FROM expenses e
-        WHERE e.organization_id = ${organization_id}
+        WHERE e.organization_id = '${organization_id}'
         ${dateFilter}
         ${userFilter}
         GROUP BY period
         ORDER BY period DESC
-      `
+      `)
     } else if (groupBy === 'week') {
       expensesByPeriod = await sql`
         SELECT
@@ -159,12 +156,12 @@ export async function GET(req: Request) {
           SUM(CASE WHEN e.status = 'approved' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as approved_amount,
           SUM(CASE WHEN e.status = 'pending' THEN e.total_amount ELSE 0 END)::DECIMAL(10,2) as pending_amount
         FROM expenses e
-        WHERE e.organization_id = ${organization_id}
+        WHERE e.organization_id = '${organization_id}'
         ${dateFilter}
         ${userFilter}
         GROUP BY period
         ORDER BY period DESC
-      `
+      `)
     }
 
     // Summary statistics
@@ -185,10 +182,10 @@ export async function GET(req: Request) {
         COUNT(DISTINCT e.user_id)::INTEGER as unique_submitters,
         COUNT(DISTINCT e.job_id)::INTEGER as unique_jobs_with_expenses
       FROM expenses e
-      WHERE e.organization_id = ${organization_id}
+      WHERE e.organization_id = '${organization_id}'
       ${dateFilter}
       ${userFilter}
-    `
+    `)
 
     // Reimbursement summary (by user)
     const reimbursementSummary = await sql`
@@ -199,13 +196,13 @@ export async function GET(req: Request) {
         COUNT(CASE WHEN e.status = 'approved' AND e.reimbursed_at IS NULL THEN 1 END)::INTEGER as expenses_pending_reimbursement
       FROM expenses e
       INNER JOIN users u ON e.user_id = u.id
-      WHERE e.organization_id = ${organization_id}
+      WHERE e.organization_id = '${organization_id}'
       ${dateFilter}
       ${userFilter}
       GROUP BY u.id, u.full_name
       HAVING SUM(CASE WHEN e.status = 'approved' AND e.reimbursed_at IS NULL THEN e.total_amount ELSE 0 END) > 0
       ORDER BY amount_owed DESC
-    `
+    `)
 
     return NextResponse.json({
       success: true,
