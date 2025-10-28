@@ -107,8 +107,8 @@ export async function GET(
     `
 
     // Get payment items for each payment
-    const paymentsWithItems = await Promise.all(
-      payments.map(async (payment) => {
+    const paymentsWithItems: any[] = await Promise.all(
+      payments.map(async (payment: any) => {
         const items = await sql`
           SELECT * FROM subcontractor_payment_items
           WHERE payment_id = ${payment.id}
@@ -122,10 +122,10 @@ export async function GET(
     )
 
     // Calculate summary
-    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.total_amount || '0'), 0)
-    const totalLabor = payments.reduce((sum, p) => sum + parseFloat(p.labor_amount || '0'), 0)
-    const totalMaterials = payments.reduce((sum, p) => sum + parseFloat(p.materials_amount || '0'), 0)
-    const totalEquipment = payments.reduce((sum, p) => sum + parseFloat(p.equipment_amount || '0'), 0)
+    const totalPaid = payments.reduce((sum, p: any) => sum + parseFloat(p.total_amount || '0'), 0)
+    const totalLabor = payments.reduce((sum, p: any) => sum + parseFloat(p.labor_amount || '0'), 0)
+    const totalMaterials = payments.reduce((sum, p: any) => sum + parseFloat(p.materials_amount || '0'), 0)
+    const totalEquipment = payments.reduce((sum, p: any) => sum + parseFloat(p.equipment_amount || '0'), 0)
 
     const statement = {
       subcontractor: {
