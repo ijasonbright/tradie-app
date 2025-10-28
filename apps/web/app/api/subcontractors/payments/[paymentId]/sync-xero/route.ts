@@ -103,7 +103,7 @@ export async function POST(
     `
 
     // Prepare Xero Bill payload
-    const lineItems = items.map((item) => ({
+    const lineItems = items.map((item: any) => ({
       Description: item.description,
       Quantity: 1,
       UnitAmount: parseFloat(item.amount),
@@ -111,7 +111,7 @@ export async function POST(
       TaxType: 'NONE', // Subcontractor payments typically don't include GST
     }))
 
-    const billPayload = {
+    const billPayload: any = {
       Type: 'ACCPAY', // Accounts Payable (Bill)
       Contact: {
         Name: payment.subcontractor_name,
