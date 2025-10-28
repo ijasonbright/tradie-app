@@ -2,11 +2,10 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
-const sql = neon(process.env.DATABASE_URL!)
-
 // GET /api/reports/time-tracking - Time tracking report with date range filtering
 export async function GET(req: Request) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { userId: clerkUserId } = await auth()
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
