@@ -13,13 +13,14 @@ import { useRouter, Link } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
 export default function SignIn() {
-  const { signIn, setActive, isLoaded } = useSignIn()
+  const { signIn, signInWithOAuth, setActive, isLoaded } = useSignIn()
   const router = useRouter()
 
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOAuthLoading] = useState(false)
 
   const onSignInPress = async () => {
     if (!isLoaded) return
@@ -39,6 +40,23 @@ export default function SignIn() {
       setError(err.errors?.[0]?.message || 'Invalid email or password')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const onOAuthSignIn = async () => {
+    if (!isLoaded) return
+
+    setOAuthLoading(true)
+    setError('')
+
+    try {
+      await signInWithOAuth()
+      // Deep link handler will redirect to jobs after successful sign-in
+      router.replace('/(tabs)/jobs')
+    } catch (err: any) {
+      setError(err.message || 'Sign in failed')
+    } finally {
+      setOAuthLoading(false)
     }
   }
 
@@ -91,6 +109,23 @@ export default function SignIn() {
             Sign In
           </Button>
 
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <Button
+            mode="outlined"
+            onPress={onOAuthSignIn}
+            loading={oauthLoading}
+            disabled={oauthLoading || loading}
+            style={styles.oauthButton}
+            icon="apple"
+          >
+            Sign in with Apple
+          </Button>
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <Link href="/(auth)/sign-up" asChild>
@@ -141,6 +176,25 @@ const styles = StyleSheet.create({
   button: {
     marginTop: 8,
     paddingVertical: 8,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    color: '#666',
+    fontSize: 14,
+  },
+  oauthButton: {
+    paddingVertical: 8,
+    borderColor: '#2563eb',
   },
   error: {
     color: '#ef4444',
