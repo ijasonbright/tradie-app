@@ -9,7 +9,8 @@ export const runtime = 'nodejs'
 /**
  * Mobile Authentication - OAuth Callback
  * After user signs in via web (with Apple, Google, etc.), this endpoint
- * generates a mobile session token and redirects back to the mobile app
+ * generates a mobile session token and redirects back to the mobile app.
+ * Supports all OAuth providers configured in Clerk.
  */
 export async function GET(request: NextRequest) {
   try {
