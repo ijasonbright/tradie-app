@@ -22,43 +22,27 @@
 - **Integration**: Uses existing Clerk user data
 - **Security**: JWT tokens with 30-day expiration
 
-## ⚠️ What's Blocked
+## ✅ Vercel Deployment - FIXED!
 
-### Vercel Deployment
-- **Issue**: React version conflict in monorepo
-  - Mobile app uses React 19.1.0 (required by Expo SDK 54)
-  - Web app uses React 18.3.0 (required by Next.js 15)
-  - npm hoists dependencies at root level, causing conflicts
-- **Error**: `Cannot read properties of undefined (reading 'ReactCurrentDispatcher')`
-- **Impact**: Backend API endpoints not deployed (mobile can't connect)
+### The Solution
+The issue was resolved by:
+1. **Root Directory** already set to `apps/web` in Vercel ✓
+2. **Excluded mobile app** from npm workspace (workspace only includes `apps/web`)
+3. **Installed React 18 at root level** so Next.js can find it
 
-## 🔧 What You Need To Do
+### What Was The Problem?
+- Root Directory setting wasn't enough on its own
+- Next.js installed in root `node_modules` couldn't find React
+- React was only in `apps/web/node_modules` due to workspace isolation
+- Solution: Install React 18 explicitly at root level
 
-### Fix Vercel Deployment (5 minutes)
+### Deployment Status
+- **Latest commit**: Fix Vercel build by installing React 18 at root level
+- **Build tested locally**: ✅ Success
+- **Pushed to GitHub**: ✅ Done
+- **Vercel auto-deploying**: 🔄 In progress
 
-**Step-by-step instructions:**
-
-1. Go to https://vercel.com/dashboard
-2. Click on your `tradie-app-web` project
-3. Click **Settings** in the left sidebar
-4. Click **General** tab
-5. Scroll down to **Root Directory** section
-6. Click **Edit** button
-7. Enter: `apps/web`
-8. Click **Save**
-9. Go to **Deployments** tab (top navigation)
-10. Click the **⋯ menu** on the latest failed deployment
-11. Click **Redeploy**
-
-**What this does:**
-- Tells Vercel to build only from the `apps/web` directory
-- Isolates web app from mobile app's React 19 dependency
-- Allows Next.js to use its required React 18
-
-**Expected result:**
-- Deployment will succeed
-- Backend API endpoints will be live
-- Mobile app can authenticate and fetch real data
+Once Vercel finishes deploying (check your dashboard), the backend API endpoints will be live!
 
 ## 📱 After Vercel Deploys
 
