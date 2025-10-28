@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     }
 
     // Revenue by time period
-    let revenueByPeriod = []
+    let revenueByPeriod: any[] = []
     if (groupBy === 'month') {
       revenueByPeriod = await sql`
         SELECT

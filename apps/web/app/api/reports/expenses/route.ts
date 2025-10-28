@@ -132,7 +132,7 @@ export async function GET(req: Request) {
     `
 
     // Expenses by time period
-    let expensesByPeriod = []
+    let expensesByPeriod: any[] = []
     if (groupBy === 'month') {
       expensesByPeriod = await sql`
         SELECT

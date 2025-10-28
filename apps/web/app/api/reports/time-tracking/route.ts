@@ -120,7 +120,7 @@ export async function GET(req: Request) {
     `
 
     // Hours by time period
-    let hoursByPeriod = []
+    let hoursByPeriod: any[] = []
     if (groupBy === 'day') {
       hoursByPeriod = await sql`
         SELECT
