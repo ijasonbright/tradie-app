@@ -929,11 +929,11 @@ const styles = StyleSheet.create({
   quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 12,
   },
   quickActionCard: {
-    flex: 1,
-    minWidth: '45%',
+    width: '47%',
     backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
