@@ -85,7 +85,7 @@ export async function POST(
     const endTime = new Date()
     const totalMilliseconds = endTime.getTime() - startTime.getTime()
     const totalMinutesWorked = Math.floor(totalMilliseconds / 60000)
-    const breakMinutes = parseInt(breakDurationMinutes) || 0
+    const breakMinutes = breakDurationMinutes || 0
 
     // Validate break duration doesn't exceed time worked
     if (breakMinutes > totalMinutesWorked) {
