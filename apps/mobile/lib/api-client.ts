@@ -119,6 +119,16 @@ class ApiClient {
     return this.request<{ client: any }>(`/clients/${id}`)
   }
 
+  async updateClient(id: string, data: any) {
+    return this.request<{ success: boolean; client: any }>(
+      `/clients/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   // Appointments API
   async getAppointments(params?: { start_date?: string; end_date?: string }) {
     const queryParams = new URLSearchParams()
