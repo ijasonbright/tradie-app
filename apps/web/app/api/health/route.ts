@@ -13,13 +13,35 @@ export async function GET(request: NextRequest) {
   // Handle OAuth callback for mobile
   if (isOAuthCallback) {
     try {
-      const { userId } = await auth()
+      const authResult = await auth()
+      const { userId } = authResult
 
       if (!userId) {
-        // User not authenticated, redirect to sign-in
-        const signInUrl = new URL('/sign-in', request.url)
-        signInUrl.searchParams.set('redirect_url', '/api/health?oauth_callback=true')
-        return NextResponse.redirect(signInUrl)
+        // User not authenticated - this means they haven't completed sign-in yet
+        // Return an HTML page that auto-redirects to sign-in with proper redirect_url
+        const baseUrl = new URL(request.url).origin
+        const callbackUrl = `${baseUrl}/api/health?oauth_callback=true`
+
+        return new NextResponse(
+          `<!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Signing in...</title>
+              <script>
+                // Redirect to Clerk sign-in with callback URL
+                window.location.href = '${baseUrl}/sign-in?redirect_url=' + encodeURIComponent('${callbackUrl}');
+              </script>
+            </head>
+            <body>
+              <p>Redirecting to sign in...</p>
+            </body>
+          </html>`,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          }
+        )
       }
 
       // Get user from database
