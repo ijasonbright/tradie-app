@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Open the web app's OAuth callback page in browser
       // User will sign in with Apple/Google/etc, then redirect back to mobile app
       const result = await WebBrowser.openAuthSessionAsync(
-        `${WEB_URL}/api/mobile-auth/oauth-callback`,
+        `${WEB_URL}/api/mobile-oauth-callback`,
         'tradieapp://auth-callback'
       )
 
