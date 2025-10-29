@@ -239,10 +239,13 @@ class ApiClient {
     )
   }
 
-  async stopTimer(jobId: string) {
+  async stopTimer(jobId: string, breakDurationMinutes = 0, notes = '') {
     return this.request<{ success: boolean; timeLog: any }>(
       `/jobs/${jobId}/stop-timer`,
-      { method: 'POST' }
+      {
+        method: 'POST',
+        body: JSON.stringify({ breakDurationMinutes, notes }),
+      }
     )
   }
 
