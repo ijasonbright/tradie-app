@@ -454,6 +454,48 @@ export default function JobDetailScreen() {
           </View>
         )}
 
+        {/* Quick Actions */}
+        <View style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="lightning-bolt" size={20} color="#2563eb" />
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+
+          <View style={styles.quickActionsGrid}>
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => router.push(`/job/${id}/time`)}
+            >
+              <MaterialCommunityIcons name="clock-outline" size={32} color="#2563eb" />
+              <Text style={styles.quickActionLabel}>Time</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => router.push(`/job/${id}/materials`)}
+            >
+              <MaterialCommunityIcons name="package-variant" size={32} color="#2563eb" />
+              <Text style={styles.quickActionLabel}>Materials</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => router.push(`/job/${id}/photos`)}
+            >
+              <MaterialCommunityIcons name="camera" size={32} color="#2563eb" />
+              <Text style={styles.quickActionLabel}>Photos</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => router.push(`/job/${id}/notes`)}
+            >
+              <MaterialCommunityIcons name="note-text" size={32} color="#2563eb" />
+              <Text style={styles.quickActionLabel}>Notes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Time Logs Section */}
         {job.time_logs && job.time_logs.length > 0 && (
           <View style={styles.card}>
@@ -879,6 +921,26 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionButtonWideText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickActionCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 12,
+    gap: 8,
+  },
+  quickActionLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#2563eb',
