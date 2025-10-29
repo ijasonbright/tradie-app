@@ -41,8 +41,18 @@ export async function POST(
     }
 
     const { id: jobId } = await params
-    const body = await req.json()
-    const { breakDurationMinutes = 0, notes = '' } = body
+
+    // Parse body, handle empty body gracefully
+    let breakDurationMinutes = 0
+    let notes = ''
+    try {
+      const body = await req.json()
+      breakDurationMinutes = body.breakDurationMinutes || 0
+      notes = body.notes || ''
+    } catch (err) {
+      // No body or invalid JSON - use defaults
+      console.log('No body in stop-timer request, using defaults')
+    }
 
     // Get user's internal ID
     const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1`
