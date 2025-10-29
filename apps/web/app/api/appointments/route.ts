@@ -70,13 +70,20 @@ export async function GET(req: Request) {
     const params: any[] = [user.id]
     let paramIndex = 2
 
-    if (startDate) {
+    // Filter appointments that overlap with the date range
+    // An appointment overlaps if: start_time < range_end AND end_time > range_start
+    if (startDate && endDate) {
+      query += ` AND a.start_time < $${paramIndex}`
+      params.push(endDate)
+      paramIndex++
+      query += ` AND a.end_time > $${paramIndex}`
+      params.push(startDate)
+      paramIndex++
+    } else if (startDate) {
       query += ` AND a.start_time >= $${paramIndex}`
       params.push(startDate)
       paramIndex++
-    }
-
-    if (endDate) {
+    } else if (endDate) {
       query += ` AND a.end_time <= $${paramIndex}`
       params.push(endDate)
       paramIndex++
