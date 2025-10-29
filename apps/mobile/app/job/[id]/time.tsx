@@ -65,22 +65,26 @@ export default function JobTimeTrackingScreen() {
   const handleStartTimer = async () => {
     try {
       const response = await apiClient.startTimer(id as string)
+      console.log('Timer started, response:', response)
       setActiveTimer(response.timeLog)
       setElapsedSeconds(0)
-      await fetchData()
     } catch (err: any) {
+      console.error('Failed to start timer:', err)
       Alert.alert('Error', err.message || 'Failed to start timer')
     }
   }
 
   const handleStopTimer = async () => {
     try {
+      console.log('Stopping timer...')
       await apiClient.stopTimer(id as string)
       setActiveTimer(null)
       setElapsedSeconds(0)
+      // Refresh the time logs list to show the completed log
       await fetchData()
       Alert.alert('Success', 'Timer stopped successfully')
     } catch (err: any) {
+      console.error('Failed to stop timer:', err)
       Alert.alert('Error', err.message || 'Failed to stop timer')
     }
   }
