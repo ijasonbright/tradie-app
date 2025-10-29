@@ -90,6 +90,14 @@ export default function MoreScreen() {
         <Text style={styles.sectionTitle}>FEATURES</Text>
 
         <List.Item
+          title="Clients"
+          description="View and manage all clients"
+          left={(props) => <List.Icon {...props} icon="account-multiple" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          onPress={() => router.push('/clients')}
+        />
+
+        <List.Item
           title="SMS & Messaging"
           description="View credits and conversations"
           left={(props) => <List.Icon {...props} icon="message-text" />}
