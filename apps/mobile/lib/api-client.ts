@@ -74,6 +74,26 @@ class ApiClient {
     )
   }
 
+  async updateJob(id: string, data: any) {
+    return this.request<{ success: boolean; job: any }>(
+      `/jobs/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async createJob(data: any) {
+    return this.request<{ success: boolean; job: any }>(
+      '/jobs',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   // Clients API
   async getClients(params?: { search?: string }) {
     const queryParams = new URLSearchParams()
@@ -99,6 +119,11 @@ class ApiClient {
     const endpoint = query ? `/appointments?${query}` : '/appointments'
 
     return this.request<{ appointments: any[] }>(endpoint)
+  }
+
+  // Organizations API
+  async getOrganizations() {
+    return this.request<{ organizations: any[] }>('/organizations')
   }
 
   // User/Profile API

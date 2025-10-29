@@ -414,10 +414,41 @@ export default function JobDetailScreen() {
             </View>
           )}
 
-          <TouchableOpacity style={styles.secondaryButton}>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push(`/job/${id}/edit`)}
+          >
             <MaterialCommunityIcons name="pencil" size={20} color="#2563eb" />
             <Text style={styles.secondaryButtonText}>Edit Job</Text>
           </TouchableOpacity>
+
+          <View style={styles.actionsRow}>
+            {address && (
+              <TouchableOpacity
+                style={styles.actionButtonWide}
+                onPress={() => handleNavigate(address)}
+              >
+                <MaterialCommunityIcons name="navigation" size={20} color="#2563eb" />
+                <Text style={styles.actionButtonWideText}>Navigate</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.actionButtonWide}
+              onPress={() => Alert.alert('Coming Soon', 'Send Invoice feature coming soon')}
+            >
+              <MaterialCommunityIcons name="file-document" size={20} color="#2563eb" />
+              <Text style={styles.actionButtonWideText}>Send Invoice</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionButtonWide}
+              onPress={() => Alert.alert('Coming Soon', 'Send Quote feature coming soon')}
+            >
+              <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563eb" />
+              <Text style={styles.actionButtonWideText}>Send Quote</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -700,6 +731,29 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+    flexWrap: 'wrap',
+  },
+  actionButtonWide: {
+    flex: 1,
+    minWidth: '30%',
+    backgroundColor: '#eff6ff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  actionButtonWideText: {
+    fontSize: 14,
     fontWeight: '600',
     color: '#2563eb',
   },

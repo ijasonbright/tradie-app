@@ -224,7 +224,7 @@ export default function JobsScreen() {
       <FAB
         icon="plus"
         style={styles.fab}
-        onPress={() => alert('Create new job - Coming soon!')}
+        onPress={() => router.push('/job/add')}
       />
     </View>
   )
