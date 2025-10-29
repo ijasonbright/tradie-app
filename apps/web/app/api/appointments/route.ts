@@ -36,8 +36,8 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url)
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
+    const startDate = searchParams.get('start_date') || searchParams.get('startDate')
+    const endDate = searchParams.get('end_date') || searchParams.get('endDate')
     const assignedToUserId = searchParams.get('assignedToUserId')
 
     const sql = neon(process.env.DATABASE_URL!)
@@ -49,9 +49,38 @@ export async function GET(req: Request) {
     }
     const user = users[0]
 
-    // Build query with optional filters
-    let query = `
-      SELECT a.*,
+    const params: any[] = [user.id]
+
+    // Build WHERE conditions for date filtering
+    // For single day or specific range, we want items that START within the range
+    let dateCondition = ''
+    if (startDate && endDate) {
+      dateCondition = ` AND start_time >= '${startDate}' AND start_time < '${endDate}'`
+    } else if (startDate) {
+      dateCondition = ` AND start_time >= '${startDate}'`
+    } else if (endDate) {
+      dateCondition = ` AND start_time < '${endDate}'`
+    }
+
+    let assignedCondition = ''
+    if (assignedToUserId) {
+      assignedCondition = ` AND assigned_to_user_id = '${assignedToUserId}'`
+    }
+
+    // Query to get both appointments AND scheduled jobs
+    const query = `
+      SELECT
+        a.id,
+        a.organization_id,
+        a.title,
+        a.description,
+        a.appointment_type,
+        a.start_time,
+        a.end_time,
+        a.location_address,
+        a.job_id,
+        a.client_id,
+        a.assigned_to_user_id,
         u1.full_name as assigned_to_name,
         u2.full_name as created_by_name,
         c.company_name, c.first_name, c.last_name, c.is_company,
@@ -65,37 +94,42 @@ export async function GET(req: Request) {
       LEFT JOIN jobs j ON a.job_id = j.id
       WHERE om.user_id = $1
       AND om.status = 'active'
+      ${dateCondition}
+      ${assignedCondition}
+
+      UNION ALL
+
+      SELECT
+        jobs.id,
+        jobs.organization_id,
+        jobs.title,
+        jobs.description,
+        'job' as appointment_type,
+        jobs.scheduled_start_time as start_time,
+        jobs.scheduled_end_time as end_time,
+        CONCAT_WS(', ', jobs.site_address_line1, jobs.site_city, jobs.site_state, jobs.site_postcode) as location_address,
+        jobs.id as job_id,
+        jobs.client_id,
+        jobs.assigned_to_user_id,
+        u1.full_name as assigned_to_name,
+        u2.full_name as created_by_name,
+        c.company_name, c.first_name, c.last_name, c.is_company,
+        jobs.job_number, jobs.title as job_title
+      FROM jobs
+      INNER JOIN organizations o ON jobs.organization_id = o.id
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      LEFT JOIN users u1 ON jobs.assigned_to_user_id = u1.id
+      LEFT JOIN users u2 ON jobs.created_by_user_id = u2.id
+      LEFT JOIN clients c ON jobs.client_id = c.id
+      WHERE om.user_id = $1
+      AND om.status = 'active'
+      AND jobs.scheduled_start_time IS NOT NULL
+      AND jobs.scheduled_end_time IS NOT NULL
+      ${dateCondition.replace(/start_time/g, 'scheduled_start_time').replace(/end_time/g, 'scheduled_end_time')}
+      ${assignedCondition}
+
+      ORDER BY start_time ASC
     `
-
-    const params: any[] = [user.id]
-    let paramIndex = 2
-
-    // Filter appointments that overlap with the date range
-    // An appointment overlaps if: start_time < range_end AND end_time > range_start
-    if (startDate && endDate) {
-      query += ` AND a.start_time < $${paramIndex}`
-      params.push(endDate)
-      paramIndex++
-      query += ` AND a.end_time > $${paramIndex}`
-      params.push(startDate)
-      paramIndex++
-    } else if (startDate) {
-      query += ` AND a.start_time >= $${paramIndex}`
-      params.push(startDate)
-      paramIndex++
-    } else if (endDate) {
-      query += ` AND a.end_time <= $${paramIndex}`
-      params.push(endDate)
-      paramIndex++
-    }
-
-    if (assignedToUserId) {
-      query += ` AND a.assigned_to_user_id = $${paramIndex}`
-      params.push(assignedToUserId)
-      paramIndex++
-    }
-
-    query += ' ORDER BY a.start_time ASC'
 
     const appointments = await sql(query, params)
 

@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Alert, Modal, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
+import DateTimePicker from '@react-native-community/datetimepicker'
 
 const STATUS_COLORS: Record<string, string> = {
   quoted: '#f59e0b',
@@ -29,6 +30,14 @@ export default function JobDetailScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [completing, setCompleting] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [scheduledDate, setScheduledDate] = useState(new Date())
+  const [scheduledStartTime, setScheduledStartTime] = useState(new Date())
+  const [scheduledEndTime, setScheduledEndTime] = useState(new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showStartTimePicker, setShowStartTimePicker] = useState(false)
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const fetchJob = async () => {
     try {
@@ -59,6 +68,37 @@ export default function JobDetailScreen() {
       })
     }
   }, [job, navigation])
+
+  // Initialize schedule date/time when modal opens with existing job data
+  useEffect(() => {
+    if (showScheduleModal && job) {
+      if (job.scheduled_date) {
+        setScheduledDate(new Date(job.scheduled_date))
+      } else {
+        setScheduledDate(new Date())
+      }
+
+      if (job.scheduled_start_time) {
+        const timeDate = new Date(job.scheduled_start_time)
+        setScheduledStartTime(timeDate)
+      } else {
+        // Default to 9 AM
+        const defaultTime = new Date()
+        defaultTime.setHours(9, 0, 0, 0)
+        setScheduledStartTime(defaultTime)
+      }
+
+      if (job.scheduled_end_time) {
+        const endTimeDate = new Date(job.scheduled_end_time)
+        setScheduledEndTime(endTimeDate)
+      } else {
+        // Default to 2 hours after start (11 AM if start is 9 AM)
+        const defaultEndTime = new Date()
+        defaultEndTime.setHours(11, 0, 0, 0)
+        setScheduledEndTime(defaultEndTime)
+      }
+    }
+  }, [showScheduleModal, job])
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -256,6 +296,85 @@ export default function JobDetailScreen() {
     )
   }
 
+  const handleSchedule = async () => {
+    try {
+      setSaving(true)
+
+      // Validate end time is after start time
+      if (scheduledEndTime <= scheduledStartTime) {
+        Alert.alert('Invalid Time', 'End time must be after start time')
+        setSaving(false)
+        return
+      }
+
+      // Format date in local timezone (YYYY-MM-DD)
+      const year = scheduledDate.getFullYear()
+      const month = String(scheduledDate.getMonth() + 1).padStart(2, '0')
+      const day = String(scheduledDate.getDate()).padStart(2, '0')
+      const dateString = `${year}-${month}-${day}`
+
+      // Combine date and times (keep in local timezone)
+      const scheduledDateTime = new Date(scheduledDate)
+      scheduledDateTime.setHours(scheduledStartTime.getHours())
+      scheduledDateTime.setMinutes(scheduledStartTime.getMinutes())
+      scheduledDateTime.setSeconds(0)
+
+      const scheduledEndDateTime = new Date(scheduledDate)
+      scheduledEndDateTime.setHours(scheduledEndTime.getHours())
+      scheduledEndDateTime.setMinutes(scheduledEndTime.getMinutes())
+      scheduledEndDateTime.setSeconds(0)
+
+      await apiClient.updateJob(id as string, {
+        scheduledDate: dateString,
+        scheduledStartTime: scheduledDateTime.toISOString(),
+        scheduledEndTime: scheduledEndDateTime.toISOString(),
+      })
+
+      setShowScheduleModal(false)
+      await fetchJob()
+      Alert.alert('Success', 'Job scheduled successfully')
+    } catch (err: any) {
+      console.error('Failed to schedule job:', err)
+      Alert.alert('Error', err.message || 'Failed to schedule job')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false)
+    if (selectedDate) {
+      setScheduledDate(selectedDate)
+    }
+  }
+
+  const onStartTimeChange = (event: any, selectedTime?: Date) => {
+    setShowStartTimePicker(false)
+    if (selectedTime) {
+      setScheduledStartTime(selectedTime)
+      // Auto-adjust end time to be 2 hours later
+      const newEndTime = new Date(selectedTime)
+      newEndTime.setHours(newEndTime.getHours() + 2)
+      setScheduledEndTime(newEndTime)
+    }
+  }
+
+  const onEndTimeChange = (event: any, selectedTime?: Date) => {
+    setShowEndTimePicker(false)
+    if (selectedTime) {
+      setScheduledEndTime(selectedTime)
+    }
+  }
+
+  // Calculate duration in hours and minutes
+  const calculateDuration = () => {
+    const diffMs = scheduledEndTime.getTime() - scheduledStartTime.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const hours = Math.floor(diffMins / 60)
+    const mins = diffMins % 60
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+  }
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
@@ -296,7 +415,7 @@ export default function JobDetailScreen() {
   ].filter(Boolean).join(', ')
 
   // Format dates
-  const scheduledDate = job.scheduled_date
+  const scheduledDateDisplay = job.scheduled_date
     ? new Date(job.scheduled_date).toLocaleDateString()
     : 'Not scheduled'
 
@@ -412,7 +531,7 @@ export default function JobDetailScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Scheduled Date:</Text>
-            <Text style={styles.value}>{scheduledDate}</Text>
+            <Text style={styles.value}>{scheduledDateDisplay}</Text>
           </View>
 
           {job.scheduled_start_time && (
@@ -428,6 +547,35 @@ export default function JobDetailScreen() {
               <Text style={styles.value}>{new Date(job.scheduled_end_time).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</Text>
             </View>
           )}
+
+          {job.scheduled_start_time && job.scheduled_end_time && (
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Duration:</Text>
+              <Text style={styles.value}>
+                {(() => {
+                  const start = new Date(job.scheduled_start_time)
+                  const end = new Date(job.scheduled_end_time)
+                  const diffMs = end.getTime() - start.getTime()
+                  const diffMins = Math.floor(diffMs / 60000)
+                  const hours = Math.floor(diffMins / 60)
+                  const mins = diffMins % 60
+                  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+                })()}
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.actionButtons}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => setShowScheduleModal(true)}
+            >
+              <MaterialCommunityIcons name="calendar-clock" size={20} color="#2563eb" />
+              <Text style={styles.actionButtonText}>
+                {job.scheduled_date ? 'Reschedule' : 'Schedule'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Pricing Card */}
@@ -619,6 +767,124 @@ export default function JobDetailScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Schedule Modal */}
+      <Modal
+        visible={showScheduleModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowScheduleModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Schedule Job</Text>
+              <TouchableOpacity onPress={() => setShowScheduleModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.label}>Scheduled Date</Text>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <MaterialCommunityIcons name="calendar" size={20} color="#2563eb" />
+                <Text style={styles.dateTimeButtonText}>
+                  {scheduledDate.toLocaleDateString('en-AU', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </Text>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={scheduledDate}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onDateChange}
+                  minimumDate={new Date()}
+                />
+              )}
+
+              <Text style={styles.label}>Start Time</Text>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowStartTimePicker(true)}
+              >
+                <MaterialCommunityIcons name="clock-outline" size={20} color="#2563eb" />
+                <Text style={styles.dateTimeButtonText}>
+                  {scheduledStartTime.toLocaleTimeString('en-AU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </TouchableOpacity>
+
+              {showStartTimePicker && (
+                <DateTimePicker
+                  value={scheduledStartTime}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onStartTimeChange}
+                />
+              )}
+
+              <Text style={styles.label}>End Time</Text>
+              <TouchableOpacity
+                style={styles.dateTimeButton}
+                onPress={() => setShowEndTimePicker(true)}
+              >
+                <MaterialCommunityIcons name="clock-outline" size={20} color="#2563eb" />
+                <Text style={styles.dateTimeButtonText}>
+                  {scheduledEndTime.toLocaleTimeString('en-AU', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </TouchableOpacity>
+
+              {showEndTimePicker && (
+                <DateTimePicker
+                  value={scheduledEndTime}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={onEndTimeChange}
+                />
+              )}
+
+              <View style={styles.durationInfo}>
+                <MaterialCommunityIcons name="timer-outline" size={20} color="#666" />
+                <Text style={styles.durationText}>Duration: {calculateDuration()}</Text>
+              </View>
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setShowScheduleModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                onPress={handleSchedule}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save Schedule</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -945,5 +1211,97 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#2563eb',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '75%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111',
+  },
+  modalBody: {
+    padding: 16,
+  },
+  dateTimeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#f9f9f9',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+  },
+  dateTimeButtonText: {
+    fontSize: 16,
+    color: '#111',
+    fontWeight: '500',
+  },
+  durationInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#eff6ff',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  durationText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563eb',
+  },
+  modalFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: '#2563eb',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    opacity: 0.6,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 })

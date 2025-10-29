@@ -362,6 +362,154 @@ class ApiClient {
   async getCurrentUser() {
     return this.request<{ user: any }>('/users/me')
   }
+
+  async updateUserProfile(data: any) {
+    return this.request<{ success: boolean; user: any }>(
+      '/users/me',
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  // Organization API
+  async getCurrentOrganization() {
+    return this.request<{ organization: any }>('/organizations/current')
+  }
+
+  async updateOrganization(data: any) {
+    return this.request<{ success: boolean; organization: any }>(
+      '/organizations/current',
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  // Team Members API
+  async getTeamMembers() {
+    return this.request<{ members: any[] }>('/organizations/members')
+  }
+
+  async inviteTeamMember(data: any) {
+    return this.request<{ success: boolean; invitation: any }>(
+      '/organizations/members/invite',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async getTeamMember(memberId: string) {
+    return this.request<{ member: any }>(`/organizations/members/${memberId}`)
+  }
+
+  async updateTeamMember(memberId: string, data: any) {
+    return this.request<{ success: boolean; member: any }>(
+      `/organizations/members/${memberId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async removeTeamMember(memberId: string) {
+    return this.request<{ success: boolean }>(
+      `/organizations/members/${memberId}`,
+      { method: 'DELETE' }
+    )
+  }
+
+  // Documents API
+  async getUserDocuments() {
+    return this.request<{ documents: any[] }>('/documents/user')
+  }
+
+  async getOrganizationDocuments() {
+    return this.request<{ documents: any[] }>('/documents/organization')
+  }
+
+  async uploadUserDocument(data: any) {
+    const formData = new FormData()
+    formData.append('title', data.title)
+    formData.append('documentType', data.documentType)
+    if (data.documentNumber) formData.append('documentNumber', data.documentNumber)
+    if (data.issuingAuthority) formData.append('issuingAuthority', data.issuingAuthority)
+    formData.append('issueDate', data.issueDate)
+    if (data.expiryDate) formData.append('expiryDate', data.expiryDate)
+
+    const filename = data.fileUri.split('/').pop() || 'document.pdf'
+    formData.append('file', {
+      uri: data.fileUri,
+      name: filename,
+      type: data.fileType || 'application/pdf',
+    } as any)
+
+    const token = await this.getAuthToken()
+    const response = await fetch(`${API_URL}/documents/user`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`)
+    }
+
+    return await response.json()
+  }
+
+  async uploadOrganizationDocument(data: any) {
+    const formData = new FormData()
+    formData.append('title', data.title)
+    formData.append('documentType', data.documentType)
+    if (data.documentNumber) formData.append('documentNumber', data.documentNumber)
+    if (data.issuingAuthority) formData.append('issuingAuthority', data.issuingAuthority)
+    formData.append('issueDate', data.issueDate)
+    if (data.expiryDate) formData.append('expiryDate', data.expiryDate)
+
+    const filename = data.fileUri.split('/').pop() || 'document.pdf'
+    formData.append('file', {
+      uri: data.fileUri,
+      name: filename,
+      type: data.fileType || 'application/pdf',
+    } as any)
+
+    const token = await this.getAuthToken()
+    const response = await fetch(`${API_URL}/documents/organization`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.status}`)
+    }
+
+    return await response.json()
+  }
+
+  async deleteUserDocument(docId: string) {
+    return this.request<{ success: boolean }>(
+      `/documents/user/${docId}`,
+      { method: 'DELETE' }
+    )
+  }
+
+  async deleteOrganizationDocument(docId: string) {
+    return this.request<{ success: boolean }>(
+      `/documents/organization/${docId}`,
+      { method: 'DELETE' }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()

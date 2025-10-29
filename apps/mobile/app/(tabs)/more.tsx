@@ -45,7 +45,7 @@ export default function MoreScreen() {
         <Text style={styles.email}>{user?.primaryEmailAddress?.emailAddress}</Text>
         <Button
           mode="outlined"
-          onPress={() => alert('Edit Profile - Coming soon!')}
+          onPress={() => router.push('/profile/edit')}
           style={styles.editButton}
         >
           Edit Profile
@@ -63,7 +63,7 @@ export default function MoreScreen() {
           description="View and manage organization"
           left={(props) => <List.Icon {...props} icon="domain" />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => alert('Organization - Coming soon!')}
+          onPress={() => router.push('/organization/settings')}
         />
 
         <List.Item
@@ -71,7 +71,7 @@ export default function MoreScreen() {
           description="Manage team and permissions"
           left={(props) => <List.Icon {...props} icon="account-group" />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => alert('Team Members - Coming soon!')}
+          onPress={() => router.push('/team')}
         />
 
         <List.Item
@@ -79,7 +79,7 @@ export default function MoreScreen() {
           description="Licenses and certificates"
           left={(props) => <List.Icon {...props} icon="file-document" />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => alert('Documents - Coming soon!')}
+          onPress={() => router.push('/documents')}
         />
       </View>
 

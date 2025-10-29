@@ -121,10 +121,34 @@ export default function JobsScreen() {
       item.site_state
     ].filter(Boolean).join(', ') || 'No address'
 
-    // Format date safely
-    const scheduledDate = item.scheduled_date
-      ? new Date(item.scheduled_date).toLocaleDateString()
-      : 'Not scheduled'
+    // Format date and time safely
+    const scheduledDateTime = (() => {
+      if (!item.scheduled_date) return 'Not scheduled'
+
+      const date = new Date(item.scheduled_date).toLocaleDateString('en-AU', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      })
+
+      if (item.scheduled_start_time) {
+        const startTime = new Date(item.scheduled_start_time).toLocaleTimeString('en-AU', {
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+
+        if (item.scheduled_end_time) {
+          const endTime = new Date(item.scheduled_end_time).toLocaleTimeString('en-AU', {
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+          return `${date} • ${startTime}-${endTime}`
+        }
+        return `${date} • ${startTime}`
+      }
+
+      return date
+    })()
 
     // Get priority and status with fallbacks
     const priority = (item.priority || 'medium') as keyof typeof PRIORITY_COLORS
@@ -161,7 +185,7 @@ export default function JobsScreen() {
 
         <View style={styles.row}>
           <MaterialCommunityIcons name="calendar" size={16} color="#666" />
-          <Text style={styles.info}>{scheduledDate}</Text>
+          <Text style={styles.info}>{scheduledDateTime}</Text>
         </View>
       </TouchableOpacity>
     )
