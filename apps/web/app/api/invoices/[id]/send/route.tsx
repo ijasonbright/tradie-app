@@ -4,6 +4,7 @@ import { neon } from '@neondatabase/serverless'
 import { generateInvoicePDF } from '@/lib/pdf/generate-invoice-pdf'
 import { sendEmail } from '@/lib/email/ses'
 import { generateInvoiceEmailHTML, generateInvoiceEmailText } from '@/lib/email/templates/invoice'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,11 +15,35 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { userId } = await auth()
 
-    if (!userId) {
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
+
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = req.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
+
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const userId = clerkUserId
 
     const sql = neon(process.env.DATABASE_URL!)
 

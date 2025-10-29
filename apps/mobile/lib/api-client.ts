@@ -156,6 +156,77 @@ class ApiClient {
     return this.request<{ organizations: any[] }>('/organizations')
   }
 
+  // Invoices API
+  async getInvoices(params?: { status?: string; clientId?: string; jobId?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.clientId) queryParams.append('clientId', params.clientId)
+    if (params?.jobId) queryParams.append('jobId', params.jobId)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/invoices?${query}` : '/invoices'
+
+    return this.request<{ invoices: any[] }>(endpoint)
+  }
+
+  async getInvoice(id: string) {
+    return this.request<{ invoice: any }>(`/invoices/${id}`)
+  }
+
+  async createInvoice(data: any) {
+    return this.request<{ success: boolean; invoice: any }>(
+      '/invoices',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async sendInvoice(id: string) {
+    return this.request<{ success: boolean; message: string }>(
+      `/invoices/${id}/send`,
+      {
+        method: 'POST',
+      }
+    )
+  }
+
+  // Quotes API
+  async getQuotes(params?: { status?: string; clientId?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.clientId) queryParams.append('clientId', params.clientId)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/quotes?${query}` : '/quotes'
+
+    return this.request<{ quotes: any[] }>(endpoint)
+  }
+
+  async getQuote(id: string) {
+    return this.request<{ quote: any }>(`/quotes/${id}`)
+  }
+
+  async createQuote(data: any) {
+    return this.request<{ success: boolean; quote: any }>(
+      '/quotes',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async sendQuote(id: string) {
+    return this.request<{ success: boolean; message: string }>(
+      `/quotes/${id}/send`,
+      {
+        method: 'POST',
+      }
+    )
+  }
+
   // User/Profile API
   async getCurrentUser() {
     return this.request<{ user: any }>('/users/me')

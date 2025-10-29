@@ -79,6 +79,132 @@ export default function JobDetailScreen() {
     }
   }
 
+  const handleSendInvoice = async () => {
+    try {
+      // Check if client has email
+      if (!job.client_email) {
+        Alert.alert('No Email Address', 'This client does not have an email address. Please add one before sending an invoice.')
+        return
+      }
+
+      Alert.alert(
+        'Send Invoice',
+        `Send invoice to ${job.client_email}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Send',
+            onPress: async () => {
+              try {
+                // First check if invoice already exists for this job
+                const invoicesResponse = await apiClient.getInvoices({ jobId: id as string })
+
+                let invoiceId: string
+
+                if (invoicesResponse.invoices && invoicesResponse.invoices.length > 0) {
+                  // Use existing invoice
+                  invoiceId = invoicesResponse.invoices[0].id
+                } else {
+                  // Create new invoice from job
+                  const invoiceData = {
+                    jobId: id,
+                    clientId: job.client_id,
+                    organizationId: job.organization_id,
+                    subtotal: parseFloat(job.quoted_amount || job.actual_amount || '0'),
+                    gstAmount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 0.1,
+                    totalAmount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 1.1,
+                    issueDate: new Date().toISOString().split('T')[0],
+                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: 'draft',
+                    notes: job.description || null,
+                  }
+
+                  const createResponse = await apiClient.createInvoice(invoiceData)
+                  invoiceId = createResponse.invoice.id
+                }
+
+                // Send the invoice
+                await apiClient.sendInvoice(invoiceId)
+
+                Alert.alert('Success', `Invoice sent to ${job.client_email}`)
+                fetchJob() // Refresh job data
+              } catch (err: any) {
+                console.error('Failed to send invoice:', err)
+                Alert.alert('Error', err.message || 'Failed to send invoice')
+              }
+            }
+          }
+        ]
+      )
+    } catch (err: any) {
+      console.error('Failed to prepare invoice:', err)
+      Alert.alert('Error', 'Failed to prepare invoice')
+    }
+  }
+
+  const handleSendQuote = async () => {
+    try {
+      // Check if client has email
+      if (!job.client_email) {
+        Alert.alert('No Email Address', 'This client does not have an email address. Please add one before sending a quote.')
+        return
+      }
+
+      Alert.alert(
+        'Send Quote',
+        `Send quote to ${job.client_email}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Send',
+            onPress: async () => {
+              try {
+                // First check if quote already exists for this job
+                const quotesResponse = await apiClient.getQuotes({ clientId: job.client_id })
+                const existingQuote = quotesResponse.quotes?.find((q: any) => q.title === job.title)
+
+                let quoteId: string
+
+                if (existingQuote) {
+                  // Use existing quote
+                  quoteId = existingQuote.id
+                } else {
+                  // Create new quote from job
+                  const quoteData = {
+                    clientId: job.client_id,
+                    organizationId: job.organization_id,
+                    title: job.title,
+                    description: job.description || null,
+                    subtotal: parseFloat(job.quoted_amount || '0'),
+                    gstAmount: parseFloat(job.quoted_amount || '0') * 0.1,
+                    totalAmount: parseFloat(job.quoted_amount || '0') * 1.1,
+                    validUntilDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: 'draft',
+                  }
+
+                  const createResponse = await apiClient.createQuote(quoteData)
+                  quoteId = createResponse.quote.id
+                }
+
+                // Send the quote
+                await apiClient.sendQuote(quoteId)
+
+                Alert.alert('Success', `Quote sent to ${job.client_email}`)
+                fetchJob() // Refresh job data
+              } catch (err: any) {
+                console.error('Failed to send quote:', err)
+                Alert.alert('Error', err.message || 'Failed to send quote')
+              }
+            }
+          }
+        ]
+      )
+    } catch (err: any) {
+      console.error('Failed to prepare quote:', err)
+      Alert.alert('Error', 'Failed to prepare quote')
+    }
+  }
+
   const handleCompleteJob = () => {
     // Check if job is already completed
     if (job.status === 'completed') {
@@ -435,7 +561,7 @@ export default function JobDetailScreen() {
 
             <TouchableOpacity
               style={styles.actionButtonWide}
-              onPress={() => Alert.alert('Coming Soon', 'Send Invoice feature coming soon')}
+              onPress={handleSendInvoice}
             >
               <MaterialCommunityIcons name="file-document" size={20} color="#2563eb" />
               <Text style={styles.actionButtonWideText}>Send Invoice</Text>
@@ -443,7 +569,7 @@ export default function JobDetailScreen() {
 
             <TouchableOpacity
               style={styles.actionButtonWide}
-              onPress={() => Alert.alert('Coming Soon', 'Send Quote feature coming soon')}
+              onPress={handleSendQuote}
             >
               <MaterialCommunityIcons name="file-document-outline" size={20} color="#2563eb" />
               <Text style={styles.actionButtonWideText}>Send Quote</Text>
