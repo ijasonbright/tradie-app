@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { randomBytes } from 'crypto'
 import { sendEmail } from '@/lib/email/ses'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null
 
@@ -15,8 +16,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { userId } = await auth()
-    if (!userId) {
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
+
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = request.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
+
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -48,7 +71,7 @@ export async function POST(request: NextRequest) {
       FROM organization_members om
       JOIN organizations o ON o.id = om.organization_id
       WHERE om.user_id = (
-        SELECT id FROM users WHERE clerk_user_id = ${userId}
+        SELECT id FROM users WHERE clerk_user_id = ${clerkUserId}
       )
       AND om.status = 'active'
       AND om.role IN ('owner', 'admin')
