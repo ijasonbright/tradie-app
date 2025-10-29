@@ -56,13 +56,11 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function JobsScreen() {
   const [searchQuery, setSearchQuery] = useState('')
-  const { user, isSignedIn, isLoaded } = useAuth()
+  const { isSignedIn } = useAuth()
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  console.log('JobsScreen - isLoaded:', isLoaded, 'isSignedIn:', isSignedIn, 'user:', user)
 
   // Fetch jobs from API
   const fetchJobs = async () => {
@@ -168,14 +166,6 @@ export default function JobsScreen() {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <View style={styles.authBanner}>
-          <Text style={styles.authText}>
-            ✅ Signed in: {user?.email || 'Not signed in'}
-          </Text>
-          <Text style={styles.authSubtext}>
-            ID: {user?.id.substring(0, 8) || 'N/A'}... | Loaded: {isLoaded ? 'Yes' : 'No'} | Auth: {isSignedIn ? 'Yes' : 'No'}
-          </Text>
-        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>Loading jobs...</Text>
@@ -186,15 +176,6 @@ export default function JobsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.authBanner}>
-        <Text style={styles.authText}>
-          ✅ Signed in: {user?.email || 'Not signed in'}
-        </Text>
-        <Text style={styles.authSubtext}>
-          ID: {user?.id.substring(0, 8) || 'N/A'}... | Loaded: {isLoaded ? 'Yes' : 'No'} | Auth: {isSignedIn ? 'Yes' : 'No'}
-        </Text>
-      </View>
-
       {error && (
         <View style={styles.errorBanner}>
           <MaterialCommunityIcons name="alert-circle" size={20} color="#fff" />
@@ -248,21 +229,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  authBanner: {
-    backgroundColor: '#10b981',
-    padding: 12,
-    alignItems: 'center',
-  },
-  authText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  authSubtext: {
-    color: '#fff',
-    fontSize: 10,
-    marginTop: 2,
   },
   errorBanner: {
     backgroundColor: '#ef4444',
