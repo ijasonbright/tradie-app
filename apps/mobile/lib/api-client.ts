@@ -105,6 +105,16 @@ class ApiClient {
     return this.request<{ clients: any[] }>(endpoint)
   }
 
+  async createClient(data: any) {
+    return this.request<{ success: boolean; client: any }>(
+      '/clients',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   async getClient(id: string) {
     return this.request<{ client: any }>(`/clients/${id}`)
   }

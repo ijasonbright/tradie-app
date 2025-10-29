@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Modal } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/api-client'
@@ -28,7 +28,20 @@ export default function AddJobScreen() {
   const [clients, setClients] = useState<any[]>([])
   const [organization, setOrganization] = useState<any>(null)
 
-  // Form fields
+  // Modal for creating new client
+  const [showClientModal, setShowClientModal] = useState(false)
+  const [creatingClient, setCreatingClient] = useState(false)
+
+  // New client form fields
+  const [newClientIsCompany, setNewClientIsCompany] = useState(false)
+  const [newClientCompanyName, setNewClientCompanyName] = useState('')
+  const [newClientFirstName, setNewClientFirstName] = useState('')
+  const [newClientLastName, setNewClientLastName] = useState('')
+  const [newClientEmail, setNewClientEmail] = useState('')
+  const [newClientPhone, setNewClientPhone] = useState('')
+  const [newClientMobile, setNewClientMobile] = useState('')
+
+  // Job form fields
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [clientId, setClientId] = useState('')
@@ -49,21 +62,92 @@ export default function AddJobScreen() {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const [clientsResponse, orgsResponse] = await Promise.all([
-        apiClient.getClients(),
-        apiClient.getOrganizations(),
-      ])
 
+      // Get clients
+      const clientsResponse = await apiClient.getClients()
       setClients(clientsResponse.clients || [])
 
-      if (orgsResponse.organizations && orgsResponse.organizations.length > 0) {
-        setOrganization(orgsResponse.organizations[0])
+      // Get organization ID from first job (workaround until organizations endpoint is fixed)
+      const jobsResponse = await apiClient.getJobs()
+      if (jobsResponse.jobs && jobsResponse.jobs.length > 0) {
+        // Extract organization ID from first job
+        const orgId = jobsResponse.jobs[0].organization_id
+        const orgName = jobsResponse.jobs[0].organization_name
+        setOrganization({ id: orgId, name: orgName })
+      } else {
+        // If no jobs exist, try organizations endpoint as fallback
+        try {
+          const orgsResponse = await apiClient.getOrganizations()
+          if (orgsResponse.organizations && orgsResponse.organizations.length > 0) {
+            setOrganization(orgsResponse.organizations[0])
+          }
+        } catch (orgError) {
+          console.log('Organizations endpoint not available, user needs to create a job from web first')
+        }
       }
     } catch (err: any) {
       console.error('Failed to fetch data:', err)
       Alert.alert('Error', 'Failed to load data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateClient = async () => {
+    // Validation
+    if (newClientIsCompany && !newClientCompanyName.trim()) {
+      Alert.alert('Validation Error', 'Company name is required')
+      return
+    }
+
+    if (!newClientIsCompany && (!newClientFirstName.trim() || !newClientLastName.trim())) {
+      Alert.alert('Validation Error', 'First name and last name are required')
+      return
+    }
+
+    if (!organization) {
+      Alert.alert('Error', 'No organization found')
+      return
+    }
+
+    try {
+      setCreatingClient(true)
+
+      const clientData: any = {
+        organizationId: organization.id,
+        clientType: 'residential',
+        isCompany: newClientIsCompany,
+        companyName: newClientIsCompany ? newClientCompanyName.trim() : null,
+        firstName: !newClientIsCompany ? newClientFirstName.trim() : null,
+        lastName: !newClientIsCompany ? newClientLastName.trim() : null,
+        email: newClientEmail.trim() || null,
+        phone: newClientPhone.trim() || null,
+        mobile: newClientMobile.trim() || null,
+      }
+
+      const response = await apiClient.createClient(clientData)
+
+      // Add new client to the list and select it
+      const newClient = response.client
+      setClients([newClient, ...clients])
+      setClientId(newClient.id)
+
+      // Reset form and close modal
+      setNewClientIsCompany(false)
+      setNewClientCompanyName('')
+      setNewClientFirstName('')
+      setNewClientLastName('')
+      setNewClientEmail('')
+      setNewClientPhone('')
+      setNewClientMobile('')
+      setShowClientModal(false)
+
+      Alert.alert('Success', 'Client created successfully')
+    } catch (err: any) {
+      console.error('Failed to create client:', err)
+      Alert.alert('Error', err.message || 'Failed to create client')
+    } finally {
+      setCreatingClient(false)
     }
   }
 
@@ -104,7 +188,7 @@ export default function AddJobScreen() {
         quotedAmount: quotedAmount ? parseFloat(quotedAmount) : null,
       }
 
-      const response = await apiClient.createJob(jobData)
+      await apiClient.createJob(jobData)
 
       Alert.alert('Success', 'Job created successfully', [
         {
@@ -134,17 +218,20 @@ export default function AddJobScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Client Selection */}
         <View style={styles.section}>
-          <Text style={styles.label}>Client *</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.label}>Client *</Text>
+            <TouchableOpacity
+              style={styles.addClientButton}
+              onPress={() => setShowClientModal(true)}
+            >
+              <MaterialCommunityIcons name="plus-circle" size={20} color="#2563eb" />
+              <Text style={styles.addClientText}>New Client</Text>
+            </TouchableOpacity>
+          </View>
+
           {clients.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No clients found. Please add a client first.</Text>
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => Alert.alert('Coming Soon', 'Add client feature coming soon')}
-              >
-                <MaterialCommunityIcons name="plus" size={20} color="#2563eb" />
-                <Text style={styles.addButtonText}>Add Client</Text>
-              </TouchableOpacity>
+              <Text style={styles.emptyText}>No clients yet. Create your first client above.</Text>
             </View>
           ) : (
             <View style={styles.clientList}>
@@ -358,6 +445,159 @@ export default function AddJobScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* New Client Modal */}
+      <Modal
+        visible={showClientModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowClientModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowClientModal(false)}>
+              <MaterialCommunityIcons name="close" size={24} color="#111" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>New Client</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.modalScrollContent}>
+            {/* Client Type Toggle */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Client Type</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    !newClientIsCompany && styles.toggleButtonActive,
+                  ]}
+                  onPress={() => setNewClientIsCompany(false)}
+                >
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      !newClientIsCompany && styles.toggleTextActive,
+                    ]}
+                  >
+                    Individual
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toggleButton,
+                    newClientIsCompany && styles.toggleButtonActive,
+                  ]}
+                  onPress={() => setNewClientIsCompany(true)}
+                >
+                  <Text
+                    style={[
+                      styles.toggleText,
+                      newClientIsCompany && styles.toggleTextActive,
+                    ]}
+                  >
+                    Company
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Company Name or Individual Names */}
+            {newClientIsCompany ? (
+              <View style={styles.section}>
+                <Text style={styles.label}>Company Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  value={newClientCompanyName}
+                  onChangeText={setNewClientCompanyName}
+                  placeholder="Enter company name"
+                  placeholderTextColor="#999"
+                />
+              </View>
+            ) : (
+              <>
+                <View style={styles.section}>
+                  <Text style={styles.label}>First Name *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newClientFirstName}
+                    onChangeText={setNewClientFirstName}
+                    placeholder="Enter first name"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={styles.label}>Last Name *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newClientLastName}
+                    onChangeText={setNewClientLastName}
+                    placeholder="Enter last name"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              </>
+            )}
+
+            {/* Contact Details */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={newClientEmail}
+                onChangeText={setNewClientEmail}
+                placeholder="email@example.com"
+                placeholderTextColor="#999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Phone</Text>
+              <TextInput
+                style={styles.input}
+                value={newClientPhone}
+                onChangeText={setNewClientPhone}
+                placeholder="(02) 1234 5678"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.label}>Mobile</Text>
+              <TextInput
+                style={styles.input}
+                value={newClientMobile}
+                onChangeText={setNewClientMobile}
+                placeholder="0412 345 678"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+              />
+            </View>
+          </ScrollView>
+
+          {/* Create Client Button */}
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={[styles.saveButton, creatingClient && styles.saveButtonDisabled]}
+              onPress={handleCreateClient}
+              disabled={creatingClient}
+            >
+              {creatingClient ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="check" size={20} color="#fff" />
+                  <Text style={styles.saveButtonText}>Create Client</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -387,6 +627,12 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -399,6 +645,16 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
     marginTop: 12,
+  },
+  addClientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  addClientText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2563eb',
   },
   input: {
     backgroundColor: '#fff',
@@ -441,26 +697,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 8,
     alignItems: 'center',
-    gap: 12,
   },
   emptyText: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-  },
-  addButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563eb',
   },
   pickerContainer: {
     flexDirection: 'row',
@@ -520,5 +761,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111',
+  },
+  modalContent: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  modalFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+    padding: 16,
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    alignItems: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  toggleText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  toggleTextActive: {
+    color: '#fff',
   },
 })
