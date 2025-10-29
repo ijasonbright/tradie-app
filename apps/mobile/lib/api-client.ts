@@ -426,11 +426,11 @@ class ApiClient {
 
   // Documents API
   async getUserDocuments() {
-    return this.request<{ documents: any[] }>('/documents/user')
+    return this.request<{ documents: any[] }>('/docs/user')
   }
 
   async getOrganizationDocuments() {
-    return this.request<{ documents: any[] }>('/documents/organization')
+    return this.request<{ documents: any[] }>('/docs/organization')
   }
 
   async uploadUserDocument(data: any) {
@@ -450,7 +450,7 @@ class ApiClient {
     } as any)
 
     const token = await this.getAuthToken()
-    const response = await fetch(`${API_URL}/documents/user`, {
+    const response = await fetch(`${API_URL}/docs/user`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -482,7 +482,7 @@ class ApiClient {
     } as any)
 
     const token = await this.getAuthToken()
-    const response = await fetch(`${API_URL}/documents/organization`, {
+    const response = await fetch(`${API_URL}/docs/organization`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -499,14 +499,14 @@ class ApiClient {
 
   async deleteUserDocument(docId: string) {
     return this.request<{ success: boolean }>(
-      `/documents/user/${docId}`,
+      `/docs/user/${docId}`,
       { method: 'DELETE' }
     )
   }
 
   async deleteOrganizationDocument(docId: string) {
     return this.request<{ success: boolean }>(
-      `/documents/organization/${docId}`,
+      `/docs/organization/${docId}`,
       { method: 'DELETE' }
     )
   }
