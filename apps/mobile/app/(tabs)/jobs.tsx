@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { Searchbar, FAB } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
 
@@ -55,6 +56,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 }
 
 export default function JobsScreen() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const { isSignedIn } = useAuth()
   const [jobs, setJobs] = useState<any[]>([])
@@ -129,7 +131,10 @@ export default function JobsScreen() {
     const status = (item.status || 'quoted') as keyof typeof STATUS_COLORS
 
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/job/${item.id}`)}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             <Text style={styles.jobNumber}>{item.job_number || 'N/A'}</Text>
