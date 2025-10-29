@@ -279,15 +279,6 @@ export default function JobPhotosScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalOverlay}
         >
-          <TouchableOpacity
-            style={styles.modalOverlayTouchable}
-            activeOpacity={1}
-            onPress={() => {
-              Keyboard.dismiss()
-              setShowAddModal(false)
-              resetForm()
-            }}
-          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Photo</Text>
@@ -489,9 +480,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
-  },
-  modalOverlayTouchable: {
-    flex: 1,
   },
   modalContent: {
     backgroundColor: '#fff',
