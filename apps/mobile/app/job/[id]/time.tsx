@@ -40,26 +40,34 @@ export default function JobTimeTrackingScreen() {
         apiClient.getTimeLogs(id as string),
         apiClient.getActiveTimer(id as string)
       ])
+      console.log('Fetched active timer response:', activeTimerRes)
       setTimeLogs(timeLogsRes.timeLogs || [])
-      setActiveTimer(activeTimerRes.timeLog)
 
-      if (activeTimerRes.timeLog) {
-        const startTime = new Date(activeTimerRes.timeLog.start_time).getTime()
+      // API returns activeTimer, not timeLog
+      const activeTimer = activeTimerRes.activeTimer || activeTimerRes.timeLog
+      setActiveTimer(activeTimer)
+
+      if (activeTimer) {
+        const startTime = new Date(activeTimer.start_time).getTime()
         const elapsed = Math.floor((Date.now() - startTime) / 1000)
         setElapsedSeconds(elapsed)
+        console.log('Active timer found, elapsed:', elapsed, 'seconds')
+      } else {
+        console.log('No active timer found')
+        setElapsedSeconds(0)
       }
     } catch (err: any) {
       console.error('Failed to fetch time data:', err)
       Alert.alert('Error', 'Failed to load time tracking data')
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
   const onRefresh = async () => {
     setRefreshing(true)
     await fetchData()
-    setRefreshing(false)
   }
 
   const handleStartTimer = async () => {
