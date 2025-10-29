@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal, KeyboardAvoidingView, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
@@ -199,18 +199,31 @@ export default function JobNotesScreen() {
         visible={showAddModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowAddModal(false)}
+        onRequestClose={() => {
+          setShowAddModal(false)
+          resetForm()
+        }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Note</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+              <TouchableOpacity onPress={() => {
+                setShowAddModal(false)
+                resetForm()
+              }}>
                 <MaterialCommunityIcons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
               <Text style={styles.label}>Note Type</Text>
               <View style={styles.typeButtons}>
                 {['general', 'issue', 'client_request', 'internal'].map((type) => (
@@ -248,7 +261,10 @@ export default function JobNotesScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setShowAddModal(false)}
+                onPress={() => {
+                  setShowAddModal(false)
+                  resetForm()
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -265,7 +281,7 @@ export default function JobNotesScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <FAB
@@ -379,7 +395,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -395,7 +411,11 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   modalScroll: {
+    maxHeight: 500,
+  },
+  modalScrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   label: {
     fontSize: 14,
