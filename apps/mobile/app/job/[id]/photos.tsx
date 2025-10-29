@@ -95,20 +95,19 @@ export default function JobPhotosScreen() {
     try {
       setUploading(true)
 
-      // For now, we'll send the URI directly
-      // In production, you'd upload to Vercel Blob first
-      await apiClient.uploadPhoto(id as string, {
-        photoUrl: selectedImage,
-        thumbnailUrl: selectedImage,
-        photoType,
-        caption: caption.trim() || null,
-      })
+      await apiClient.uploadPhoto(
+        id as string,
+        selectedImage,
+        caption.trim(),
+        photoType
+      )
 
       setShowAddModal(false)
       resetForm()
       await fetchPhotos()
       Alert.alert('Success', 'Photo uploaded successfully')
     } catch (err: any) {
+      console.error('Upload error:', err)
       Alert.alert('Error', err.message || 'Failed to upload photo')
     } finally {
       setUploading(false)

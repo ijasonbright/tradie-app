@@ -287,14 +287,43 @@ class ApiClient {
     return this.request<{ photos: any[] }>(`/jobs/${jobId}/photos`)
   }
 
-  async uploadPhoto(jobId: string, data: any) {
-    return this.request<{ success: boolean; photo: any }>(
-      `/jobs/${jobId}/photos`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    )
+  async uploadPhoto(jobId: string, imageUri: string, caption: string, photoType: string) {
+    const formData = new FormData()
+
+    // Create file from URI
+    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('photo', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('caption', caption || '')
+    formData.append('photoType', photoType)
+
+    const token = await this.getAuthToken()
+    const url = `${this.baseURL}/jobs/${jobId}/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let the browser set it with boundary
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
   }
 
   async deletePhoto(jobId: string, photoId: string) {
