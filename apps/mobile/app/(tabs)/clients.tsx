@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native'
 import { Searchbar, FAB, Avatar } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
@@ -113,6 +113,24 @@ export default function ClientsScreen() {
       .slice(0, 2)
   }
 
+  const handleCall = (phoneNumber: string) => {
+    if (phoneNumber && phoneNumber !== 'No phone') {
+      Linking.openURL(`tel:${phoneNumber}`)
+    }
+  }
+
+  const handleEmail = (email: string) => {
+    if (email) {
+      Linking.openURL(`mailto:${email}`)
+    }
+  }
+
+  const handleMessage = (phoneNumber: string) => {
+    if (phoneNumber && phoneNumber !== 'No phone') {
+      Linking.openURL(`sms:${phoneNumber}`)
+    }
+  }
+
   const renderClientCard = ({ item }: { item: any }) => {
     // Build client name from database fields
     const clientName = item.is_company
@@ -134,7 +152,10 @@ export default function ClientsScreen() {
     const clientType = item.client_type || 'residential'
 
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/clients/${item.id}`)}
+      >
         <View style={styles.cardHeader}>
           <Avatar.Text
             size={48}
@@ -172,13 +193,31 @@ export default function ClientsScreen() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleCall(contactPhone)
+            }}
+          >
             <MaterialCommunityIcons name="phone" size={20} color="#2563eb" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleEmail(item.email)
+            }}
+          >
             <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleMessage(contactPhone)
+            }}
+          >
             <MaterialCommunityIcons name="message-text" size={20} color="#2563eb" />
           </TouchableOpacity>
         </View>
