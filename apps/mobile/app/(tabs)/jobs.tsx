@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
-import { Chip, Searchbar, FAB } from 'react-native-paper'
+import { Searchbar, FAB } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuth } from '../../lib/auth'
@@ -135,21 +135,13 @@ export default function JobsScreen() {
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             <Text style={styles.jobNumber}>{item.job_number || 'N/A'}</Text>
-            <Chip
-              mode="flat"
-              style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[priority] }]}
-              textStyle={styles.chipText}
-            >
-              {priority.toUpperCase()}
-            </Chip>
+            <View style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[priority] }]}>
+              <Text style={styles.chipText}>{priority.toUpperCase()}</Text>
+            </View>
           </View>
-          <Chip
-            mode="flat"
-            style={[styles.statusChip, { backgroundColor: STATUS_COLORS[status] }]}
-            textStyle={styles.chipText}
-          >
-            {status.replace('_', ' ').toUpperCase()}
-          </Chip>
+          <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[status] }]}>
+            <Text style={styles.chipText}>{status.replace('_', ' ').toUpperCase()}</Text>
+          </View>
         </View>
 
         <Text style={styles.title}>{item.title || 'Untitled Job'}</Text>
@@ -331,10 +323,18 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   priorityChip: {
-    height: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statusChip: {
-    height: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chipText: {
     fontSize: 10,
