@@ -104,12 +104,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithOAuth = async () => {
     try {
-      // Open the web app's OAuth callback page in browser
-      // User will sign in with Apple/Google/etc, then redirect back to mobile app
+      // Open Clerk's sign-in page directly
+      // After sign-in, Clerk will redirect to /mobile-callback which generates token
+      // and redirects to tradieapp://auth-callback
+      const signInUrl = `${WEB_URL}/sign-in?redirect_url=${encodeURIComponent('/mobile-callback')}`
+
+      console.log('Opening sign-in URL:', signInUrl)
+
       const result = await WebBrowser.openAuthSessionAsync(
-        `${WEB_URL}/mobile-callback`,
+        signInUrl,
         'tradieapp://auth-callback'
       )
+
+      console.log('WebBrowser result:', result)
 
       if (result.type === 'success' && result.url) {
         // URL will be handled by the deep link listener above
