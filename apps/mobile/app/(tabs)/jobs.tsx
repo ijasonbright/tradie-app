@@ -93,55 +93,84 @@ export default function JobsScreen() {
     fetchJobs()
   }
 
-  const filteredJobs = jobs.filter(
-    (job) =>
-      job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.client?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.jobNumber?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredJobs = jobs.filter((job) => {
+    if (!searchQuery) return true
 
-  const renderJobCard = ({ item }: { item: typeof MOCK_JOBS[0] }) => (
-    <TouchableOpacity style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardHeaderLeft}>
-          <Text style={styles.jobNumber}>{item.jobNumber}</Text>
+    const query = searchQuery.toLowerCase()
+    const clientName = job.is_company
+      ? job.company_name
+      : `${job.first_name || ''} ${job.last_name || ''}`.trim()
+
+    return (
+      job.title?.toLowerCase().includes(query) ||
+      job.job_number?.toLowerCase().includes(query) ||
+      clientName?.toLowerCase().includes(query)
+    )
+  })
+
+  const renderJobCard = ({ item }: { item: any }) => {
+    // Build client name from database fields
+    const clientName = item.is_company
+      ? item.company_name
+      : `${item.first_name || ''} ${item.last_name || ''}`.trim()
+
+    // Build address from database fields
+    const address = [
+      item.site_address_line1,
+      item.site_city,
+      item.site_state
+    ].filter(Boolean).join(', ') || 'No address'
+
+    // Format date safely
+    const scheduledDate = item.scheduled_date
+      ? new Date(item.scheduled_date).toLocaleDateString()
+      : 'Not scheduled'
+
+    // Get priority and status with fallbacks
+    const priority = (item.priority || 'medium') as keyof typeof PRIORITY_COLORS
+    const status = (item.status || 'quoted') as keyof typeof STATUS_COLORS
+
+    return (
+      <TouchableOpacity style={styles.card}>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardHeaderLeft}>
+            <Text style={styles.jobNumber}>{item.job_number || 'N/A'}</Text>
+            <Chip
+              mode="flat"
+              style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[priority] }]}
+              textStyle={styles.chipText}
+            >
+              {priority.toUpperCase()}
+            </Chip>
+          </View>
           <Chip
             mode="flat"
-            style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[item.priority] }]}
+            style={[styles.statusChip, { backgroundColor: STATUS_COLORS[status] }]}
             textStyle={styles.chipText}
           >
-            {item.priority.toUpperCase()}
+            {status.replace('_', ' ').toUpperCase()}
           </Chip>
         </View>
-        <Chip
-          mode="flat"
-          style={[styles.statusChip, { backgroundColor: STATUS_COLORS[item.status] }]}
-          textStyle={styles.chipText}
-        >
-          {item.status.replace('_', ' ').toUpperCase()}
-        </Chip>
-      </View>
 
-      <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.title}>{item.title || 'Untitled Job'}</Text>
 
-      <View style={styles.row}>
-        <MaterialCommunityIcons name="account" size={16} color="#666" />
-        <Text style={styles.info}>{item.client}</Text>
-      </View>
+        <View style={styles.row}>
+          <MaterialCommunityIcons name="account" size={16} color="#666" />
+          <Text style={styles.info}>{clientName || 'No client'}</Text>
+        </View>
 
-      <View style={styles.row}>
-        <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
-        <Text style={styles.info}>{item.address}</Text>
-      </View>
+        <View style={styles.row}>
+          <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
+          <Text style={styles.info}>{address}</Text>
+        </View>
 
-      <View style={styles.row}>
-        <MaterialCommunityIcons name="calendar" size={16} color="#666" />
-        <Text style={styles.info}>
-          {new Date(item.scheduledDate).toLocaleDateString()}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  )
+        <View style={styles.row}>
+          <MaterialCommunityIcons name="calendar" size={16} color="#666" />
+          <Text style={styles.info}>{scheduledDate}</Text>
+        </View>
+      </TouchableOpacity>
+    )
+  }
 
   // Show loading spinner while fetching jobs
   if (loading && !refreshing) {
