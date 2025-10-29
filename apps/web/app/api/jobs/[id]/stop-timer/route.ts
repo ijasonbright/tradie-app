@@ -93,15 +93,22 @@ export async function POST(
     const costRate = parseFloat(timeLog.hourly_rate || 0)
     const laborCost = (parseFloat(totalHours) * costRate).toFixed(2)
 
-    // Get billing rate from job's trade type
-    const jobRates = await sql`
-      SELECT tt.client_hourly_rate as billing_rate
-      FROM jobs j
-      JOIN trade_types tt ON tt.id = j.trade_type_id
-      WHERE j.id = ${jobId}
-      LIMIT 1
-    `
-    const billingRate = jobRates.length > 0 ? parseFloat(jobRates[0].billing_rate || 0) : 0
+    // Get billing rate from job's trade type (optional - defaults to 0 if not found)
+    let billingRate = 0
+    try {
+      const jobRates = await sql`
+        SELECT tt.client_hourly_rate as billing_rate
+        FROM jobs j
+        LEFT JOIN trade_types tt ON tt.id = j.trade_type_id
+        WHERE j.id = ${jobId}
+        LIMIT 1
+      `
+      if (jobRates.length > 0 && jobRates[0].billing_rate) {
+        billingRate = parseFloat(jobRates[0].billing_rate)
+      }
+    } catch (err) {
+      console.log('Could not fetch billing rate, defaulting to 0:', err)
+    }
     const billingAmount = (parseFloat(totalHours) * billingRate).toFixed(2)
 
     // Update time log with end time and calculations
