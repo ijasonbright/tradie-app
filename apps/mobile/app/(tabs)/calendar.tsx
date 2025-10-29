@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { FAB } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'expo-router'
 import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
 
@@ -47,6 +48,7 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export default function CalendarScreen() {
+  const router = useRouter()
   const { isSignedIn } = useAuth()
   const [appointments, setAppointments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -237,7 +239,7 @@ export default function CalendarScreen() {
       <FAB
         icon="plus"
         style={styles.fab}
-        onPress={() => alert('Add appointment - Coming soon!')}
+        onPress={() => router.push('/appointment/add')}
       />
     </View>
   )

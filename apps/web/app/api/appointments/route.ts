@@ -112,7 +112,28 @@ export async function GET(req: Request) {
 // POST - Create new appointment
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth()
+    // Try to get auth from Clerk (web) first
+    let userId: string | null = null
+
+    try {
+      const authResult = await auth()
+      userId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!userId) {
+      const authHeader = req.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          userId = payload.clerkUserId
+        }
+      }
+    }
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

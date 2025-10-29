@@ -131,6 +131,16 @@ class ApiClient {
     return this.request<{ appointments: any[] }>(endpoint)
   }
 
+  async createAppointment(data: any) {
+    return this.request<{ success: boolean; appointment: any }>(
+      '/appointments',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   // Organizations API
   async getOrganizations() {
     return this.request<{ organizations: any[] }>('/organizations')
