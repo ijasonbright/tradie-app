@@ -304,7 +304,7 @@ class ApiClient {
     formData.append('photoType', photoType)
 
     const token = await this.getAuthToken()
-    const url = `${this.baseURL}/jobs/${jobId}/photos`
+    const url = `${API_URL}/jobs/${jobId}/photos`
 
     console.log(`API Request: POST ${url}`)
 
