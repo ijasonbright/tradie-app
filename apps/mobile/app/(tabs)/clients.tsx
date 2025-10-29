@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, 
 import { Searchbar, FAB, Avatar } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
 
@@ -50,6 +51,7 @@ const MOCK_CLIENTS = [
 ]
 
 export default function ClientsScreen() {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const { isSignedIn } = useAuth()
   const [clients, setClients] = useState<any[]>([])
@@ -245,7 +247,7 @@ export default function ClientsScreen() {
       <FAB
         icon="plus"
         style={styles.fab}
-        onPress={() => alert('Add new client - Coming soon!')}
+        onPress={() => router.push('/clients/add')}
       />
     </View>
   )
