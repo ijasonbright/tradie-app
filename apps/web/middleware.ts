@@ -16,7 +16,26 @@ const isPublicRoute = createRouteMatcher([
   '/mobile-callback',
 ])
 
+// API routes that handle their own JWT authentication (for mobile)
+const isMobileApiRoute = createRouteMatcher([
+  '/api/jobs(.*)',
+  '/api/clients(.*)',
+  '/api/appointments(.*)',
+  '/api/invoices(.*)',
+  '/api/quotes(.*)',
+  '/api/expenses(.*)',
+  '/api/users/me(.*)',
+  '/api/organizations/current(.*)',
+  '/api/organizations/members(.*)',
+])
+
 export default clerkMiddleware((auth, request) => {
+  // Skip Clerk protection for mobile API routes (they handle JWT auth internally)
+  if (isMobileApiRoute(request)) {
+    return
+  }
+
+  // Protect all other non-public routes with Clerk
   if (!isPublicRoute(request)) {
     auth().protect()
   }
