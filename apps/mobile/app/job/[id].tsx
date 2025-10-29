@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Alert } from 'react-native'
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
@@ -23,6 +23,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 export default function JobDetailScreen() {
   const { id } = useLocalSearchParams()
   const router = useRouter()
+  const navigation = useNavigation()
   const [job, setJob] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -49,6 +50,15 @@ export default function JobDetailScreen() {
       fetchJob()
     }
   }, [id])
+
+  // Set the header title when job is loaded
+  useEffect(() => {
+    if (job) {
+      navigation.setOptions({
+        title: job.job_number || 'Job Details',
+      })
+    }
+  }, [job, navigation])
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -123,7 +133,6 @@ export default function JobDetailScreen() {
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Loading...' }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2563eb" />
           <Text style={styles.loadingText}>Loading job details...</Text>
@@ -135,7 +144,6 @@ export default function JobDetailScreen() {
   if (error || !job) {
     return (
       <View style={styles.container}>
-        <Stack.Screen options={{ title: 'Error' }} />
         <View style={styles.errorContainer}>
           <MaterialCommunityIcons name="alert-circle-outline" size={64} color="#ef4444" />
           <Text style={styles.errorTitle}>Failed to Load Job</Text>
@@ -171,13 +179,6 @@ export default function JobDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: job.job_number || 'Job Details',
-          headerBackTitle: 'Back'
-        }}
-      />
-
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
