@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal, KeyboardAvoidingView, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
@@ -198,7 +198,15 @@ export default function JobMaterialsScreen() {
         transparent={true}
         onRequestClose={() => setShowAddModal(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlayTouchable}
+            activeOpacity={1}
+            onPress={() => setShowAddModal(false)}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Material</Text>
@@ -207,7 +215,12 @@ export default function JobMaterialsScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={true}
+            >
               <Text style={styles.label}>Type</Text>
               <View style={styles.typeButtons}>
                 <TouchableOpacity
@@ -295,7 +308,7 @@ export default function JobMaterialsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <FAB
@@ -420,11 +433,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  modalOverlayTouchable: {
+    flex: 1,
+  },
   modalContent: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -440,7 +456,11 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   modalScroll: {
+    flex: 1,
+  },
+  modalScrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   label: {
     fontSize: 14,
