@@ -57,7 +57,7 @@ export default function DocumentUpload({
       formData.append('issueDate', issueDate)
       formData.append('enableAIVerification', 'true')
 
-      const res = await fetch('/api/documents/upload', {
+      const res = await fetch('/api/docs/upload', {
         method: 'POST',
         body: formData,
       })
