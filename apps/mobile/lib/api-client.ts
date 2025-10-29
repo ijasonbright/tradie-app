@@ -227,6 +227,105 @@ class ApiClient {
     )
   }
 
+  // Time Tracking API
+  async getTimeLogs(jobId: string) {
+    return this.request<{ timeLogs: any[] }>(`/jobs/${jobId}/time-logs`)
+  }
+
+  async startTimer(jobId: string) {
+    return this.request<{ success: boolean; timeLog: any }>(
+      `/jobs/${jobId}/start-timer`,
+      { method: 'POST' }
+    )
+  }
+
+  async stopTimer(jobId: string) {
+    return this.request<{ success: boolean; timeLog: any }>(
+      `/jobs/${jobId}/stop-timer`,
+      { method: 'POST' }
+    )
+  }
+
+  async getActiveTimer(jobId: string) {
+    return this.request<{ timeLog: any | null }>(`/jobs/${jobId}/active-timer`)
+  }
+
+  async addManualTimeLog(jobId: string, data: any) {
+    return this.request<{ success: boolean; timeLog: any }>(
+      `/jobs/${jobId}/time-logs`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  // Materials API
+  async getMaterials(jobId: string) {
+    return this.request<{ materials: any[] }>(`/jobs/${jobId}/materials`)
+  }
+
+  async addMaterial(jobId: string, data: any) {
+    return this.request<{ success: boolean; material: any }>(
+      `/jobs/${jobId}/materials`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async deleteMaterial(jobId: string, materialId: string) {
+    return this.request<{ success: boolean }>(
+      `/jobs/${jobId}/materials/${materialId}`,
+      { method: 'DELETE' }
+    )
+  }
+
+  // Photos API
+  async getPhotos(jobId: string) {
+    return this.request<{ photos: any[] }>(`/jobs/${jobId}/photos`)
+  }
+
+  async uploadPhoto(jobId: string, data: any) {
+    return this.request<{ success: boolean; photo: any }>(
+      `/jobs/${jobId}/photos`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async deletePhoto(jobId: string, photoId: string) {
+    return this.request<{ success: boolean }>(
+      `/jobs/${jobId}/photos/${photoId}`,
+      { method: 'DELETE' }
+    )
+  }
+
+  // Notes API
+  async getNotes(jobId: string) {
+    return this.request<{ notes: any[] }>(`/jobs/${jobId}/notes`)
+  }
+
+  async addNote(jobId: string, data: any) {
+    return this.request<{ success: boolean; note: any }>(
+      `/jobs/${jobId}/notes`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async deleteNote(jobId: string, noteId: string) {
+    return this.request<{ success: boolean }>(
+      `/jobs/${jobId}/notes/${noteId}`,
+      { method: 'DELETE' }
+    )
+  }
+
   // User/Profile API
   async getCurrentUser() {
     return this.request<{ user: any }>('/users/me')
