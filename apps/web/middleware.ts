@@ -27,6 +27,7 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/users/me(.*)',
   '/api/organizations/current(.*)',
   '/api/organizations/members(.*)',
+  '/api/docs(.*)',
 ])
 
 export default clerkMiddleware((auth, request) => {
