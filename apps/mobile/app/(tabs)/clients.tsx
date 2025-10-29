@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import { Searchbar, FAB, Avatar } from 'react-native-paper'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useAuth } from '../../lib/auth'
+import { apiClient } from '../../lib/api-client'
 
 // Mock data for clients
 const MOCK_CLIENTS = [
@@ -49,13 +51,56 @@ const MOCK_CLIENTS = [
 
 export default function ClientsScreen() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { isSignedIn } = useAuth()
+  const [clients, setClients] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredClients = MOCK_CLIENTS.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery)
-  )
+  // Fetch clients from API
+  const fetchClients = async () => {
+    try {
+      setError(null)
+      const response = await apiClient.getClients()
+      console.log('Fetched clients:', response)
+      setClients(response.clients || [])
+    } catch (err: any) {
+      console.error('Failed to fetch clients:', err)
+      setError(err.message || 'Failed to load clients')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Load clients on mount
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchClients()
+    }
+  }, [isSignedIn])
+
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true)
+    fetchClients()
+  }
+
+  const filteredClients = clients.filter((client) => {
+    if (!searchQuery) return true
+
+    const query = searchQuery.toLowerCase()
+    const clientName = client.is_company
+      ? client.company_name
+      : `${client.first_name || ''} ${client.last_name || ''}`.trim()
+
+    return (
+      clientName?.toLowerCase().includes(query) ||
+      client.email?.toLowerCase().includes(query) ||
+      client.phone?.includes(searchQuery) ||
+      client.mobile?.includes(searchQuery)
+    )
+  })
 
   const getInitials = (name: string) => {
     return name
@@ -66,70 +111,100 @@ export default function ClientsScreen() {
       .slice(0, 2)
   }
 
-  const renderClientCard = ({ item }: { item: typeof MOCK_CLIENTS[0] }) => (
-    <TouchableOpacity style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Avatar.Text
-          size={48}
-          label={getInitials(item.name)}
-          style={[
-            styles.avatar,
-            { backgroundColor: item.type === 'commercial' ? '#9333ea' : '#2563eb' },
-          ]}
-        />
-        <View style={styles.headerInfo}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.type}>
-            {item.type === 'commercial' ? 'Commercial' : 'Residential'}
-          </Text>
+  const renderClientCard = ({ item }: { item: any }) => {
+    // Build client name from database fields
+    const clientName = item.is_company
+      ? item.company_name || 'Unnamed Company'
+      : `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Unnamed Client'
+
+    // Build address from database fields
+    const address = [
+      item.site_address_line1,
+      item.site_city,
+      item.site_state,
+      item.site_postcode
+    ].filter(Boolean).join(', ') || 'No address'
+
+    // Get contact phone (prefer mobile, fallback to phone)
+    const contactPhone = item.mobile || item.phone || 'No phone'
+
+    // Get client type
+    const clientType = item.client_type || 'residential'
+
+    return (
+      <TouchableOpacity style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Avatar.Text
+            size={48}
+            label={getInitials(clientName)}
+            style={[
+              styles.avatar,
+              { backgroundColor: clientType === 'commercial' ? '#9333ea' : '#2563eb' },
+            ]}
+          />
+          <View style={styles.headerInfo}>
+            <Text style={styles.name}>{clientName}</Text>
+            <Text style={styles.type}>
+              {clientType === 'commercial' ? 'Commercial' : 'Residential'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.contactInfo}>
+          {item.email && (
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="email" size={16} color="#666" />
+              <Text style={styles.info}>{item.email}</Text>
+            </View>
+          )}
+
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="phone" size={16} color="#666" />
+            <Text style={styles.info}>{contactPhone}</Text>
+          </View>
+
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
+            <Text style={styles.info}>{address}</Text>
+          </View>
+        </View>
+
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.actionButton}>
+            <MaterialCommunityIcons name="phone" size={20} color="#2563eb" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <MaterialCommunityIcons name="message-text" size={20} color="#2563eb" />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  // Show loading spinner while fetching clients
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading clients...</Text>
         </View>
       </View>
-
-      <View style={styles.contactInfo}>
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="email" size={16} color="#666" />
-          <Text style={styles.info}>{item.email}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="phone" size={16} color="#666" />
-          <Text style={styles.info}>{item.phone}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
-          <Text style={styles.info}>{item.address}</Text>
-        </View>
-      </View>
-
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{item.activeJobs}</Text>
-          <Text style={styles.statLabel}>Active Jobs</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{item.totalJobs}</Text>
-          <Text style={styles.statLabel}>Total Jobs</Text>
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <MaterialCommunityIcons name="phone" size={20} color="#2563eb" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <MaterialCommunityIcons name="message-text" size={20} color="#2563eb" />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  )
+    )
+  }
 
   return (
     <View style={styles.container}>
+      {error && (
+        <View style={styles.errorBanner}>
+          <MaterialCommunityIcons name="alert-circle" size={20} color="#fff" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <Searchbar
         placeholder="Search clients..."
         onChangeText={setSearchQuery}
@@ -142,6 +217,14 @@ export default function ClientsScreen() {
         renderItem={renderClientCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#2563eb']}
+            tintColor="#2563eb"
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <MaterialCommunityIcons
@@ -149,7 +232,12 @@ export default function ClientsScreen() {
               size={64}
               color="#ccc"
             />
-            <Text style={styles.emptyText}>No clients found</Text>
+            <Text style={styles.emptyText}>
+              {error ? 'Failed to load clients' : 'No clients found'}
+            </Text>
+            {error && (
+              <Text style={styles.emptySubtext}>Pull down to retry</Text>
+            )}
           </View>
         }
       />
@@ -167,6 +255,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  errorBanner: {
+    backgroundColor: '#ef4444',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   searchbar: {
     margin: 16,
@@ -270,6 +381,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 12,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#bbb',
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',

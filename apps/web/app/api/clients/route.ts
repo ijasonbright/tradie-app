@@ -1,13 +1,35 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
 // GET - List all clients for user's organizations
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { userId: clerkUserId } = await auth()
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
+
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = req.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
 
     if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
