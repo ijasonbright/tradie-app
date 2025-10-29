@@ -1,6 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
-import { Chip, FAB } from 'react-native-paper'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
+import { FAB } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useState, useEffect } from 'react'
+import { useAuth } from '../../lib/auth'
+import { apiClient } from '../../lib/api-client'
 
 // Mock data for today's schedule
 const MOCK_APPOINTMENTS = [
@@ -44,6 +47,12 @@ const TYPE_COLORS: Record<string, string> = {
 }
 
 export default function CalendarScreen() {
+  const { isSignedIn } = useAuth()
+  const [appointments, setAppointments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
   const today = new Date().toLocaleDateString('en-AU', {
     weekday: 'long',
     year: 'numeric',
@@ -51,58 +60,135 @@ export default function CalendarScreen() {
     day: 'numeric',
   })
 
-  const renderAppointment = (appointment: typeof MOCK_APPOINTMENTS[0]) => (
-    <TouchableOpacity key={appointment.id} style={styles.appointmentCard}>
-      <View style={styles.timeColumn}>
-        <Text style={styles.time}>{appointment.time}</Text>
-        <Text style={styles.endTime}>{appointment.endTime}</Text>
+  // Fetch today's appointments from API
+  const fetchAppointments = async () => {
+    try {
+      setError(null)
+      // Get today's date range (start and end of day)
+      const now = new Date()
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+
+      const response = await apiClient.getAppointments({
+        start_date: startOfDay.toISOString(),
+        end_date: endOfDay.toISOString()
+      })
+      console.log('Fetched appointments:', response)
+      setAppointments(response.appointments || [])
+    } catch (err: any) {
+      console.error('Failed to fetch appointments:', err)
+      setError(err.message || 'Failed to load appointments')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Load appointments on mount
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchAppointments()
+    }
+  }, [isSignedIn])
+
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true)
+    fetchAppointments()
+  }
+
+  const renderAppointment = (appointment: any) => {
+    // Format times from database
+    const formatTime = (dateStr: string) => {
+      if (!dateStr) return ''
+      const date = new Date(dateStr)
+      return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+    }
+
+    // Build client name
+    const clientName = appointment.is_company
+      ? appointment.company_name
+      : `${appointment.first_name || ''} ${appointment.last_name || ''}`.trim()
+
+    // Get appointment type
+    const appointmentType = appointment.appointment_type || 'job'
+
+    const startTime = formatTime(appointment.start_time)
+    const endTime = formatTime(appointment.end_time)
+
+    return (
+      <TouchableOpacity key={appointment.id} style={styles.appointmentCard}>
+        <View style={styles.timeColumn}>
+          <Text style={styles.time}>{startTime || 'TBD'}</Text>
+          <Text style={styles.endTime}>{endTime || ''}</Text>
+        </View>
+
+        <View
+          style={[
+            styles.colorBar,
+            { backgroundColor: TYPE_COLORS[appointmentType] || TYPE_COLORS.job },
+          ]}
+        />
+
+        <View style={styles.detailsColumn}>
+          <View style={styles.header}>
+            <Text style={styles.title}>{appointment.title || 'Untitled Appointment'}</Text>
+            <View
+              style={[
+                styles.typeChip,
+                { backgroundColor: TYPE_COLORS[appointmentType] || TYPE_COLORS.job },
+              ]}
+            >
+              <Text style={styles.chipText}>
+                {appointmentType.replace('_', ' ').toUpperCase()}
+              </Text>
+            </View>
+          </View>
+
+          {clientName && (
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="account" size={14} color="#666" />
+              <Text style={styles.info}>{clientName}</Text>
+            </View>
+          )}
+
+          {appointment.location_address && (
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="map-marker" size={14} color="#666" />
+              <Text style={styles.info}>{appointment.location_address}</Text>
+            </View>
+          )}
+
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <MaterialCommunityIcons name="phone" size={18} color="#2563eb" />
+              <Text style={styles.actionText}>Call</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <MaterialCommunityIcons name="navigation" size={18} color="#2563eb" />
+              <Text style={styles.actionText}>Navigate</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+
+  // Show loading spinner while fetching appointments
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.dateHeader}>
+          <Text style={styles.todayLabel}>Today</Text>
+          <Text style={styles.dateText}>{today}</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading appointments...</Text>
+        </View>
       </View>
-
-      <View
-        style={[
-          styles.colorBar,
-          { backgroundColor: TYPE_COLORS[appointment.type] },
-        ]}
-      />
-
-      <View style={styles.detailsColumn}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{appointment.title}</Text>
-          <Chip
-            mode="flat"
-            style={[
-              styles.typeChip,
-              { backgroundColor: TYPE_COLORS[appointment.type] },
-            ]}
-            textStyle={styles.chipText}
-          >
-            {appointment.type.toUpperCase()}
-          </Chip>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="account" size={14} color="#666" />
-          <Text style={styles.info}>{appointment.client}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="map-marker" size={14} color="#666" />
-          <Text style={styles.info}>{appointment.address}</Text>
-        </View>
-
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialCommunityIcons name="phone" size={18} color="#2563eb" />
-            <Text style={styles.actionText}>Call</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <MaterialCommunityIcons name="navigation" size={18} color="#2563eb" />
-            <Text style={styles.actionText}>Navigate</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -111,9 +197,26 @@ export default function CalendarScreen() {
         <Text style={styles.dateText}>{today}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {MOCK_APPOINTMENTS.length > 0 ? (
-          MOCK_APPOINTMENTS.map(renderAppointment)
+      {error && (
+        <View style={styles.errorBanner}>
+          <MaterialCommunityIcons name="alert-circle" size={20} color="#fff" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#2563eb']}
+            tintColor="#2563eb"
+          />
+        }
+      >
+        {appointments.length > 0 ? (
+          appointments.map(renderAppointment)
         ) : (
           <View style={styles.emptyState}>
             <MaterialCommunityIcons
@@ -121,7 +224,12 @@ export default function CalendarScreen() {
               size={64}
               color="#ccc"
             />
-            <Text style={styles.emptyText}>No appointments today</Text>
+            <Text style={styles.emptyText}>
+              {error ? 'Failed to load appointments' : 'No appointments today'}
+            </Text>
+            {error && (
+              <Text style={styles.emptySubtext}>Pull down to retry</Text>
+            )}
           </View>
         )}
       </ScrollView>
@@ -139,6 +247,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  errorBanner: {
+    backgroundColor: '#ef4444',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   dateHeader: {
     backgroundColor: '#fff',
@@ -210,7 +341,11 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   typeChip: {
-    height: 22,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chipText: {
     fontSize: 9,
@@ -251,6 +386,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 12,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#bbb',
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',
