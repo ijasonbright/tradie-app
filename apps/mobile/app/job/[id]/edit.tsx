@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 
+const JOB_TYPE_OPTIONS = [
+  { value: 'repair', label: 'Repair' },
+  { value: 'installation', label: 'Installation' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'inspection', label: 'Inspection' },
+  { value: 'quote', label: 'Quote' },
+  { value: 'emergency', label: 'Emergency' },
+]
+
 const STATUS_OPTIONS = [
   { value: 'quoted', label: 'Quoted' },
   { value: 'scheduled', label: 'Scheduled' },
@@ -30,6 +39,7 @@ export default function EditJobScreen() {
   // Form fields
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  const [jobType, setJobType] = useState('repair')
   const [status, setStatus] = useState('scheduled')
   const [priority, setPriority] = useState('medium')
   const [siteAddressLine1, setSiteAddressLine1] = useState('')
@@ -54,6 +64,7 @@ export default function EditJobScreen() {
       // Populate form fields
       setTitle(job.title || '')
       setDescription(job.description || '')
+      setJobType(job.job_type || 'repair')
       setStatus(job.status || 'scheduled')
       setPriority(job.priority || 'medium')
       setSiteAddressLine1(job.site_address_line1 || '')
@@ -84,6 +95,7 @@ export default function EditJobScreen() {
       const updateData: any = {
         title: title.trim(),
         description: description.trim() || null,
+        jobType,
         status,
         priority,
         siteAddressLine1: siteAddressLine1.trim() || null,
@@ -148,6 +160,32 @@ export default function EditJobScreen() {
             numberOfLines={4}
             textAlignVertical="top"
           />
+        </View>
+
+        {/* Job Type */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Job Type</Text>
+          <View style={styles.pickerContainer}>
+            {JOB_TYPE_OPTIONS.map((option) => (
+              <TouchableOpacity
+                key={option.value}
+                style={[
+                  styles.optionButton,
+                  jobType === option.value && styles.optionButtonActive,
+                ]}
+                onPress={() => setJobType(option.value)}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    jobType === option.value && styles.optionTextActive,
+                  ]}
+                >
+                  {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Status */}
