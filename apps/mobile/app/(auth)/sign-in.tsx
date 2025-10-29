@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -8,12 +8,13 @@ import {
   ScrollView,
 } from 'react-native'
 import { TextInput, Button } from 'react-native-paper'
-import { useSignIn } from '../../lib/auth'
+import { useSignIn, useAuth } from '../../lib/auth'
 import { useRouter, Link } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
 export default function SignIn() {
   const { signIn, signInWithOAuth, setActive, isLoaded } = useSignIn()
+  const { isSignedIn } = useAuth()
   const router = useRouter()
 
   const [emailAddress, setEmailAddress] = useState('')
@@ -21,6 +22,14 @@ export default function SignIn() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [oauthLoading, setOAuthLoading] = useState(false)
+
+  // Navigate to main app when OAuth completes
+  useEffect(() => {
+    if (isSignedIn) {
+      setOAuthLoading(false)
+      router.replace('/(tabs)/jobs')
+    }
+  }, [isSignedIn, router])
 
   const onSignInPress = async () => {
     if (!isLoaded) return

@@ -37,12 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadSession = async () => {
       try {
+        console.log('Loading stored session...')
         const storedToken = await SecureStore.getItemAsync('session_token')
         const storedUser = await SecureStore.getItemAsync('user_data')
 
+        console.log('Stored token exists:', !!storedToken)
+        console.log('Stored user exists:', !!storedUser)
+
         if (storedToken && storedUser) {
-          setUser(JSON.parse(storedUser))
+          const userData = JSON.parse(storedUser)
+          console.log('Loaded user from storage:', userData)
+          setUser(userData)
           setIsSignedIn(true)
+          console.log('Session restored successfully!')
+        } else {
+          console.log('No stored session found')
         }
       } catch (error) {
         console.error('Failed to load session:', error)
@@ -57,15 +66,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleUrl = async (event: { url: string }) => {
       const url = event.url
+      console.log('Deep link received:', url)
 
       if (url.startsWith('tradieapp://auth-callback')) {
+        console.log('Processing auth callback...')
         const params = new URL(url).searchParams
         const token = params.get('token')
         const userJson = params.get('user')
 
+        console.log('Token exists:', !!token)
+        console.log('User JSON exists:', !!userJson)
+
         if (token && userJson) {
           try {
             const userData = JSON.parse(decodeURIComponent(userJson))
+            console.log('Parsed user data:', userData)
 
             const user: User = {
               id: userData.id,
@@ -75,15 +90,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               fullName: userData.fullName,
             }
 
+            console.log('Saving to SecureStore...')
             await SecureStore.setItemAsync('session_token', token)
             await SecureStore.setItemAsync('user_data', JSON.stringify(user))
 
+            console.log('Setting auth state...')
             setUser(user)
             setIsSignedIn(true)
+            console.log('Auth state updated! isSignedIn should now be true')
           } catch (error) {
             console.error('Failed to process OAuth callback:', error)
           }
+        } else {
+          console.log('Missing token or user data')
         }
+      } else {
+        console.log('URL does not start with tradieapp://auth-callback')
       }
     }
 
@@ -119,8 +141,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('WebBrowser result:', result)
 
       if (result.type === 'success' && result.url) {
-        // URL will be handled by the deep link listener above
-        console.log('OAuth success, waiting for callback...')
+        // Process the callback URL directly - don't wait for deep link event
+        console.log('OAuth success! Processing callback URL...')
+
+        const url = result.url
+        if (url.startsWith('tradieapp://auth-callback')) {
+          const params = new URL(url).searchParams
+          const token = params.get('token')
+          const userJson = params.get('user')
+
+          console.log('Token exists:', !!token)
+          console.log('User JSON exists:', !!userJson)
+
+          if (token && userJson) {
+            const userData = JSON.parse(decodeURIComponent(userJson))
+            console.log('Parsed user data:', userData)
+
+            const user: User = {
+              id: userData.id,
+              firstName: userData.firstName || null,
+              lastName: userData.lastName || null,
+              email: userData.email,
+              fullName: userData.fullName,
+            }
+
+            console.log('Saving to SecureStore...')
+            await SecureStore.setItemAsync('session_token', token)
+            await SecureStore.setItemAsync('user_data', JSON.stringify(user))
+
+            console.log('Setting auth state...')
+            setUser(user)
+            setIsSignedIn(true)
+            console.log('Auth state updated! isSignedIn should now be true')
+          }
+        }
       } else if (result.type === 'cancel') {
         throw new Error('Sign in cancelled')
       }
@@ -230,6 +284,7 @@ export function useAuth() {
   return {
     isLoaded: context.isLoaded,
     isSignedIn: context.isSignedIn,
+    user: context.user,
     signOut: context.signOut,
   }
 }

@@ -1,7 +1,9 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
 import { Chip, Searchbar, FAB } from 'react-native-paper'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useAuth } from '../../lib/auth'
+import { apiClient } from '../../lib/api-client'
 
 // Mock data for now - will be replaced with API calls
 const MOCK_JOBS = [
@@ -54,12 +56,48 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export default function JobsScreen() {
   const [searchQuery, setSearchQuery] = useState('')
+  const { user, isSignedIn, isLoaded } = useAuth()
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const filteredJobs = MOCK_JOBS.filter(
+  console.log('JobsScreen - isLoaded:', isLoaded, 'isSignedIn:', isSignedIn, 'user:', user)
+
+  // Fetch jobs from API
+  const fetchJobs = async () => {
+    try {
+      setError(null)
+      const response = await apiClient.getJobs()
+      console.log('Fetched jobs:', response)
+      setJobs(response.jobs || [])
+    } catch (err: any) {
+      console.error('Failed to fetch jobs:', err)
+      setError(err.message || 'Failed to load jobs')
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
+
+  // Load jobs on mount
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchJobs()
+    }
+  }, [isSignedIn])
+
+  // Pull to refresh
+  const onRefresh = () => {
+    setRefreshing(true)
+    fetchJobs()
+  }
+
+  const filteredJobs = jobs.filter(
     (job) =>
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.jobNumber.toLowerCase().includes(searchQuery.toLowerCase())
+      job.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.client?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.jobNumber?.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const renderJobCard = ({ item }: { item: typeof MOCK_JOBS[0] }) => (
@@ -105,8 +143,44 @@ export default function JobsScreen() {
     </TouchableOpacity>
   )
 
+  // Show loading spinner while fetching jobs
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.authBanner}>
+          <Text style={styles.authText}>
+            ✅ Signed in: {user?.email || 'Not signed in'}
+          </Text>
+          <Text style={styles.authSubtext}>
+            ID: {user?.id.substring(0, 8) || 'N/A'}... | Loaded: {isLoaded ? 'Yes' : 'No'} | Auth: {isSignedIn ? 'Yes' : 'No'}
+          </Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading jobs...</Text>
+        </View>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
+      <View style={styles.authBanner}>
+        <Text style={styles.authText}>
+          ✅ Signed in: {user?.email || 'Not signed in'}
+        </Text>
+        <Text style={styles.authSubtext}>
+          ID: {user?.id.substring(0, 8) || 'N/A'}... | Loaded: {isLoaded ? 'Yes' : 'No'} | Auth: {isSignedIn ? 'Yes' : 'No'}
+        </Text>
+      </View>
+
+      {error && (
+        <View style={styles.errorBanner}>
+          <MaterialCommunityIcons name="alert-circle" size={20} color="#fff" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
+
       <Searchbar
         placeholder="Search jobs..."
         onChangeText={setSearchQuery}
@@ -119,10 +193,23 @@ export default function JobsScreen() {
         renderItem={renderJobCard}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#2563eb']}
+            tintColor="#2563eb"
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="briefcase-outline" size={64} color="#ccc" />
-            <Text style={styles.emptyText}>No jobs found</Text>
+            <Text style={styles.emptyText}>
+              {error ? 'Failed to load jobs' : 'No jobs found'}
+            </Text>
+            {error && (
+              <Text style={styles.emptySubtext}>Pull down to retry</Text>
+            )}
           </View>
         }
       />
@@ -140,6 +227,44 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  authBanner: {
+    backgroundColor: '#10b981',
+    padding: 12,
+    alignItems: 'center',
+  },
+  authText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  authSubtext: {
+    color: '#fff',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  errorBanner: {
+    backgroundColor: '#ef4444',
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
   },
   searchbar: {
     margin: 16,
@@ -212,6 +337,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 12,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#bbb',
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',
