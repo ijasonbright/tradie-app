@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal, Image, Dimensions } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, RefreshControl, Modal, Image, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
@@ -271,18 +271,40 @@ export default function JobPhotosScreen() {
         visible={showAddModal}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setShowAddModal(false)}
+        onRequestClose={() => {
+          setShowAddModal(false)
+          resetForm()
+        }}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlayTouchable}
+            activeOpacity={1}
+            onPress={() => {
+              Keyboard.dismiss()
+              setShowAddModal(false)
+              resetForm()
+            }}
+          />
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Photo</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+              <TouchableOpacity onPress={() => {
+                setShowAddModal(false)
+                resetForm()
+              }}>
                 <MaterialCommunityIcons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView
+              style={styles.modalScroll}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+            >
               {selectedImage && (
                 <Image
                   source={{ uri: selectedImage }}
@@ -321,7 +343,10 @@ export default function JobPhotosScreen() {
             <View style={styles.modalFooter}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setShowAddModal(false)}
+                onPress={() => {
+                  setShowAddModal(false)
+                  resetForm()
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -338,7 +363,7 @@ export default function JobPhotosScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Camera FAB */}
@@ -466,11 +491,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  modalOverlayTouchable: {
+    flex: 1,
+  },
   modalContent: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: '85%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -486,7 +514,11 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   modalScroll: {
+    flex: 1,
+  },
+  modalScrollContent: {
     padding: 16,
+    paddingBottom: 32,
   },
   previewImage: {
     width: '100%',
