@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Alert } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
@@ -27,6 +27,7 @@ export default function JobDetailScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [completing, setCompleting] = useState(false)
 
   const fetchJob = async () => {
     try {
@@ -66,6 +67,57 @@ export default function JobDetailScreen() {
       // Try Google Maps first (works on both platforms)
       Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`)
     }
+  }
+
+  const handleCompleteJob = () => {
+    // Check if job is already completed
+    if (job.status === 'completed') {
+      Alert.alert('Job Already Completed', 'This job has already been marked as completed.')
+      return
+    }
+
+    // Show confirmation dialog
+    Alert.alert(
+      'Complete Job',
+      'Are you sure you want to mark this job as completed? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Complete',
+          style: 'default',
+          onPress: async () => {
+            setCompleting(true)
+            try {
+              const response = await apiClient.completeJob(id as string)
+
+              // Show success message with any warnings
+              let message = response.message
+              if (response.warnings && response.warnings.length > 0) {
+                message += '\n\nWarnings:\n' + response.warnings.join('\n')
+              }
+
+              Alert.alert('Success', message, [
+                {
+                  text: 'OK',
+                  onPress: () => {
+                    // Refresh the job data
+                    fetchJob()
+                  }
+                }
+              ])
+            } catch (err: any) {
+              console.error('Failed to complete job:', err)
+              Alert.alert('Error', err.message || 'Failed to complete job. Please try again.')
+            } finally {
+              setCompleting(false)
+            }
+          },
+        },
+      ]
+    )
   }
 
   if (loading && !refreshing) {
@@ -332,10 +384,34 @@ export default function JobDetailScreen() {
 
         {/* Action Buttons */}
         <View style={styles.bottomActions}>
-          <TouchableOpacity style={styles.primaryButton}>
-            <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-            <Text style={styles.primaryButtonText}>Complete Job</Text>
-          </TouchableOpacity>
+          {job.status !== 'completed' && (
+            <TouchableOpacity
+              style={[styles.primaryButton, completing && styles.disabledButton]}
+              onPress={handleCompleteJob}
+              disabled={completing}
+            >
+              {completing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
+                  <Text style={styles.primaryButtonText}>Complete Job</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          {job.status === 'completed' && (
+            <View style={styles.completedBanner}>
+              <MaterialCommunityIcons name="check-circle" size={24} color="#10b981" />
+              <Text style={styles.completedText}>Job Completed</Text>
+              {job.completed_at && (
+                <Text style={styles.completedDate}>
+                  {new Date(job.completed_at).toLocaleDateString()}
+                </Text>
+              )}
+            </View>
+          )}
 
           <TouchableOpacity style={styles.secondaryButton}>
             <MaterialCommunityIcons name="pencil" size={20} color="#2563eb" />
@@ -588,6 +664,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  completedBanner: {
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1,
+    borderColor: '#10b981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 8,
+  },
+  completedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#10b981',
+  },
+  completedDate: {
+    fontSize: 12,
+    color: '#059669',
   },
   secondaryButton: {
     backgroundColor: '#eff6ff',

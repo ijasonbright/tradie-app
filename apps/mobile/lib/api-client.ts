@@ -65,6 +65,15 @@ class ApiClient {
     return this.request<{ job: any }>(`/jobs/${id}`)
   }
 
+  async completeJob(id: string) {
+    return this.request<{ success: boolean; job: any; warnings: string[] | null; message: string }>(
+      `/jobs/${id}/complete`,
+      {
+        method: 'POST',
+      }
+    )
+  }
+
   // Clients API
   async getClients(params?: { search?: string }) {
     const queryParams = new URLSearchParams()
