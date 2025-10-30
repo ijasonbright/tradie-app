@@ -410,6 +410,9 @@ export async function POST() {
       `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_credits INTEGER DEFAULT 0`,
       `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS sms_phone_number VARCHAR(20)`,
 
+      // Add branding to organizations table
+      `ALTER TABLE organizations ADD COLUMN IF NOT EXISTS primary_color VARCHAR(7)`,
+
       // Create indexes for SMS tables
       `CREATE INDEX IF NOT EXISTS sms_transactions_organization_id_idx ON sms_transactions(organization_id)`,
       `CREATE INDEX IF NOT EXISTS sms_transactions_created_at_idx ON sms_transactions(created_at DESC)`,
