@@ -30,6 +30,7 @@ export default function ColorPicker({
     if (logoUrl) {
       extractColors()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [logoUrl])
 
   const extractColors = async () => {
