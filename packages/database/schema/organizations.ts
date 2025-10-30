@@ -7,6 +7,7 @@ export const organizations = pgTable('organizations', {
   abn: varchar('abn', { length: 50 }),
   tradeType: varchar('trade_type', { length: 100 }),
   logoUrl: text('logo_url'),
+  primaryColor: varchar('primary_color', { length: 7 }), // Hex color code (e.g., #1E40AF)
   phone: varchar('phone', { length: 50 }),
   email: varchar('email', { length: 255 }),
   addressLine1: varchar('address_line1', { length: 255 }),

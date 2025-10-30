@@ -388,6 +388,16 @@ class ApiClient {
     )
   }
 
+  async extractLogoColors(logoUrl: string) {
+    return this.request<{ colors: Array<{ hex: string; rgb: [number, number, number]; isDark: boolean; name: string }> }>(
+      '/organizations/extract-logo-colors',
+      {
+        method: 'POST',
+        body: JSON.stringify({ logoUrl }),
+      }
+    )
+  }
+
   // Team Members API
   async getTeamMembers() {
     return this.request<{ members: any[] }>('/organizations/members')

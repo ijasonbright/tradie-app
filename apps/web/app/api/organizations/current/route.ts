@@ -149,6 +149,7 @@ export async function PUT(req: Request) {
         state = ${body.state !== undefined ? body.state : null},
         postcode = ${body.postcode !== undefined ? body.postcode : null},
         logo_url = ${body.logoUrl !== undefined ? body.logoUrl : null},
+        primary_color = ${body.primaryColor !== undefined ? body.primaryColor : null},
         updated_at = NOW()
       WHERE id = ${org.id}
       RETURNING *
