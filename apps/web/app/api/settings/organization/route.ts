@@ -83,35 +83,108 @@ export async function PUT(req: Request) {
 
     const org = orgs[0]
 
-    // Convert numeric strings to numbers or null
-    const defaultHourlyRate = body.defaultHourlyRate && body.defaultHourlyRate !== '' ? parseFloat(body.defaultHourlyRate) : null
-    const defaultEmployeeCost = body.defaultEmployeeCost && body.defaultEmployeeCost !== '' ? parseFloat(body.defaultEmployeeCost) : null
+    // Build dynamic update query based on provided fields
+    const updates: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
+
+    if (body.name !== undefined) {
+      updates.push(`name = $${paramIndex++}`)
+      values.push(body.name || null)
+    }
+    if (body.abn !== undefined) {
+      updates.push(`abn = $${paramIndex++}`)
+      values.push(body.abn || null)
+    }
+    if (body.tradeType !== undefined) {
+      updates.push(`trade_type = $${paramIndex++}`)
+      values.push(body.tradeType || null)
+    }
+    if (body.phone !== undefined) {
+      updates.push(`phone = $${paramIndex++}`)
+      values.push(body.phone || null)
+    }
+    if (body.email !== undefined) {
+      updates.push(`email = $${paramIndex++}`)
+      values.push(body.email || null)
+    }
+    if (body.addressLine1 !== undefined) {
+      updates.push(`address_line1 = $${paramIndex++}`)
+      values.push(body.addressLine1 || null)
+    }
+    if (body.addressLine2 !== undefined) {
+      updates.push(`address_line2 = $${paramIndex++}`)
+      values.push(body.addressLine2 || null)
+    }
+    if (body.city !== undefined) {
+      updates.push(`city = $${paramIndex++}`)
+      values.push(body.city || null)
+    }
+    if (body.state !== undefined) {
+      updates.push(`state = $${paramIndex++}`)
+      values.push(body.state || null)
+    }
+    if (body.postcode !== undefined) {
+      updates.push(`postcode = $${paramIndex++}`)
+      values.push(body.postcode || null)
+    }
+    if (body.bankName !== undefined) {
+      updates.push(`bank_name = $${paramIndex++}`)
+      values.push(body.bankName || null)
+    }
+    if (body.bankBsb !== undefined) {
+      updates.push(`bank_bsb = $${paramIndex++}`)
+      values.push(body.bankBsb || null)
+    }
+    if (body.bankAccountNumber !== undefined) {
+      updates.push(`bank_account_number = $${paramIndex++}`)
+      values.push(body.bankAccountNumber || null)
+    }
+    if (body.bankAccountName !== undefined) {
+      updates.push(`bank_account_name = $${paramIndex++}`)
+      values.push(body.bankAccountName || null)
+    }
+    if (body.defaultHourlyRate !== undefined) {
+      updates.push(`default_hourly_rate = $${paramIndex++}`)
+      values.push(body.defaultHourlyRate && body.defaultHourlyRate !== '' ? parseFloat(body.defaultHourlyRate) : null)
+    }
+    if (body.defaultEmployeeCost !== undefined) {
+      updates.push(`default_employee_cost = $${paramIndex++}`)
+      values.push(body.defaultEmployeeCost && body.defaultEmployeeCost !== '' ? parseFloat(body.defaultEmployeeCost) : null)
+    }
+    if (body.smsPhoneNumber !== undefined) {
+      updates.push(`sms_phone_number = $${paramIndex++}`)
+      values.push(body.smsPhoneNumber || null)
+    }
+    if (body.logoUrl !== undefined) {
+      updates.push(`logo_url = $${paramIndex++}`)
+      values.push(body.logoUrl || null)
+    }
+    if (body.primaryColor !== undefined) {
+      updates.push(`primary_color = $${paramIndex++}`)
+      values.push(body.primaryColor || null)
+    }
+
+    // Always update timestamp
+    updates.push(`updated_at = NOW()`)
+
+    if (updates.length === 1) {
+      // Only timestamp update, no actual changes
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
+    }
+
+    // Add org ID as last parameter
+    values.push(org.id)
 
     // Update organization
-    const updated = await sql`
+    const query = `
       UPDATE organizations
-      SET
-        name = ${body.name || null},
-        abn = ${body.abn || null},
-        trade_type = ${body.tradeType || null},
-        phone = ${body.phone || null},
-        email = ${body.email || null},
-        address_line1 = ${body.addressLine1 || null},
-        address_line2 = ${body.addressLine2 || null},
-        city = ${body.city || null},
-        state = ${body.state || null},
-        postcode = ${body.postcode || null},
-        bank_name = ${body.bankName || null},
-        bank_bsb = ${body.bankBsb || null},
-        bank_account_number = ${body.bankAccountNumber || null},
-        bank_account_name = ${body.bankAccountName || null},
-        default_hourly_rate = ${defaultHourlyRate},
-        default_employee_cost = ${defaultEmployeeCost},
-        sms_phone_number = ${body.smsPhoneNumber || null},
-        updated_at = NOW()
-      WHERE id = ${org.id}
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
       RETURNING *
     `
+
+    const updated = await sql(query, values)
 
     return NextResponse.json({ organization: updated[0] })
   } catch (error) {
