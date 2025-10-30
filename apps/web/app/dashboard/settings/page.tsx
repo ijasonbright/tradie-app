@@ -48,7 +48,7 @@ export default function SettingsPage() {
   const [organization, setOrganization] = useState<Organization | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'business' | 'trades' | 'banking'>('business')
+  const [activeTab, setActiveTab] = useState<'business' | 'branding' | 'trades' | 'banking'>('business')
 
   // Trade Types state
   const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
@@ -66,6 +66,11 @@ export default function SettingsPage() {
     defaultEmployeeHourlyRate: '',
     defaultEmployeeDailyRate: '',
   })
+
+  // Branding state
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [primaryColor, setPrimaryColor] = useState<string | null>(null)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -101,6 +106,10 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json()
         setOrganization(data.organization)
+
+        // Load branding
+        setLogoUrl(data.organization.logo_url || null)
+        setPrimaryColor(data.organization.primary_color || null)
 
         // Pre-fill form
         setFormData({
