@@ -1,19 +1,42 @@
 import { Tabs } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { Image, Text } from 'react-native'
+import { useTheme } from '../../context/ThemeContext'
 
 export default function TabsLayout() {
+  const { brandColor, logoUrl } = useTheme()
+
+  // Custom header title component that shows logo
+  const HeaderTitle = ({ children }: { children: string }) => {
+    if (logoUrl) {
+      return (
+        <Image
+          source={{ uri: logoUrl }}
+          style={{ width: 120, height: 40 }}
+          resizeMode="contain"
+        />
+      )
+    }
+    return (
+      <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+        {children}
+      </Text>
+    )
+  }
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2563eb',
+        tabBarActiveTintColor: brandColor,
         tabBarInactiveTintColor: '#666',
         headerStyle: {
-          backgroundColor: '#2563eb',
+          backgroundColor: brandColor,
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
           fontWeight: 'bold',
         },
+        headerTitle: (props) => <HeaderTitle>{props.children as string}</HeaderTitle>,
       }}
     >
       <Tabs.Screen
