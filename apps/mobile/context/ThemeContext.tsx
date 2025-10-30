@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useAuth } from '../lib/auth'
-import apiClient from '../lib/api-client'
+import { apiClient } from '../lib/api-client'
 
 interface Organization {
   id: string
