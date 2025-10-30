@@ -193,9 +193,18 @@ export default function CalendarScreen() {
     const startTime = formatTime(appointment.start_time)
     const endTime = formatTime(appointment.end_time)
 
+    // Format the date for week view
+    const appointmentDate = new Date(appointment.start_time)
+    const dateLabel = appointmentDate.toLocaleDateString('en-AU', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short'
+    })
+
     return (
       <TouchableOpacity key={appointment.id} style={styles.appointmentCard}>
         <View style={styles.timeColumn}>
+          {viewMode === 'week' && <Text style={styles.dateLabel}>{dateLabel}</Text>}
           <Text style={styles.time}>{startTime || 'TBD'}</Text>
           <Text style={styles.endTime}>{endTime || ''}</Text>
         </View>
@@ -501,6 +510,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginTop: 2,
+  },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#2563eb',
+    marginBottom: 4,
+    textAlign: 'right',
   },
   colorBar: {
     width: 4,
