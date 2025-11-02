@@ -83,7 +83,7 @@ export async function GET(req: Request) {
         a.assigned_to_user_id,
         u1.full_name as assigned_to_name,
         u2.full_name as created_by_name,
-        c.company_name, c.first_name, c.last_name, c.is_company,
+        c.company_name, c.first_name, c.last_name, c.is_company, c.phone as client_phone, c.mobile as client_mobile,
         j.job_number, j.title as job_title
       FROM appointments a
       INNER JOIN organizations o ON a.organization_id = o.id
@@ -113,7 +113,7 @@ export async function GET(req: Request) {
         jobs.assigned_to_user_id,
         u1.full_name as assigned_to_name,
         u2.full_name as created_by_name,
-        c.company_name, c.first_name, c.last_name, c.is_company,
+        c.company_name, c.first_name, c.last_name, c.is_company, c.phone as client_phone, c.mobile as client_mobile,
         jobs.job_number, jobs.title as job_title
       FROM jobs
       INNER JOIN organizations o ON jobs.organization_id = o.id

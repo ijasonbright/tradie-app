@@ -50,7 +50,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       SELECT a.*,
         u1.full_name as assigned_to_name,
         u2.full_name as created_by_name,
-        c.company_name, c.first_name, c.last_name, c.is_company,
+        c.company_name, c.first_name, c.last_name, c.is_company, c.phone as client_phone, c.mobile as client_mobile,
         j.job_number, j.title as job_title
       FROM appointments a
       INNER JOIN organization_members om ON a.organization_id = om.organization_id

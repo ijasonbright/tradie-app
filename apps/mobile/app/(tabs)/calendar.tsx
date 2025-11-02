@@ -247,11 +247,22 @@ export default function CalendarScreen() {
     // Get phone number from client data
     const clientPhone = appointment.client_phone || appointment.client_mobile
 
+    // Determine if this is a job or an appointment
+    // If job_id equals id, then this row came from the jobs UNION query
+    const isJob = appointment.job_id === appointment.id
+    const handlePress = () => {
+      if (isJob) {
+        router.push(`/jobs/${appointment.id}`)
+      } else {
+        router.push(`/appointment/${appointment.id}`)
+      }
+    }
+
     return (
       <TouchableOpacity
         key={appointment.id}
         style={styles.appointmentCard}
-        onPress={() => router.push(`/appointment/${appointment.id}`)}
+        onPress={handlePress}
       >
         <View style={styles.timeColumn}>
           {viewMode === 'week' && <Text style={styles.dateLabel}>{dateLabel}</Text>}
