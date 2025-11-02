@@ -3,7 +3,8 @@ import { Avatar, List, Divider, Button } from 'react-native-paper'
 import { useUser, useAuth } from '../../lib/auth'
 import { useRouter } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import { apiClient } from '../../lib/api-client'
 
 export default function MoreScreen() {
@@ -14,39 +15,34 @@ export default function MoreScreen() {
   const [loading, setLoading] = useState(true)
 
   // Fetch user data from database
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await apiClient.getCurrentUser()
-        setDbUser(response.user)
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error)
-        // Fallback to Clerk data if API fails
-        setDbUser(null)
-      } finally {
-        setLoading(false)
-      }
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const response = await apiClient.getCurrentUser()
+      setDbUser(response.user)
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error)
+      // Fallback to Clerk data if API fails
+      setDbUser(null)
+    } finally {
+      setLoading(false)
     }
+  }, [])
 
+  // Initial fetch
+  useEffect(() => {
     if (clerkUser) {
       fetchUserProfile()
     }
-  }, [clerkUser])
+  }, [clerkUser, fetchUserProfile])
 
   // Refetch when screen comes into focus (after editing profile)
-  useEffect(() => {
-    const unsubscribe = router.addListener('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
       if (clerkUser) {
-        apiClient.getCurrentUser().then(response => {
-          setDbUser(response.user)
-        }).catch(err => {
-          console.error('Failed to refresh user profile:', err)
-        })
+        fetchUserProfile()
       }
-    })
-
-    return unsubscribe
-  }, [clerkUser, router])
+    }, [clerkUser, fetchUserProfile])
+  )
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
