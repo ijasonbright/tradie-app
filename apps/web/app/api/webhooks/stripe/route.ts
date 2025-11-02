@@ -48,12 +48,12 @@ export async function POST(req: Request) {
 
       // Check if this is an SMS credit purchase
       if (metadata.type === 'sms_credits') {
-        const organizationId = session.metadata.organization_id
-        const creditsToAdd = parseInt(session.metadata.credits || '0')
+        const organizationId = metadata.organization_id
+        const creditsToAdd = parseInt(metadata.credits || '0')
         const amountPaid = (session.amount_total || 0) / 100 // Convert from cents to dollars
 
         if (!organizationId || creditsToAdd === 0) {
-          console.error('Missing metadata in Stripe session:', session.metadata)
+          console.error('Missing metadata in Stripe session:', metadata)
           return NextResponse.json({ error: 'Invalid metadata' }, { status: 400 })
         }
 
