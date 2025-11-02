@@ -3,6 +3,7 @@ import { Searchbar, FAB, Chip } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
 
@@ -55,6 +56,9 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: '#dc2626',
 }
 
+const STORAGE_KEY = '@jobs_filter_status'
+const DEFAULT_FILTERS = ['scheduled', 'in_progress'] // Default to scheduled and in progress
+
 export default function JobsScreen() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
@@ -63,7 +67,49 @@ export default function JobsScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>('scheduled')
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(DEFAULT_FILTERS)
+
+  // Load saved filter preferences
+  useEffect(() => {
+    const loadFilterPreferences = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSelectedStatuses(parsed)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load filter preferences:', error)
+      }
+    }
+    loadFilterPreferences()
+  }, [])
+
+  // Save filter preferences whenever they change
+  const updateSelectedStatuses = async (newStatuses: string[]) => {
+    setSelectedStatuses(newStatuses)
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newStatuses))
+    } catch (error) {
+      console.error('Failed to save filter preferences:', error)
+    }
+  }
+
+  // Toggle a status filter
+  const toggleStatus = (status: string) => {
+    if (status === 'all') {
+      // If "All" is clicked, clear all filters
+      updateSelectedStatuses([])
+    } else {
+      // Toggle individual status
+      const newStatuses = selectedStatuses.includes(status)
+        ? selectedStatuses.filter(s => s !== status)
+        : [...selectedStatuses, status]
+      updateSelectedStatuses(newStatuses)
+    }
+  }
 
   // Fetch jobs from API
   const fetchJobs = async () => {
@@ -96,8 +142,8 @@ export default function JobsScreen() {
 
   const filteredJobs = jobs
     .filter((job) => {
-      // Filter by status
-      if (filterStatus !== 'all' && job.status !== filterStatus) {
+      // Filter by status - if no statuses selected, show all
+      if (selectedStatuses.length > 0 && !selectedStatuses.includes(job.status)) {
         return false
       }
 
@@ -237,43 +283,43 @@ export default function JobsScreen() {
 
         <View style={styles.chipContainer}>
           <Chip
-            selected={filterStatus === 'all'}
-            onPress={() => setFilterStatus('all')}
+            selected={selectedStatuses.length === 0}
+            onPress={() => toggleStatus('all')}
             style={styles.chip}
           >
             All
           </Chip>
           <Chip
-            selected={filterStatus === 'quoted'}
-            onPress={() => setFilterStatus('quoted')}
+            selected={selectedStatuses.includes('quoted')}
+            onPress={() => toggleStatus('quoted')}
             style={styles.chip}
           >
             Quoted
           </Chip>
           <Chip
-            selected={filterStatus === 'scheduled'}
-            onPress={() => setFilterStatus('scheduled')}
+            selected={selectedStatuses.includes('scheduled')}
+            onPress={() => toggleStatus('scheduled')}
             style={styles.chip}
           >
             Scheduled
           </Chip>
           <Chip
-            selected={filterStatus === 'in_progress'}
-            onPress={() => setFilterStatus('in_progress')}
+            selected={selectedStatuses.includes('in_progress')}
+            onPress={() => toggleStatus('in_progress')}
             style={styles.chip}
           >
             In Progress
           </Chip>
           <Chip
-            selected={filterStatus === 'completed'}
-            onPress={() => setFilterStatus('completed')}
+            selected={selectedStatuses.includes('completed')}
+            onPress={() => toggleStatus('completed')}
             style={styles.chip}
           >
             Completed
           </Chip>
           <Chip
-            selected={filterStatus === 'invoiced'}
-            onPress={() => setFilterStatus('invoiced')}
+            selected={selectedStatuses.includes('invoiced')}
+            onPress={() => toggleStatus('invoiced')}
             style={styles.chip}
           >
             Invoiced
