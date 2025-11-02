@@ -13,7 +13,6 @@ export default function InvoiceDetailScreen() {
   const [invoice, setInvoice] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false)
 
   useEffect(() => {
     fetchInvoice()
@@ -87,46 +86,6 @@ export default function InvoiceDetailScreen() {
     return `$${num.toFixed(2)}`
   }
 
-  const handleGeneratePaymentLink = async () => {
-    try {
-      setGeneratingPaymentLink(true)
-      const response = await apiClient.createInvoicePaymentLink(id as string)
-
-      // Show options to share
-      Alert.alert(
-        'Payment Link Created',
-        `Amount: ${formatCurrency(response.paymentAmount)}\n\nWould you like to share the payment link?`,
-        [
-          {
-            text: 'Copy Link',
-            onPress: () => {
-              Clipboard.setString(response.publicUrl)
-              Alert.alert('Copied!', 'Payment link copied to clipboard')
-            },
-          },
-          {
-            text: 'Share',
-            onPress: async () => {
-              try {
-                await Share.share({
-                  message: `Please pay your invoice:\n\n${response.publicUrl}`,
-                  title: `Invoice ${invoice.invoice_number}`,
-                })
-              } catch (err) {
-                console.error('Error sharing:', err)
-              }
-            },
-          },
-          { text: 'Done', style: 'cancel' },
-        ]
-      )
-    } catch (err: any) {
-      console.error('Failed to generate payment link:', err)
-      Alert.alert('Error', err.message || 'Failed to generate payment link')
-    } finally {
-      setGeneratingPaymentLink(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -253,22 +212,6 @@ export default function InvoiceDetailScreen() {
               <MaterialCommunityIcons name="cash" size={20} color="#fff" />
               <Text style={styles.actionButtonText}>Record Payment</Text>
             </TouchableOpacity>
-            {invoice.status !== 'draft' && (
-              <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
-                onPress={handleGeneratePaymentLink}
-                disabled={generatingPaymentLink}
-              >
-                {generatingPaymentLink ? (
-                  <ActivityIndicator size="small" color={brandColor} />
-                ) : (
-                  <MaterialCommunityIcons name="link-variant" size={20} color={brandColor} />
-                )}
-                <Text style={[styles.actionButtonText, { color: brandColor }]}>
-                  {generatingPaymentLink ? 'Generating...' : 'Send Payment Link'}
-                </Text>
-              </TouchableOpacity>
-            )}
           </>
         )}
         {invoice.status === 'draft' && (
