@@ -19,11 +19,31 @@ export default function EditProfileScreen() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null)
 
   useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await apiClient.getCurrentUser()
+        const dbUser = response.user
+
+        // Use database values or fall back to Clerk
+        setFullName(dbUser.full_name || `${clerkUser?.firstName || ''} ${clerkUser?.lastName || ''}`.trim())
+        setEmail(dbUser.email || clerkUser?.primaryEmailAddress?.emailAddress || '')
+        setPhone(dbUser.phone || clerkUser?.primaryPhoneNumber?.phoneNumber || '')
+        setProfilePhotoUrl(dbUser.profile_photo_url || null)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Fall back to Clerk data
+        if (clerkUser) {
+          setFullName(`${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim())
+          setEmail(clerkUser.primaryEmailAddress?.emailAddress || '')
+          setPhone(clerkUser.primaryPhoneNumber?.phoneNumber || '')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
     if (clerkUser) {
-      setFullName(`${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim())
-      setEmail(clerkUser.primaryEmailAddress?.emailAddress || '')
-      setPhone(clerkUser.primaryPhoneNumber?.phoneNumber || '')
-      setLoading(false)
+      fetchUserProfile()
     }
   }, [clerkUser])
 

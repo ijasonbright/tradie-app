@@ -1,13 +1,52 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
 import { Avatar, List, Divider, Button } from 'react-native-paper'
 import { useUser, useAuth } from '../../lib/auth'
 import { useRouter } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useState, useEffect } from 'react'
+import { apiClient } from '../../lib/api-client'
 
 export default function MoreScreen() {
-  const { user } = useUser()
+  const { user: clerkUser } = useUser()
   const { signOut } = useAuth()
   const router = useRouter()
+  const [dbUser, setDbUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch user data from database
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await apiClient.getCurrentUser()
+        setDbUser(response.user)
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error)
+        // Fallback to Clerk data if API fails
+        setDbUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (clerkUser) {
+      fetchUserProfile()
+    }
+  }, [clerkUser])
+
+  // Refetch when screen comes into focus (after editing profile)
+  useEffect(() => {
+    const unsubscribe = router.addListener('focus', () => {
+      if (clerkUser) {
+        apiClient.getCurrentUser().then(response => {
+          setDbUser(response.user)
+        }).catch(err => {
+          console.error('Failed to refresh user profile:', err)
+        })
+      }
+    })
+
+    return unsubscribe
+  }, [clerkUser, router])
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -24,25 +63,53 @@ export default function MoreScreen() {
   }
 
   const getInitials = () => {
-    if (!user) return '?'
-    const firstName = user.firstName || ''
-    const lastName = user.lastName || ''
-    return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase()
+    // Use database user's full_name or fall back to Clerk
+    const name = dbUser?.full_name || `${clerkUser?.firstName || ''} ${clerkUser?.lastName || ''}`.trim()
+    if (!name) return '?'
+
+    const parts = name.split(' ')
+    if (parts.length >= 2) {
+      return `${parts[0][0] || ''}${parts[parts.length - 1][0] || ''}`.toUpperCase()
+    }
+    return (name[0] || '?').toUpperCase()
   }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    )
+  }
+
+  // Use database user data or fall back to Clerk
+  const displayName = dbUser?.full_name || `${clerkUser?.firstName || ''} ${clerkUser?.lastName || ''}`.trim() || 'User'
+  const displayEmail = dbUser?.email || clerkUser?.primaryEmailAddress?.emailAddress || ''
+  const displayPhone = dbUser?.phone || clerkUser?.primaryPhoneNumber?.phoneNumber || ''
+  const displayPhoto = dbUser?.profile_photo_url || clerkUser?.imageUrl
 
   return (
     <ScrollView style={styles.container}>
       {/* Profile Section */}
       <View style={styles.profileSection}>
-        <Avatar.Text
-          size={80}
-          label={getInitials()}
-          style={styles.avatar}
-        />
+        {displayPhoto ? (
+          <Avatar.Image
+            size={80}
+            source={{ uri: displayPhoto }}
+            style={styles.avatar}
+          />
+        ) : (
+          <Avatar.Text
+            size={80}
+            label={getInitials()}
+            style={styles.avatar}
+          />
+        )}
         <Text style={styles.name}>
-          {user?.firstName} {user?.lastName}
+          {displayName}
         </Text>
-        <Text style={styles.email}>{user?.primaryEmailAddress?.emailAddress}</Text>
+        <Text style={styles.email}>{displayEmail}</Text>
+        {displayPhone && <Text style={styles.phone}>{displayPhone}</Text>}
         <Button
           mode="outlined"
           onPress={() => router.push('/profile/edit')}
@@ -204,6 +271,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   email: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  phone: {
     fontSize: 14,
     color: '#666',
     marginBottom: 16,
