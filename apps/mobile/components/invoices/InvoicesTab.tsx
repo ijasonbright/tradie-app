@@ -281,7 +281,8 @@ export default function InvoicesTab() {
         icon="plus"
         style={styles.fab}
         label="Create Invoice"
-        onPress={() => router.push('/invoices/create')}
+        color="#fff"
+        onPress={() => Alert.alert('Coming Soon', 'Create invoice feature is coming soon!')}
       />
     </View>
   )

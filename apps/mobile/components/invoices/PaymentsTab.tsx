@@ -256,6 +256,7 @@ export default function PaymentsTab() {
         icon="cash-plus"
         style={styles.fab}
         label="Record Payment"
+        color="#fff"
         onPress={() => router.push('/payments/record')}
       />
     </View>
