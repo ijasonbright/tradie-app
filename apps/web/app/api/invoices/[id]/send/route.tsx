@@ -160,6 +160,12 @@ export async function POST(
       dueDate: formatDate(invoice.due_date),
       organizationEmail: organization.email || undefined,
       organizationPhone: organization.phone || undefined,
+      logoUrl: organization.logo_url || undefined,
+      primaryColor: organization.primary_color || undefined,
+      bankName: organization.bank_name || undefined,
+      bankBsb: organization.bank_bsb || undefined,
+      bankAccountNumber: organization.bank_account_number || undefined,
+      bankAccountName: organization.bank_account_name || undefined,
       paymentLink,
     }
 
