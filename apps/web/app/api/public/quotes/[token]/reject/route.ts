@@ -11,10 +11,10 @@ const sql = neon(process.env.DATABASE_URL!)
  */
 export async function POST(
   req: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const token = params.token
+    const { token } = await params
     const body = await req.json()
     const { reason } = body
 

@@ -9,7 +9,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(req)
@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const quoteId = params.id
+    const { id: quoteId } = await params
 
     // Get the quote
     const quotes = await sql`

@@ -9,7 +9,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getUserFromRequest(req)
@@ -17,7 +17,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const invoiceId = params.id
+    const { id: invoiceId } = await params
     const body = await req.json()
     const { amount: customAmount } = body // Optional: for partial payments
 
