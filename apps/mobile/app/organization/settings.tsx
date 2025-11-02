@@ -238,7 +238,10 @@ export default function OrganizationSettingsScreen() {
               <Text style={styles.infoTitle}>SMS Credits</Text>
               <Text style={styles.infoValue}>{organization.sms_credits} credits remaining</Text>
             </View>
-            <TouchableOpacity style={styles.infoButton}>
+            <TouchableOpacity
+              style={styles.infoButton}
+              onPress={() => router.push('/sms/purchase-credits')}
+            >
               <Text style={styles.infoButtonText}>Buy More</Text>
             </TouchableOpacity>
           </View>

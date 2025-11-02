@@ -162,10 +162,10 @@ export default function MoreScreen() {
 
         <List.Item
           title="SMS & Messaging"
-          description="View credits and conversations"
+          description="Purchase credits and send messages"
           left={(props) => <List.Icon {...props} icon="message-text" />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => alert('SMS - Coming soon!')}
+          onPress={() => router.push('/sms/purchase-credits')}
         />
 
         <List.Item

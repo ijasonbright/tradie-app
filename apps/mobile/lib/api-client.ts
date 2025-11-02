@@ -596,6 +596,36 @@ class ApiClient {
       { method: 'DELETE' }
     )
   }
+
+  // SMS API
+  async getSMSBalance() {
+    return this.request<{ credits: number }>('/sms/balance')
+  }
+
+  async purchaseSMSCredits(bundleSize: string) {
+    return this.request<{ sessionId: string; url: string }>(
+      '/sms/purchase-credits',
+      {
+        method: 'POST',
+        body: JSON.stringify({ bundleSize }),
+      }
+    )
+  }
+
+  async getSMSTransactions(params?: { limit?: number; offset?: number; type?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.offset) queryParams.append('offset', params.offset.toString())
+    if (params?.type) queryParams.append('type', params.type)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/sms/transactions?${query}` : '/sms/transactions'
+
+    return this.request<{
+      transactions: any[]
+      pagination: { total: number; limit: number; offset: number; hasMore: boolean }
+    }>(endpoint)
+  }
 }
 
 export const apiClient = new ApiClient()
