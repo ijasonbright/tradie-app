@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,11 +12,35 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const { userId } = await auth()
 
-    if (!userId) {
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
+
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = req.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
+
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const userId = clerkUserId
 
     const sql = neon(process.env.DATABASE_URL!)
 
@@ -50,6 +75,11 @@ export async function GET(
 
     const invoice = invoices[0]
 
+    // Format client name
+    const client_name = invoice.is_company
+      ? invoice.company_name
+      : `${invoice.first_name || ''} ${invoice.last_name || ''}`.trim()
+
     // Get line items
     const lineItems = await sql`
       SELECT * FROM invoice_line_items
@@ -67,7 +97,10 @@ export async function GET(
     `
 
     return NextResponse.json({
-      invoice,
+      invoice: {
+        ...invoice,
+        client_name,
+      },
       lineItems,
       payments,
     })
