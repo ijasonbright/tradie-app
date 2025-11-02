@@ -542,89 +542,60 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
       rightYPosition -= 20
 
       // Payment instructions
-      page.drawText('Pay securely with card:', {
+      page.drawText('Visit this link to pay securely', {
         x: 320,
         y: rightYPosition,
-        size: 10,
+        size: 9,
         font: regularFont,
         color: textColor,
       })
-      rightYPosition -= 25
+      rightYPosition -= 12
 
-      // Draw payment button background
-      const buttonWidth = 180
-      const buttonHeight = 35
-      const buttonX = 320
-      const buttonY = rightYPosition - buttonHeight + 5
-
-      page.drawRectangle({
-        x: buttonX,
-        y: buttonY,
-        width: buttonWidth,
-        height: buttonHeight,
-        color: primaryColor,
-      })
-
-      // "Pay Now" button text
-      const buttonText = 'Pay Now'
-      const buttonTextSize = 12
-      const buttonTextWidth = boldFont.widthOfTextAtSize(buttonText, buttonTextSize)
-      page.drawText(buttonText, {
-        x: buttonX + (buttonWidth - buttonTextWidth) / 2,
-        y: buttonY + (buttonHeight - buttonTextSize) / 2 + 2,
-        size: buttonTextSize,
-        font: boldFont,
-        color: rgb(1, 1, 1), // White
-      })
-
-      rightYPosition -= buttonHeight + 10
-
-      // Small URL text below button (compact)
-      const urlText = 'Visit payment link:'
-      page.drawText(urlText, {
+      page.drawText('with credit or debit card:', {
         x: 320,
         y: rightYPosition,
-        size: 7,
+        size: 9,
         font: regularFont,
-        color: lightGray,
+        color: textColor,
       })
-      rightYPosition -= 10
+      rightYPosition -= 20
 
-      // Split URL into multiple lines if needed (to fit in right column)
-      const maxUrlWidth = 220
-      const urlSize = 7
+      // Display URL in a box with better formatting
+      // Split URL at strategic points (after slashes or hyphens)
       const urlParts = []
-      let currentPart = ''
+      const maxCharsPerLine = 35
+      let currentLine = ''
 
       for (let i = 0; i < paymentUrl.length; i++) {
-        const char = paymentUrl[i]
-        const testPart = currentPart + char
-        const testWidth = regularFont.widthOfTextAtSize(testPart, urlSize)
+        currentLine += paymentUrl[i]
 
-        if (testWidth > maxUrlWidth && currentPart) {
-          urlParts.push(currentPart)
-          currentPart = char
-        } else {
-          currentPart = testPart
+        // Break at natural points or when line is too long
+        const nextChar = paymentUrl[i + 1]
+        if (currentLine.length >= maxCharsPerLine && (paymentUrl[i] === '/' || paymentUrl[i] === '-' || !nextChar)) {
+          urlParts.push(currentLine)
+          currentLine = ''
         }
       }
-      if (currentPart) {
-        urlParts.push(currentPart)
+
+      if (currentLine) {
+        urlParts.push(currentLine)
       }
 
-      urlParts.forEach((part) => {
+      // Draw URL lines
+      const urlFontSize = 8
+      urlParts.forEach((part, index) => {
         page.drawText(part, {
           x: 320,
           y: rightYPosition,
-          size: urlSize,
+          size: urlFontSize,
           font: regularFont,
           color: primaryColor,
         })
-        rightYPosition -= 9
+        rightYPosition -= 10
       })
 
       // Update yPosition to the lower of the two columns
-      yPosition = Math.min(yPosition, rightYPosition)
+      yPosition = Math.min(yPosition, rightYPosition - 10)
     }
   }
 
