@@ -79,7 +79,12 @@ export default function PublicInvoicePage() {
 
   const fetchInvoice = async () => {
     try {
-      const response = await fetch(`/api/public/invoices/${token}`)
+      // Use absolute URL to avoid issues with mobile browsers
+      const apiUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/api/public/invoices/${token}`
+        : `/api/public/invoices/${token}`
+
+      const response = await fetch(apiUrl)
       if (!response.ok) {
         throw new Error('Invoice not found')
       }
