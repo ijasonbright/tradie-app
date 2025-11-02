@@ -198,7 +198,7 @@ export default function PublicQuotePage() {
     )
   }
 
-  if (error || !quote || !organization) {
+  if (error || !quote || !organization || !client) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
         <div style={{ color: '#ef4444' }}>{error || 'Quote not found'}</div>

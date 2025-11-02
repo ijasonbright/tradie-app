@@ -133,7 +133,7 @@ export default function PublicInvoicePage() {
     )
   }
 
-  if (error || !invoice || !organization) {
+  if (error || !invoice || !organization || !client) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial, sans-serif' }}>
         <div style={{ color: '#ef4444' }}>{error || 'Invoice not found'}</div>
