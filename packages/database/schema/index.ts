@@ -14,5 +14,6 @@ export * from './sms-transactions'
 export * from './sms-conversations'
 export * from './sms-messages'
 export * from './tallbob-webhooks'
+export * from './payment-requests'
 // Temporarily disable relations to fix build
 // export * from './relations'

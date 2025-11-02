@@ -1,8 +1,9 @@
-import { pgTable, uuid, varchar, text, timestamp, decimal, integer } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, text, timestamp, decimal, integer, boolean } from 'drizzle-orm/pg-core'
 import { organizations } from './organizations'
 import { clients } from './clients'
 import { users } from './users'
 import { jobs } from './jobs'
+import { quotes } from './quotes'
 
 export const invoices = pgTable('invoices', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -27,9 +28,16 @@ export const invoices = pgTable('invoices', {
   // Xero sync
   xeroInvoiceId: varchar('xero_invoice_id', { length: 255 }),
   lastSyncedAt: timestamp('last_synced_at'),
-  // Stripe (future online payments)
+  // Stripe (online payments)
   stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
+  stripePaymentLinkId: varchar('stripe_payment_link_id', { length: 255 }),
+  stripePaymentLinkUrl: varchar('stripe_payment_link_url', { length: 500 }),
+  // Public viewing and payment
+  publicToken: varchar('public_token', { length: 100 }).unique(),
+  // Deposit tracking (if this invoice is for a deposit)
+  isDepositInvoice: boolean('is_deposit_invoice').default(false).notNull(),
+  relatedQuoteId: uuid('related_quote_id').references(() => quotes.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

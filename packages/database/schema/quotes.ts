@@ -24,6 +24,18 @@ export const quotes = pgTable('quotes', {
   convertedToJobId: uuid('converted_to_job_id').references(() => jobs.id),
   notes: text('notes'),
   xeroQuoteId: varchar('xero_quote_id', { length: 255 }),
+  // Deposit fields
+  depositRequired: boolean('deposit_required').default(false).notNull(),
+  depositPercentage: decimal('deposit_percentage', { precision: 5, scale: 2 }), // e.g., 30.00 for 30%
+  depositAmount: decimal('deposit_amount', { precision: 10, scale: 2 }), // Fixed deposit amount
+  depositPaid: boolean('deposit_paid').default(false).notNull(),
+  depositPaidAt: timestamp('deposit_paid_at'),
+  depositPaymentIntentId: varchar('deposit_payment_intent_id', { length: 255 }),
+  depositPaymentLinkUrl: varchar('deposit_payment_link_url', { length: 500 }),
+  // Public viewing and acceptance
+  publicToken: varchar('public_token', { length: 100 }).unique(),
+  acceptedByName: varchar('accepted_by_name', { length: 255 }),
+  acceptedByEmail: varchar('accepted_by_email', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
