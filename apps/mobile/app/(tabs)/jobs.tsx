@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
-import { Searchbar, FAB } from 'react-native-paper'
+import { Searchbar, FAB, Chip } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
@@ -63,6 +63,7 @@ export default function JobsScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('scheduled')
 
   // Fetch jobs from API
   const fetchJobs = async () => {
@@ -93,20 +94,34 @@ export default function JobsScreen() {
     fetchJobs()
   }
 
-  const filteredJobs = jobs.filter((job) => {
-    if (!searchQuery) return true
+  const filteredJobs = jobs
+    .filter((job) => {
+      // Filter by status
+      if (filterStatus !== 'all' && job.status !== filterStatus) {
+        return false
+      }
 
-    const query = searchQuery.toLowerCase()
-    const clientName = job.is_company
-      ? job.company_name
-      : `${job.first_name || ''} ${job.last_name || ''}`.trim()
+      // Filter by search query
+      if (!searchQuery) return true
 
-    return (
-      job.title?.toLowerCase().includes(query) ||
-      job.job_number?.toLowerCase().includes(query) ||
-      clientName?.toLowerCase().includes(query)
-    )
-  })
+      const query = searchQuery.toLowerCase()
+      const clientName = job.is_company
+        ? job.company_name
+        : `${job.first_name || ''} ${job.last_name || ''}`.trim()
+
+      return (
+        job.title?.toLowerCase().includes(query) ||
+        job.job_number?.toLowerCase().includes(query) ||
+        clientName?.toLowerCase().includes(query)
+      )
+    })
+    .sort((a, b) => {
+      // Sort by scheduled_date (earliest first)
+      if (!a.scheduled_date && !b.scheduled_date) return 0
+      if (!a.scheduled_date) return 1
+      if (!b.scheduled_date) return -1
+      return new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime()
+    })
 
   const renderJobCard = ({ item }: { item: any }) => {
     // Build client name from database fields
@@ -212,12 +227,59 @@ export default function JobsScreen() {
         </View>
       )}
 
-      <Searchbar
-        placeholder="Search jobs..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchbar}
-      />
+      <View style={styles.filtersContainer}>
+        <Searchbar
+          placeholder="Search jobs..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+        />
+
+        <View style={styles.chipContainer}>
+          <Chip
+            selected={filterStatus === 'all'}
+            onPress={() => setFilterStatus('all')}
+            style={styles.chip}
+          >
+            All
+          </Chip>
+          <Chip
+            selected={filterStatus === 'quoted'}
+            onPress={() => setFilterStatus('quoted')}
+            style={styles.chip}
+          >
+            Quoted
+          </Chip>
+          <Chip
+            selected={filterStatus === 'scheduled'}
+            onPress={() => setFilterStatus('scheduled')}
+            style={styles.chip}
+          >
+            Scheduled
+          </Chip>
+          <Chip
+            selected={filterStatus === 'in_progress'}
+            onPress={() => setFilterStatus('in_progress')}
+            style={styles.chip}
+          >
+            In Progress
+          </Chip>
+          <Chip
+            selected={filterStatus === 'completed'}
+            onPress={() => setFilterStatus('completed')}
+            style={styles.chip}
+          >
+            Completed
+          </Chip>
+          <Chip
+            selected={filterStatus === 'invoiced'}
+            onPress={() => setFilterStatus('invoiced')}
+            style={styles.chip}
+          >
+            Invoiced
+          </Chip>
+        </View>
+      </View>
 
       <FlatList
         data={filteredJobs}
@@ -282,9 +344,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
+  filtersContainer: {
+    backgroundColor: '#fff',
+  },
   searchbar: {
     margin: 16,
+    marginBottom: 0,
     elevation: 2,
+  },
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 12,
+    paddingTop: 8,
+    gap: 8,
+  },
+  chip: {
+    marginRight: 0,
   },
   list: {
     padding: 16,
