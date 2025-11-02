@@ -14,6 +14,7 @@ export default async function PublicInvoicePage({ params }: PageProps) {
     SELECT i.*, o.name as organization_name, o.abn, o.email as org_email, o.phone as org_phone,
            o.address_line1, o.address_line2, o.city, o.state, o.postcode,
            o.logo_url, o.primary_color,
+           o.bank_name, o.bank_bsb, o.bank_account_number, o.bank_account_name,
            c.company_name, c.first_name, c.last_name, c.is_company,
            c.email as client_email, c.phone as client_phone,
            c.billing_address_line1, c.billing_address_line2,
@@ -225,6 +226,54 @@ export default async function PublicInvoicePage({ params }: PageProps) {
               <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#6b7280', textTransform: 'uppercase' }}>Notes</h3>
                 <p style={{ margin: 0, fontSize: '14px', color: '#1f2937', lineHeight: '1.6' }}>{invoice.notes}</p>
+              </div>
+            )}
+
+            {/* Payment Link Button - Placeholder for future online payment integration */}
+            {false && ( // TODO: Enable when Stripe payment links are implemented
+              <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                <a
+                  href="#"
+                  style={{
+                    display: 'inline-block',
+                    backgroundColor: brandColor,
+                    color: '#ffffff',
+                    padding: '14px 28px',
+                    textDecoration: 'none',
+                    borderRadius: '6px',
+                    fontWeight: '600',
+                    fontSize: '16px',
+                  }}
+                >
+                  Pay Invoice Online
+                </a>
+              </div>
+            )}
+
+            {/* Payment Details */}
+            {(invoice.bank_name || invoice.bank_bsb || invoice.bank_account_number) && (
+              <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: '#f9fafb', borderRadius: '6px', borderLeft: `4px solid ${brandColor}` }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600' }}>Payment Details</h3>
+                {invoice.bank_account_name && (
+                  <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1f2937' }}>
+                    <strong>Account Name:</strong> {invoice.bank_account_name}
+                  </p>
+                )}
+                {invoice.bank_name && (
+                  <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1f2937' }}>
+                    <strong>Bank:</strong> {invoice.bank_name}
+                  </p>
+                )}
+                {invoice.bank_bsb && (
+                  <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#1f2937' }}>
+                    <strong>BSB:</strong> {invoice.bank_bsb}
+                  </p>
+                )}
+                {invoice.bank_account_number && (
+                  <p style={{ margin: 0, fontSize: '14px', color: '#1f2937' }}>
+                    <strong>Account Number:</strong> {invoice.bank_account_number}
+                  </p>
+                )}
               </div>
             )}
 

@@ -8,10 +8,15 @@ interface InvoiceEmailData {
   organizationPhone?: string
   logoUrl?: string
   primaryColor?: string
+  bankName?: string
+  bankBsb?: string
+  bankAccountNumber?: string
+  bankAccountName?: string
+  paymentLink?: string
 }
 
 export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
-  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate, organizationEmail, organizationPhone, logoUrl, primaryColor } = data
+  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate, organizationEmail, organizationPhone, logoUrl, primaryColor, bankName, bankBsb, bankAccountNumber, bankAccountName, paymentLink } = data
   const brandColor = primaryColor || '#2563eb'
 
   return `
@@ -74,6 +79,34 @@ export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
               <p style="margin: 0 0 10px 0; font-size: 16px; color: #555; line-height: 1.6;">
                 If you have any questions about this invoice, please don't hesitate to contact us.
               </p>
+
+              ${paymentLink ? `
+              <!-- Payment Link Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${paymentLink}" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">
+                      Pay Invoice Online
+                    </a>
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
+
+              ${bankName || bankBsb || bankAccountNumber ? `
+              <!-- Banking Details -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid ${brandColor};">
+                <tr>
+                  <td>
+                    <p style="margin: 0 0 12px 0; font-size: 14px; color: #666; font-weight: bold;">Payment Details:</p>
+                    ${bankAccountName ? `<p style="margin: 0 0 5px 0; font-size: 14px; color: #333;"><strong>Account Name:</strong> ${bankAccountName}</p>` : ''}
+                    ${bankName ? `<p style="margin: 0 0 5px 0; font-size: 14px; color: #333;"><strong>Bank:</strong> ${bankName}</p>` : ''}
+                    ${bankBsb ? `<p style="margin: 0 0 5px 0; font-size: 14px; color: #333;"><strong>BSB:</strong> ${bankBsb}</p>` : ''}
+                    ${bankAccountNumber ? `<p style="margin: 0; font-size: 14px; color: #333;"><strong>Account Number:</strong> ${bankAccountNumber}</p>` : ''}
+                  </td>
+                </tr>
+              </table>
+              ` : ''}
 
               ${organizationEmail || organizationPhone ? `
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0; padding: 20px; background-color: #f8f9fa; border-radius: 6px;">

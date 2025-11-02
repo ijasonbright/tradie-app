@@ -497,14 +497,13 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
     })
     yPosition -= 20
 
-    const paymentDetails = [
-      `Bank: ${organization.bank_name}`,
-      `BSB: ${organization.bank_bsb}`,
-      `Account Number: ${organization.bank_account_number}`,
-    ]
+    const paymentDetails = []
     if (organization.bank_account_name) {
       paymentDetails.push(`Account Name: ${organization.bank_account_name}`)
     }
+    paymentDetails.push(`Bank: ${organization.bank_name}`)
+    paymentDetails.push(`BSB: ${organization.bank_bsb}`)
+    paymentDetails.push(`Account Number: ${organization.bank_account_number}`)
 
     paymentDetails.forEach((detail) => {
       page.drawText(detail, {

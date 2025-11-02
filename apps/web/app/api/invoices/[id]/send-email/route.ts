@@ -114,6 +114,11 @@ export async function POST(
       dueDate: formatDate(invoice.due_date),
       logoUrl: invoice.logo_url || undefined,
       primaryColor: invoice.primary_color || undefined,
+      bankName: invoice.bank_name || undefined,
+      bankBsb: invoice.bank_bsb || undefined,
+      bankAccountNumber: invoice.bank_account_number || undefined,
+      bankAccountName: invoice.bank_account_name || undefined,
+      // paymentLink: undefined, // TODO: Add Stripe payment link when implemented
     })
 
     const textBody = generateInvoiceEmailText({
