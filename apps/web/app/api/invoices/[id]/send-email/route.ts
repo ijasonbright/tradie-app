@@ -115,8 +115,16 @@ export async function POST(
     })
   } catch (error) {
     console.error('Error sending invoice email:', error)
+
+    // Return detailed error message for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+
     return NextResponse.json(
-      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to send email',
+        details: errorMessage,
+        message: errorMessage
+      },
       { status: 500 }
     )
   }
