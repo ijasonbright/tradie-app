@@ -47,6 +47,8 @@ interface InvoiceData {
     bank_bsb: string | null
     bank_account_number: string | null
     bank_account_name: string | null
+    logo_url: string | null
+    primary_color: string | null
   }
 }
 
@@ -61,11 +63,50 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
   const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
   const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-  // Colors
-  const primaryColor = rgb(0.15, 0.39, 0.92) // Blue #2563eb
+  // Parse brand color or use default
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+      ? rgb(
+          parseInt(result[1], 16) / 255,
+          parseInt(result[2], 16) / 255,
+          parseInt(result[3], 16) / 255
+        )
+      : rgb(0.15, 0.39, 0.92) // Default blue
+  }
+
+  const primaryColor = organization.primary_color
+    ? hexToRgb(organization.primary_color)
+    : rgb(0.15, 0.39, 0.92) // Default blue #2563eb
   const textColor = rgb(0.12, 0.16, 0.22) // Dark gray
   const lightGray = rgb(0.42, 0.45, 0.50)
   const veryLightGray = rgb(0.98, 0.98, 0.99)
+
+  // Load logo if available
+  let logoImage = null
+  let logoWidth = 0
+  let logoHeight = 0
+  if (organization.logo_url) {
+    try {
+      const logoResponse = await fetch(organization.logo_url)
+      const logoBytes = await logoResponse.arrayBuffer()
+      const logoExt = organization.logo_url.toLowerCase()
+
+      if (logoExt.includes('.png')) {
+        logoImage = await pdfDoc.embedPng(logoBytes)
+      } else if (logoExt.includes('.jpg') || logoExt.includes('.jpeg')) {
+        logoImage = await pdfDoc.embedJpg(logoBytes)
+      }
+
+      if (logoImage) {
+        const logoDims = logoImage.scale(0.3)
+        logoWidth = Math.min(logoDims.width, 150)
+        logoHeight = logoWidth * (logoImage.height / logoImage.width)
+      }
+    } catch (error) {
+      console.error('Failed to load logo for PDF:', error)
+    }
+  }
 
   // Helper function to format currency
   const formatCurrency = (amount: string) => {
@@ -86,11 +127,22 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
   const { width, height } = page.getSize()
   let yPosition = height - 50
 
+  // Header - Logo (if available)
+  if (logoImage) {
+    page.drawImage(logoImage, {
+      x: 50,
+      y: yPosition - logoHeight,
+      width: logoWidth,
+      height: logoHeight,
+    })
+    yPosition -= logoHeight + 20
+  }
+
   // Header - Company Name
   page.drawText(organization.name, {
     x: 50,
     y: yPosition,
-    size: 24,
+    size: logoImage ? 18 : 24, // Smaller if logo is present
     font: boldFont,
     color: primaryColor,
   })

@@ -6,10 +6,13 @@ interface InvoiceEmailData {
   dueDate: string
   organizationEmail?: string
   organizationPhone?: string
+  logoUrl?: string
+  primaryColor?: string
 }
 
 export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
-  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate, organizationEmail, organizationPhone } = data
+  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate, organizationEmail, organizationPhone, logoUrl, primaryColor } = data
+  const brandColor = primaryColor || '#2563eb'
 
   return `
 <!DOCTYPE html>
@@ -26,7 +29,8 @@ export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <!-- Header -->
           <tr>
-            <td style="background-color: #2563eb; padding: 30px; text-align: center;">
+            <td style="background-color: ${brandColor}; padding: 30px; text-align: center;">
+              ${logoUrl ? `<img src="${logoUrl}" alt="${organizationName}" style="max-width: 200px; max-height: 60px; margin-bottom: 20px; object-fit: contain;">` : ''}
               <h1 style="margin: 0; color: #ffffff; font-size: 28px;">Invoice</h1>
               <p style="margin: 10px 0 0 0; color: #e0e7ff; font-size: 16px;">${invoiceNumber}</p>
             </td>
@@ -52,7 +56,7 @@ export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
                       </tr>
                       <tr>
                         <td style="color: #666; font-size: 14px;">Total Amount:</td>
-                        <td align="right" style="color: #2563eb; font-size: 18px; font-weight: bold;">${totalAmount}</td>
+                        <td align="right" style="color: ${brandColor}; font-size: 18px; font-weight: bold;">${totalAmount}</td>
                       </tr>
                       <tr>
                         <td style="color: #666; font-size: 14px;">Due Date:</td>

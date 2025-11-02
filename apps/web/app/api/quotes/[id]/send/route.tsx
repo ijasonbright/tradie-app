@@ -126,6 +126,8 @@ export async function POST(
       validUntilDate: formatDate(quote.valid_until_date),
       organizationEmail: organization.email || undefined,
       organizationPhone: organization.phone || undefined,
+      logoUrl: organization.logo_url || undefined,
+      primaryColor: organization.primary_color || undefined,
     })
 
     const textBody = generateQuoteEmailText({

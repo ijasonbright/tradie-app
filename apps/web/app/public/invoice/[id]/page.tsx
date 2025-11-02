@@ -13,6 +13,7 @@ export default async function PublicInvoicePage({ params }: PageProps) {
   const invoices = await sql`
     SELECT i.*, o.name as organization_name, o.abn, o.email as org_email, o.phone as org_phone,
            o.address_line1, o.address_line2, o.city, o.state, o.postcode,
+           o.logo_url, o.primary_color,
            c.company_name, c.first_name, c.last_name, c.is_company,
            c.email as client_email, c.phone as client_phone,
            c.billing_address_line1, c.billing_address_line2,
@@ -77,6 +78,7 @@ export default async function PublicInvoicePage({ params }: PageProps) {
 
   const statusInfo = getStatusInfo(invoice.status)
   const outstanding = parseFloat(invoice.total_amount) - parseFloat(invoice.paid_amount || '0')
+  const brandColor = invoice.primary_color || '#2563eb'
 
   return (
     <html lang="en">
@@ -88,11 +90,20 @@ export default async function PublicInvoicePage({ params }: PageProps) {
         <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
           {/* Main Invoice Card */}
           <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '40px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '40px' }}>
-              <div>
-                <h1 style={{ margin: 0, fontSize: '32px', color: '#1f2937' }}>INVOICE</h1>
-                <p style={{ margin: '8px 0 0 0', fontSize: '18px', color: '#6b7280' }}>{invoice.invoice_number}</p>
+            {/* Header with Logo */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '40px', paddingBottom: '20px', borderBottom: `3px solid ${brandColor}` }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {invoice.logo_url && (
+                  <img
+                    src={invoice.logo_url}
+                    alt={invoice.organization_name}
+                    style={{ maxWidth: '200px', maxHeight: '80px', objectFit: 'contain' }}
+                  />
+                )}
+                <div>
+                  <h1 style={{ margin: 0, fontSize: '32px', color: brandColor }}>INVOICE</h1>
+                  <p style={{ margin: '8px 0 0 0', fontSize: '18px', color: '#6b7280' }}>{invoice.invoice_number}</p>
+                </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{

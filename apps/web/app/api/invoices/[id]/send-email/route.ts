@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 import { sendEmail } from '@/lib/email/ses'
+import { generateInvoiceEmailHTML, generateInvoiceEmailText } from '@/lib/email/templates/invoice'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,7 +63,8 @@ export async function POST(
 
     // Get invoice with organization check
     const invoices = await sql`
-      SELECT i.*, o.name as organization_name, c.company_name, c.first_name, c.last_name, c.is_company
+      SELECT i.*, o.name as organization_name, o.logo_url, o.primary_color,
+             c.company_name, c.first_name, c.last_name, c.is_company
       FROM invoices i
       INNER JOIN organizations o ON i.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
@@ -79,34 +81,56 @@ export async function POST(
 
     const invoice = invoices[0]
 
-    // Generate public invoice link
-    const invoiceLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoice/${id}`
+    // Format client name
+    const clientName = invoice.is_company
+      ? invoice.company_name
+      : `${invoice.first_name || ''} ${invoice.last_name || ''}`.trim()
 
-    // Convert plain text message to HTML
-    const htmlBody = message.replace(/\n/g, '<br>')
+    // Format currency
+    const formatCurrency = (amount: number | string) => {
+      const num = typeof amount === 'string' ? parseFloat(amount) : amount
+      return `$${num.toFixed(2)}`
+    }
+
+    // Format date
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-AU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+    }
 
     // Prepare from email
     const fromEmail = process.env.AWS_SES_FROM_EMAIL || 'noreply@tradieapp.com'
+
+    // Generate branded email using template
+    const htmlBody = generateInvoiceEmailHTML({
+      invoiceNumber: invoice.invoice_number,
+      clientName,
+      organizationName: invoice.organization_name,
+      totalAmount: formatCurrency(invoice.total_amount),
+      dueDate: formatDate(invoice.due_date),
+      logoUrl: invoice.logo_url || undefined,
+      primaryColor: invoice.primary_color || undefined,
+    })
+
+    const textBody = generateInvoiceEmailText({
+      invoiceNumber: invoice.invoice_number,
+      clientName,
+      organizationName: invoice.organization_name,
+      totalAmount: formatCurrency(invoice.total_amount),
+      dueDate: formatDate(invoice.due_date),
+    })
 
     // Send email via AWS SES
     await sendEmail({
       to: email,
       from: fromEmail,
       subject,
-      htmlBody: `
-        <html>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            ${htmlBody}
-            <br><br>
-            <a href="${invoiceLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-              View Invoice Online
-            </a>
-            <br><br>
-            <p style="color: #666; font-size: 12px;">Invoice Number: ${invoice.invoice_number}</p>
-          </body>
-        </html>
-      `,
-      textBody: message + `\n\nView invoice online: ${invoiceLink}\n\nInvoice Number: ${invoice.invoice_number}`,
+      htmlBody,
+      textBody,
     })
 
     return NextResponse.json({
