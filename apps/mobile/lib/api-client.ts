@@ -192,6 +192,29 @@ class ApiClient {
     )
   }
 
+  async recordPayment(invoiceId: string, data: any) {
+    return this.request<{ success: boolean; payment: any }>(
+      `/invoices/${invoiceId}/payments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  // Payments API
+  async getPayments(params?: { invoiceId?: string; startDate?: string; endDate?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.invoiceId) queryParams.append('invoiceId', params.invoiceId)
+    if (params?.startDate) queryParams.append('startDate', params.startDate)
+    if (params?.endDate) queryParams.append('endDate', params.endDate)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/payments?${query}` : '/payments'
+
+    return this.request<{ payments: any[] }>(endpoint)
+  }
+
   // Quotes API
   async getQuotes(params?: { status?: string; clientId?: string }) {
     const queryParams = new URLSearchParams()
