@@ -58,12 +58,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="clients"
+        name="invoices"
         options={{
-          title: 'Clients',
+          title: 'Invoices',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
-              name="account-group"
+              name="receipt-text"
               size={size}
               color={color}
             />

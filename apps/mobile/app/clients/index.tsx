@@ -1,22 +1,21 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
-import { Searchbar, FAB } from 'react-native-paper'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Linking } from 'react-native'
+import { Searchbar, FAB, Avatar } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
 
 export default function ClientsScreen() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
+  const { isSignedIn } = useAuth()
   const [clients, setClients] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchClients()
-  }, [])
-
+  // Fetch clients from API
   const fetchClients = async () => {
     try {
       setError(null)
@@ -32,28 +31,81 @@ export default function ClientsScreen() {
     }
   }
 
+  // Load clients on mount
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchClients()
+    }
+  }, [isSignedIn])
+
+  // Pull to refresh
   const onRefresh = () => {
     setRefreshing(true)
     fetchClients()
   }
 
   const filteredClients = clients.filter((client) => {
+    if (!searchQuery) return true
+
+    const query = searchQuery.toLowerCase()
     const clientName = client.is_company
       ? client.company_name
-      : `${client.first_name} ${client.last_name}`
+      : `${client.first_name || ''} ${client.last_name || ''}`.trim()
 
-    return clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           client.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           client.phone?.includes(searchQuery) ||
-           client.mobile?.includes(searchQuery)
+    return (
+      clientName?.toLowerCase().includes(query) ||
+      client.email?.toLowerCase().includes(query) ||
+      client.phone?.includes(searchQuery) ||
+      client.mobile?.includes(searchQuery)
+    )
   })
 
-  const renderClientCard = ({ item }: { item: any }) => {
-    const clientName = item.is_company
-      ? item.company_name
-      : `${item.first_name} ${item.last_name}`
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
-    const primaryContact = item.mobile || item.phone || item.email
+  const handleCall = (phoneNumber: string) => {
+    if (phoneNumber && phoneNumber !== 'No phone') {
+      Linking.openURL(`tel:${phoneNumber}`)
+    }
+  }
+
+  const handleEmail = (email: string) => {
+    if (email) {
+      Linking.openURL(`mailto:${email}`)
+    }
+  }
+
+  const handleMessage = (phoneNumber: string) => {
+    if (phoneNumber && phoneNumber !== 'No phone') {
+      Linking.openURL(`sms:${phoneNumber}`)
+    }
+  }
+
+  const renderClientCard = ({ item }: { item: any }) => {
+    // Build client name from database fields
+    const clientName = item.is_company
+      ? item.company_name || 'Unnamed Company'
+      : `${item.first_name || ''} ${item.last_name || ''}`.trim() || 'Unnamed Client'
+
+    // Build address from database fields
+    const address = [
+      item.site_address_line1,
+      item.site_city,
+      item.site_state,
+      item.site_postcode
+    ].filter(Boolean).join(', ') || 'No address'
+
+    // Get contact phone (prefer mobile, fallback to phone)
+    const contactPhone = item.mobile || item.phone || 'No phone'
+
+    // Get client type
+    const clientType = item.client_type || 'residential'
 
     return (
       <TouchableOpacity
@@ -61,55 +113,82 @@ export default function ClientsScreen() {
         onPress={() => router.push(`/clients/${item.id}`)}
       >
         <View style={styles.cardHeader}>
-          <View style={styles.iconContainer}>
-            <MaterialCommunityIcons
-              name={item.is_company ? 'office-building' : 'account'}
-              size={24}
-              color="#2563eb"
-            />
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.clientName}>{clientName}</Text>
-            {item.is_company && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>COMPANY</Text>
-              </View>
-            )}
+          <Avatar.Text
+            size={48}
+            label={getInitials(clientName)}
+            style={[
+              styles.avatar,
+              { backgroundColor: clientType === 'commercial' ? '#9333ea' : '#2563eb' },
+            ]}
+          />
+          <View style={styles.headerInfo}>
+            <Text style={styles.name}>{clientName}</Text>
+            <Text style={styles.type}>
+              {clientType === 'commercial' ? 'Commercial' : 'Residential'}
+            </Text>
           </View>
         </View>
 
-        {primaryContact && (
-          <View style={styles.contactRow}>
+        <View style={styles.contactInfo}>
+          {item.email && (
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="email" size={16} color="#666" />
+              <Text style={styles.info}>{item.email}</Text>
+            </View>
+          )}
+
+          <View style={styles.row}>
             <MaterialCommunityIcons name="phone" size={16} color="#666" />
-            <Text style={styles.contactText}>{primaryContact}</Text>
+            <Text style={styles.info}>{contactPhone}</Text>
           </View>
-        )}
 
-        {item.site_address_line1 && (
-          <View style={styles.contactRow}>
+          <View style={styles.row}>
             <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
-            <Text style={styles.contactText} numberOfLines={1}>
-              {item.site_address_line1}
-              {item.site_city && `, ${item.site_city}`}
-            </Text>
+            <Text style={styles.info}>{address}</Text>
           </View>
-        )}
+        </View>
 
-        <View style={styles.cardFooter}>
-          <Text style={styles.footerText}>
-            {item.client_type === 'commercial' ? 'Commercial' : 'Residential'}
-          </Text>
-          <MaterialCommunityIcons name="chevron-right" size={20} color="#999" />
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleCall(contactPhone)
+            }}
+          >
+            <MaterialCommunityIcons name="phone" size={20} color="#2563eb" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleEmail(item.email)
+            }}
+          >
+            <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleMessage(contactPhone)
+            }}
+          >
+            <MaterialCommunityIcons name="message-text" size={20} color="#2563eb" />
+          </TouchableOpacity>
         </View>
       </TouchableOpacity>
     )
   }
 
-  if (loading) {
+  // Show loading spinner while fetching clients
+  if (loading && !refreshing) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={styles.loadingText}>Loading clients...</Text>
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading clients...</Text>
+        </View>
       </View>
     )
   }
@@ -145,15 +224,16 @@ export default function ClientsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <MaterialCommunityIcons name="account-multiple-outline" size={64} color="#ccc" />
+            <MaterialCommunityIcons
+              name="account-group-outline"
+              size={64}
+              color="#ccc"
+            />
             <Text style={styles.emptyText}>
-              {error ? 'Failed to load clients' : searchQuery ? 'No clients found' : 'No clients yet'}
+              {error ? 'Failed to load clients' : 'No clients found'}
             </Text>
             {error && (
               <Text style={styles.emptySubtext}>Pull down to retry</Text>
-            )}
-            {!error && !searchQuery && (
-              <Text style={styles.emptySubtext}>Tap + to add your first client</Text>
             )}
           </View>
         }
@@ -185,110 +265,98 @@ const styles = StyleSheet.create({
   },
   errorBanner: {
     backgroundColor: '#ef4444',
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    justifyContent: 'center',
     gap: 8,
   },
   errorText: {
     color: '#fff',
-    fontSize: 14,
-    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
   },
   searchbar: {
     margin: 16,
-    backgroundColor: '#fff',
+    elevation: 2,
   },
   list: {
     padding: 16,
     paddingTop: 0,
-    paddingBottom: 80,
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#eff6ff',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  avatar: {
     marginRight: 12,
   },
-  cardContent: {
+  headerInfo: {
     flex: 1,
   },
-  clientName: {
+  name: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111',
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '600',
+  type: {
+    fontSize: 13,
     color: '#666',
+    textTransform: 'capitalize',
   },
-  contactRow: {
+  contactInfo: {
+    marginBottom: 16,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
-  contactText: {
+  info: {
     fontSize: 14,
     color: '#666',
     flex: 1,
   },
-  cardFooter: {
+  actions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    justifyContent: 'space-around',
   },
-  footerText: {
-    fontSize: 12,
-    color: '#999',
-    fontWeight: '500',
+  actionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#eff6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
-    gap: 12,
+    paddingVertical: 48,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
+    color: '#999',
+    marginTop: 12,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#bbb',
+    marginTop: 8,
   },
   fab: {
     position: 'absolute',
