@@ -579,11 +579,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
   }
 
   // Payment Link Section (if invoice is unpaid and has payment link)
-  const totalAmount = parseFloat(invoice.total_amount)
-  const paidAmount = parseFloat(invoice.paid_amount || '0')
-  const remainingAmount = totalAmount - paidAmount
-
-  if (remainingAmount > 0 && invoice.public_token) {
+  // Reuse totalAmount and paidAmount already calculated earlier (line 448-450)
+  if (outstanding > 0 && invoice.public_token) {
     const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoices/${invoice.public_token}`
 
     // Add some space before payment section
