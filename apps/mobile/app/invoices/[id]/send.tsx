@@ -55,8 +55,8 @@ export default function SendInvoiceScreen() {
       const rawPhone = response.invoice.client_phone || response.invoice.client_mobile || ''
       setPhoneNumber(rawPhone ? formatPhoneNumber(rawPhone) : '')
 
-      // Generate invoice link
-      const invoiceLink = `https://tradie-app-web.vercel.app/invoices/${id}`
+      // Generate public invoice link
+      const invoiceLink = `https://tradie-app-web.vercel.app/public/invoice/${id}`
 
       // Default email subject and message
       setEmailSubject(`Invoice ${response.invoice.invoice_number} from ${response.invoice.organization_name}`)

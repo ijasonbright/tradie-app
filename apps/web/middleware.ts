@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   '/verify-email-address(.*)',
   '/verify(.*)',
   '/mobile-callback',
+  '/public/(.*)',
 ])
 
 // API routes that handle their own JWT authentication (for mobile)

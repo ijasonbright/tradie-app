@@ -79,8 +79,8 @@ export async function POST(
 
     const invoice = invoices[0]
 
-    // Generate invoice link
-    const invoiceLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/invoices/${id}`
+    // Generate public invoice link
+    const invoiceLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoice/${id}`
 
     // Convert plain text message to HTML
     const htmlBody = message.replace(/\n/g, '<br>')
