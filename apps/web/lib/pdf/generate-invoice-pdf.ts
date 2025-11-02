@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, PDFName, PDFArray, PDFDict, PDFString } from 'pdf-lib'
 
 interface InvoiceLineItem {
   description: string
@@ -542,25 +542,88 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
       rightYPosition -= 20
 
       // Payment instructions
-      page.drawText('Visit this link to pay securely', {
+      page.drawText('Pay securely with card:', {
         x: 320,
         y: rightYPosition,
-        size: 9,
+        size: 10,
         font: regularFont,
         color: textColor,
       })
-      rightYPosition -= 12
+      rightYPosition -= 25
 
-      page.drawText('with credit or debit card:', {
+      // Draw clickable payment button
+      const buttonWidth = 180
+      const buttonHeight = 35
+      const buttonX = 320
+      const buttonY = rightYPosition - buttonHeight + 5
+
+      page.drawRectangle({
+        x: buttonX,
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+        color: primaryColor,
+      })
+
+      // "Pay Now" button text
+      const buttonText = 'Pay Now'
+      const buttonTextSize = 12
+      const buttonTextWidth = boldFont.widthOfTextAtSize(buttonText, buttonTextSize)
+      page.drawText(buttonText, {
+        x: buttonX + (buttonWidth - buttonTextWidth) / 2,
+        y: buttonY + (buttonHeight - buttonTextSize) / 2 + 2,
+        size: buttonTextSize,
+        font: boldFont,
+        color: rgb(1, 1, 1), // White
+      })
+
+      // Create clickable link annotation using proper pdf-lib API
+      try {
+        // Create the link annotation dictionary
+        const linkAnnotation = pdfDoc.context.obj({
+          Type: 'Annot',
+          Subtype: 'Link',
+          Rect: [buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight],
+          Border: [0, 0, 0],
+          C: [0, 0, 1], // Blue color (not visible but standard)
+          A: {
+            Type: 'Action',
+            S: 'URI',
+            URI: PDFString.of(paymentUrl),
+          },
+        })
+
+        // Register the annotation with the PDF context
+        const linkAnnotationRef = pdfDoc.context.register(linkAnnotation)
+
+        // Get or create the Annots array for the page
+        let annots = page.node.lookup(PDFName.of('Annots'))
+
+        if (annots instanceof PDFArray) {
+          // Add to existing array
+          annots.push(linkAnnotationRef)
+        } else {
+          // Create new array with the annotation
+          const annotsArray = pdfDoc.context.obj([linkAnnotationRef])
+          page.node.set(PDFName.of('Annots'), annotsArray)
+        }
+      } catch (error) {
+        console.error('Failed to create clickable link annotation:', error)
+        // Continue without the link - button will still be visible
+      }
+
+      rightYPosition -= buttonHeight + 15
+
+      // Optional: Display URL below button as backup
+      page.drawText('Or visit:', {
         x: 320,
         y: rightYPosition,
-        size: 9,
+        size: 7,
         font: regularFont,
-        color: textColor,
+        color: lightGray,
       })
-      rightYPosition -= 20
+      rightYPosition -= 10
 
-      // Display URL in a box with better formatting
       // Split URL at strategic points (after slashes or hyphens)
       const urlParts = []
       const maxCharsPerLine = 35
@@ -582,7 +645,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
       }
 
       // Draw URL lines
-      const urlFontSize = 8
+      const urlFontSize = 7
       urlParts.forEach((part, index) => {
         page.drawText(part, {
           x: 320,
@@ -591,7 +654,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
           font: regularFont,
           color: primaryColor,
         })
-        rightYPosition -= 10
+        rightYPosition -= 9
       })
 
       // Update yPosition to the lower of the two columns
