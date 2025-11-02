@@ -180,7 +180,7 @@ export default function PublicInvoicePage() {
                 </div>
               </div>
               <a
-                href={invoice.stripePaymentLinkUrl}
+                href={invoice.stripePaymentLinkUrl || '#'}
                 style={{
                   backgroundColor: '#3b82f6',
                   color: '#fff',
