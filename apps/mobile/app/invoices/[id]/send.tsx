@@ -23,6 +23,23 @@ export default function SendInvoiceScreen() {
   const [emailMessage, setEmailMessage] = useState('')
   const [smsMessage, setSmsMessage] = useState('')
 
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all non-digit characters
+    let cleaned = phone.replace(/\D/g, '')
+
+    // If starts with 0, assume Australian number and add country code
+    if (cleaned.startsWith('0')) {
+      cleaned = '61' + cleaned.substring(1)
+    }
+
+    // Add + prefix if not present
+    if (!cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned
+    }
+
+    return cleaned
+  }
+
   useEffect(() => {
     fetchInvoice()
   }, [id])
@@ -33,9 +50,13 @@ export default function SendInvoiceScreen() {
       const response = await apiClient.getInvoice(id as string)
       setInvoice(response.invoice)
 
-      // Pre-fill email and phone from client
+      // Pre-fill email and phone from client (auto-format phone)
       setEmailAddress(response.invoice.client_email || '')
-      setPhoneNumber(response.invoice.client_phone || response.invoice.client_mobile || '')
+      const rawPhone = response.invoice.client_phone || response.invoice.client_mobile || ''
+      setPhoneNumber(rawPhone ? formatPhoneNumber(rawPhone) : '')
+
+      // Generate invoice link
+      const invoiceLink = `https://tradie-app-web.vercel.app/invoices/${id}`
 
       // Default email subject and message
       setEmailSubject(`Invoice ${response.invoice.invoice_number} from ${response.invoice.organization_name}`)
@@ -43,13 +64,14 @@ export default function SendInvoiceScreen() {
         `Hi ${response.invoice.client_name},\n\n` +
         `Please find attached your invoice ${response.invoice.invoice_number} for $${parseFloat(response.invoice.total_amount).toFixed(2)}.\n\n` +
         `Due date: ${new Date(response.invoice.due_date).toLocaleDateString('en-AU')}\n\n` +
+        `View your invoice online: ${invoiceLink}\n\n` +
         `Thank you for your business!\n\n` +
         `${response.invoice.organization_name}`
       )
 
-      // Default SMS message
+      // Default SMS message with actual link
       setSmsMessage(
-        `Hi ${response.invoice.client_name}, your invoice ${response.invoice.invoice_number} for $${parseFloat(response.invoice.total_amount).toFixed(2)} is ready. View it here: [link]`
+        `Hi ${response.invoice.client_name}, your invoice ${response.invoice.invoice_number} for $${parseFloat(response.invoice.total_amount).toFixed(2)} is ready. View it here: ${invoiceLink}`
       )
     } catch (err: any) {
       console.error('Failed to fetch invoice:', err)
@@ -94,10 +116,11 @@ export default function SendInvoiceScreen() {
         })
       }
 
-      // Send via SMS
+      // Send via SMS (auto-format phone number)
       if (sendViaSMS) {
+        const formattedPhone = formatPhoneNumber(phoneNumber)
         await apiClient.sendInvoiceSMS(id as string, {
-          phone: phoneNumber,
+          phone: formattedPhone,
           message: smsMessage,
         })
       }

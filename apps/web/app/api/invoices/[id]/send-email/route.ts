@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+import { sendEmail } from '@/lib/email/ses'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,34 +79,39 @@ export async function POST(
 
     const invoice = invoices[0]
 
-    // TODO: Integrate with email service (Resend, SendGrid, etc.)
-    // For now, we'll just log the email details and return success
-    console.log('Sending invoice email:', {
-      to: email,
-      subject,
-      message,
-      invoiceId: id,
-      invoiceNumber: invoice.invoice_number,
-    })
+    // Generate invoice link
+    const invoiceLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/invoices/${id}`
 
-    // In production, you would send the actual email here:
-    /*
+    // Convert plain text message to HTML
+    const htmlBody = message.replace(/\n/g, '<br>')
+
+    // Prepare from email
+    const fromEmail = process.env.AWS_SES_FROM_EMAIL || 'noreply@tradieapp.com'
+
+    // Send email via AWS SES
     await sendEmail({
       to: email,
-      subject: subject,
-      html: generateInvoiceEmailHTML(invoice, message),
-      attachments: [
-        {
-          filename: `Invoice-${invoice.invoice_number}.pdf`,
-          content: await generateInvoicePDF(invoice),
-        },
-      ],
+      from: fromEmail,
+      subject,
+      htmlBody: `
+        <html>
+          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            ${htmlBody}
+            <br><br>
+            <a href="${invoiceLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              View Invoice Online
+            </a>
+            <br><br>
+            <p style="color: #666; font-size: 12px;">Invoice Number: ${invoice.invoice_number}</p>
+          </body>
+        </html>
+      `,
+      textBody: message + `\n\nView invoice online: ${invoiceLink}\n\nInvoice Number: ${invoice.invoice_number}`,
     })
-    */
 
     return NextResponse.json({
       success: true,
-      message: 'Invoice email sent successfully (demo mode)',
+      message: 'Invoice email sent successfully',
     })
   } catch (error) {
     console.error('Error sending invoice email:', error)
