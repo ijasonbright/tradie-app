@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Platform } from 'react-native'
 import { FAB } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useState, useEffect } from 'react'
@@ -174,6 +174,49 @@ export default function CalendarScreen() {
     setSelectedDate(new Date())
   }
 
+  // Handle phone call
+  const handleCall = (phoneNumber: string | null | undefined) => {
+    if (!phoneNumber) {
+      alert('No phone number available')
+      return
+    }
+    const url = `tel:${phoneNumber}`
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url)
+        } else {
+          alert('Unable to make phone call')
+        }
+      })
+      .catch((err) => console.error('Error making phone call:', err))
+  }
+
+  // Handle navigation to address
+  const handleNavigate = (address: string | null | undefined) => {
+    if (!address) {
+      alert('No address available')
+      return
+    }
+
+    const encodedAddress = encodeURIComponent(address)
+    const url = Platform.select({
+      ios: `maps://app?daddr=${encodedAddress}`,
+      android: `google.navigation:q=${encodedAddress}`,
+    }) || `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url)
+        } else {
+          // Fallback to browser-based Google Maps
+          return Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`)
+        }
+      })
+      .catch((err) => console.error('Error opening maps:', err))
+  }
+
   const renderAppointment = (appointment: any) => {
     // Format times from database
     const formatTime = (dateStr: string) => {
@@ -201,8 +244,15 @@ export default function CalendarScreen() {
       month: 'short'
     })
 
+    // Get phone number from client data
+    const clientPhone = appointment.client_phone || appointment.client_mobile
+
     return (
-      <TouchableOpacity key={appointment.id} style={styles.appointmentCard}>
+      <TouchableOpacity
+        key={appointment.id}
+        style={styles.appointmentCard}
+        onPress={() => router.push(`/appointment/${appointment.id}`)}
+      >
         <View style={styles.timeColumn}>
           {viewMode === 'week' && <Text style={styles.dateLabel}>{dateLabel}</Text>}
           <Text style={styles.time}>{startTime || 'TBD'}</Text>
@@ -246,11 +296,23 @@ export default function CalendarScreen() {
           )}
 
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={(e) => {
+                e.stopPropagation() // Prevent navigating to edit screen
+                handleCall(clientPhone)
+              }}
+            >
               <MaterialCommunityIcons name="phone" size={18} color="#2563eb" />
               <Text style={styles.actionText}>Call</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={(e) => {
+                e.stopPropagation() // Prevent navigating to edit screen
+                handleNavigate(appointment.location_address)
+              }}
+            >
               <MaterialCommunityIcons name="navigation" size={18} color="#2563eb" />
               <Text style={styles.actionText}>Navigate</Text>
             </TouchableOpacity>

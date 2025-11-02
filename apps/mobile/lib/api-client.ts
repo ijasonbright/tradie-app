@@ -151,6 +151,29 @@ class ApiClient {
     )
   }
 
+  async getAppointment(id: string) {
+    return this.request<{ appointment: any }>(`/appointments/${id}`)
+  }
+
+  async updateAppointment(id: string, data: any) {
+    return this.request<{ success: boolean; appointment: any }>(
+      `/appointments/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async deleteAppointment(id: string) {
+    return this.request<{ success: boolean }>(
+      `/appointments/${id}`,
+      {
+        method: 'DELETE',
+      }
+    )
+  }
+
   // Organizations API
   async getOrganizations() {
     return this.request<{ organizations: any[] }>('/organizations')
