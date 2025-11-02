@@ -535,6 +535,74 @@ export async function POST() {
            amount = ROUND(total_amount - (total_amount / 11), 2)
        WHERE gst_amount = 0
        AND total_amount > 0`,
+
+      // ========== INVOICES & PAYMENTS ==========
+
+      // Create invoices table
+      `CREATE TABLE IF NOT EXISTS invoices (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        invoice_number VARCHAR(50) NOT NULL,
+        job_id UUID REFERENCES jobs(id),
+        client_id UUID REFERENCES clients(id) NOT NULL,
+        created_by_user_id UUID REFERENCES users(id) NOT NULL,
+        status VARCHAR(50) DEFAULT 'draft' NOT NULL,
+        subtotal DECIMAL(10, 2) NOT NULL,
+        gst_amount DECIMAL(10, 2) NOT NULL,
+        total_amount DECIMAL(10, 2) NOT NULL,
+        paid_amount DECIMAL(10, 2) DEFAULT 0,
+        issue_date TIMESTAMP NOT NULL,
+        due_date TIMESTAMP NOT NULL,
+        paid_date TIMESTAMP,
+        payment_terms VARCHAR(100),
+        payment_method VARCHAR(50),
+        notes TEXT,
+        footer_text TEXT,
+        sent_at TIMESTAMP,
+        xero_invoice_id VARCHAR(255),
+        last_synced_at TIMESTAMP,
+        stripe_invoice_id VARCHAR(255),
+        stripe_payment_intent_id VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create invoice_line_items table
+      `CREATE TABLE IF NOT EXISTS invoice_line_items (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE NOT NULL,
+        source_type VARCHAR(50),
+        source_id UUID,
+        item_type VARCHAR(50) NOT NULL,
+        description TEXT NOT NULL,
+        quantity DECIMAL(10, 2) NOT NULL,
+        unit_price DECIMAL(10, 2) NOT NULL,
+        gst_amount DECIMAL(10, 2) NOT NULL,
+        line_total DECIMAL(10, 2) NOT NULL,
+        line_order INTEGER NOT NULL
+      )`,
+
+      // Create invoice_payments table
+      `CREATE TABLE IF NOT EXISTS invoice_payments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE NOT NULL,
+        payment_date TIMESTAMP NOT NULL,
+        amount DECIMAL(10, 2) NOT NULL,
+        payment_method VARCHAR(50) NOT NULL,
+        reference_number VARCHAR(100),
+        notes TEXT,
+        recorded_by_user_id UUID REFERENCES users(id) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for invoices
+      `CREATE INDEX IF NOT EXISTS idx_invoices_organization_id ON invoices(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoices_job_id ON invoices(job_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoice_line_items_invoice_id ON invoice_line_items(invoice_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice_id ON invoice_payments(invoice_id)`,
     ]
 
     const results = []
