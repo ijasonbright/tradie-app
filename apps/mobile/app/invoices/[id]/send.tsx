@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Switch, KeyboardAvoidingView, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
@@ -138,7 +138,11 @@ export default function SendInvoiceScreen() {
   const smsCredits = Math.ceil(smsCharCount / 160)
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}
+    >
       <Stack.Screen options={{ title: 'Send Invoice' }} />
 
       <ScrollView style={styles.scrollView}>
@@ -281,7 +285,7 @@ export default function SendInvoiceScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
