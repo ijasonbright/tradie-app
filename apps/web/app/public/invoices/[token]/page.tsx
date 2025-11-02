@@ -81,8 +81,8 @@ export default function PublicInvoicePage() {
     try {
       // Use absolute URL to avoid issues with mobile browsers
       const apiUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/api/v/invoices/${token}`
-        : `/api/v/invoices/${token}`
+        ? `${window.location.origin}/api/invoice-public/${token}`
+        : `/api/invoice-public/${token}`
 
       const response = await fetch(apiUrl)
       if (!response.ok) {
