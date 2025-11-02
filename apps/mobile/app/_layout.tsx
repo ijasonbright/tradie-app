@@ -57,6 +57,7 @@ function ThemedStack() {
           fontWeight: 'bold',
         },
         headerTitle: (props) => <HeaderTitle>{props.children as string}</HeaderTitle>,
+        headerBackTitle: 'Back',
       }}
     >
       <Stack.Screen
