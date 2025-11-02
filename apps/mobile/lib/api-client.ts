@@ -662,7 +662,7 @@ class ApiClient {
       isPartialPayment: boolean
     }>(`/invoices/${invoiceId}/create-payment-link`, {
       method: 'POST',
-      body: amount ? JSON.stringify({ amount }) : undefined,
+      body: JSON.stringify(amount ? { amount } : {}),
     })
   }
 }

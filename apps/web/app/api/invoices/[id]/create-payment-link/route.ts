@@ -43,8 +43,16 @@ export async function POST(
     const userId = clerkUserId
 
     const { id: invoiceId } = await params
-    const body = await req.json()
-    const { amount: customAmount } = body // Optional: for partial payments
+
+    // Parse body (may be empty for full payment)
+    let customAmount: number | undefined
+    try {
+      const body = await req.json()
+      customAmount = body.amount
+    } catch (error) {
+      // No body or invalid JSON - use full amount
+      customAmount = undefined
+    }
 
     // Get user's internal ID
     const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
