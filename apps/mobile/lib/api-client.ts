@@ -202,6 +202,36 @@ class ApiClient {
     )
   }
 
+  async updateInvoice(id: string, data: any) {
+    return this.request<{ invoice: any }>(
+      `/invoices/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async sendInvoiceEmail(id: string, data: { email: string; subject: string; message: string }) {
+    return this.request<{ success: boolean }>(
+      `/invoices/${id}/send-email`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async sendInvoiceSMS(id: string, data: { phone: string; message: string }) {
+    return this.request<{ success: boolean }>(
+      `/invoices/${id}/send-sms`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   // Payments API
   async getPayments(params?: { invoiceId?: string; startDate?: string; endDate?: string }) {
     const queryParams = new URLSearchParams()
