@@ -16,6 +16,11 @@ export async function GET(
   try {
     const { token } = await params
 
+    // Debug logging
+    console.log('Public invoice lookup - Token:', token)
+    console.log('Token length:', token?.length)
+    console.log('User-Agent:', req.headers.get('user-agent'))
+
     // Get the invoice with all related data
     const invoices = await sql`
       SELECT
@@ -41,7 +46,18 @@ export async function GET(
       WHERE i.public_token = ${token}
     `
 
+    console.log('Query result count:', invoices.length)
+
     if (invoices.length === 0) {
+      // Check if token exists but is null
+      const tokenCheck = await sql`
+        SELECT id, invoice_number, public_token
+        FROM invoices
+        WHERE public_token IS NULL
+        LIMIT 5
+      `
+      console.log('Invoices with null tokens (first 5):', tokenCheck)
+
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
     }
 
