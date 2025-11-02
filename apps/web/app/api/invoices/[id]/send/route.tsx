@@ -96,9 +96,12 @@ export async function POST(
       ORDER BY line_order ASC
     `
 
-    // Generate PDF
+    // Generate PDF with updated invoice data including public token
     const pdfData = {
-      invoice,
+      invoice: {
+        ...invoice,
+        public_token: publicToken, // Include the generated/existing token
+      },
       lineItems,
       organization,
     } as any // Type assertion to bypass strict typing from database queries
@@ -122,15 +125,30 @@ export async function POST(
       return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
     }
 
-    // Prepare payment link if invoice is unpaid
+    // Prepare payment link - generate token if needed for unpaid invoices
     let paymentLink: string | undefined
     const totalAmount = parseFloat(invoice.total_amount)
     const paidAmount = parseFloat(invoice.paid_amount || '0')
     const remainingAmount = totalAmount - paidAmount
 
-    if (remainingAmount > 0 && invoice.public_token) {
+    let publicToken = invoice.public_token
+
+    if (remainingAmount > 0) {
+      // Generate public token if it doesn't exist
+      if (!publicToken) {
+        const { generatePublicToken } = await import('@/lib/stripe/payment-links')
+        publicToken = generatePublicToken()
+
+        // Update invoice with the new token
+        await sql`
+          UPDATE invoices
+          SET public_token = ${publicToken}, updated_at = NOW()
+          WHERE id = ${id}
+        `
+      }
+
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
-      paymentLink = `${appUrl}/public/invoices/${invoice.public_token}`
+      paymentLink = `${appUrl}/public/invoices/${publicToken}`
     }
 
     // Prepare email data

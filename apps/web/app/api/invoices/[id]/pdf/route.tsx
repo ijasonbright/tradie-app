@@ -64,9 +64,30 @@ export async function GET(
       ORDER BY line_order ASC
     `
 
+    // Generate public token if invoice is unpaid and doesn't have one
+    let publicToken = invoice.public_token
+    const totalAmount = parseFloat(invoice.total_amount)
+    const paidAmount = parseFloat(invoice.paid_amount || '0')
+    const remainingAmount = totalAmount - paidAmount
+
+    if (remainingAmount > 0 && !publicToken) {
+      const { generatePublicToken } = await import('@/lib/stripe/payment-links')
+      publicToken = generatePublicToken()
+
+      // Update invoice with the new token
+      await sql`
+        UPDATE invoices
+        SET public_token = ${publicToken}, updated_at = NOW()
+        WHERE id = ${id}
+      `
+    }
+
     // Generate PDF
     const pdfData = {
-      invoice,
+      invoice: {
+        ...invoice,
+        public_token: publicToken,
+      },
       lineItems,
       organization,
     } as any // Type assertion to bypass strict typing from database queries
