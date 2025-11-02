@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
-import { getUserFromRequest } from '@/lib/auth'
 import { createQuoteDepositPaymentLink, generatePublicToken } from '@/lib/stripe/payment-links'
 
 export const dynamic = 'force-dynamic'
@@ -12,14 +12,21 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id: quoteId } = await params
 
-    // Get the quote
+    // Get user's internal ID
+    const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    const user = users[0]
+
+    // Get the quote (with organization membership check)
     const quotes = await sql`
       SELECT
         q.*,
@@ -29,8 +36,10 @@ export async function POST(
         c.is_company
       FROM quotes q
       JOIN clients c ON q.client_id = c.id
+      JOIN organization_members om ON q.organization_id = om.organization_id
       WHERE q.id = ${quoteId}
-        AND q.organization_id = ${user.organizationId}
+        AND om.user_id = ${user.id}
+        AND om.status = 'active'
     `
 
     if (quotes.length === 0) {
@@ -84,7 +93,7 @@ export async function POST(
     const { paymentLink } = await createQuoteDepositPaymentLink({
       quoteId,
       quoteNumber: quote.quote_number,
-      organizationId: user.organizationId,
+      organizationId: quote.organization_id,
       depositAmount,
       publicToken,
       clientName,

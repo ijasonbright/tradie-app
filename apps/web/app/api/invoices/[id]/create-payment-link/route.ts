@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
-import { getUserFromRequest } from '@/lib/auth'
 import { createInvoicePaymentLink, generatePublicToken } from '@/lib/stripe/payment-links'
 
 export const dynamic = 'force-dynamic'
@@ -12,8 +12,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getUserFromRequest(req)
-    if (!user) {
+    const { userId } = await auth()
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -21,7 +21,14 @@ export async function POST(
     const body = await req.json()
     const { amount: customAmount } = body // Optional: for partial payments
 
-    // Get the invoice
+    // Get user's internal ID
+    const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+    const user = users[0]
+
+    // Get the invoice (with organization membership check)
     const invoices = await sql`
       SELECT
         i.*,
@@ -31,8 +38,10 @@ export async function POST(
         c.is_company
       FROM invoices i
       JOIN clients c ON i.client_id = c.id
+      JOIN organization_members om ON i.organization_id = om.organization_id
       WHERE i.id = ${invoiceId}
-        AND i.organization_id = ${user.organizationId}
+        AND om.user_id = ${user.id}
+        AND om.status = 'active'
     `
 
     if (invoices.length === 0) {
@@ -91,7 +100,7 @@ export async function POST(
     const { paymentLink } = await createInvoicePaymentLink({
       invoiceId,
       invoiceNumber: invoice.invoice_number,
-      organizationId: user.organizationId,
+      organizationId: invoice.organization_id,
       amount: paymentAmount,
       publicToken,
       clientName,
