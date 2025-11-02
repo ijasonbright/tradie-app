@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+import { tallbob, TallBobAPI } from '@/lib/sms/tallbob'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,7 +62,8 @@ export async function POST(
 
     // Get invoice with organization check
     const invoices = await sql`
-      SELECT i.*, o.name as organization_name, o.sms_credits, c.company_name, c.first_name, c.last_name, c.is_company
+      SELECT i.*, o.name as organization_name, o.sms_credits, o.sms_phone_number,
+             c.company_name, c.first_name, c.last_name, c.is_company
       FROM invoices i
       INNER JOIN organizations o ON i.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
@@ -91,24 +93,31 @@ export async function POST(
       )
     }
 
-    // TODO: Integrate with Tall Bob SMS API
-    // For now, we'll just log the SMS details and return success
-    console.log('Sending invoice SMS:', {
-      to: phone,
+    // Format phone numbers
+    const formattedTo = TallBobAPI.formatPhoneNumber(phone)
+    const fromNumber = invoice.sms_phone_number || process.env.TALLBOB_DEFAULT_FROM_NUMBER || ''
+
+    if (!fromNumber) {
+      return NextResponse.json(
+        { error: 'Organization SMS phone number not configured' },
+        { status: 400 }
+      )
+    }
+
+    // Send SMS via Tall Bob
+    const smsResult = await tallbob.sendSMS({
+      from: fromNumber,
+      to: formattedTo,
       message,
-      invoiceId: id,
-      invoiceNumber: invoice.invoice_number,
-      creditsUsed: creditsNeeded,
+      messageId: `invoice_${id}_${Date.now()}`,
     })
 
-    // In production, you would send the actual SMS here:
-    /*
-    await sendSMS({
-      to: phone,
-      message: message,
-      organizationId: invoice.organization_id,
-    })
-    */
+    if (!smsResult.success) {
+      return NextResponse.json(
+        { error: smsResult.error || 'Failed to send SMS' },
+        { status: 500 }
+      )
+    }
 
     // Deduct SMS credits (in demo mode, we'll still deduct to simulate)
     await sql`
@@ -130,27 +139,30 @@ export async function POST(
         sms_type,
         message_preview,
         delivery_status,
-        related_invoice_id
+        related_invoice_id,
+        tallbob_message_id
       ) VALUES (
         ${invoice.organization_id},
         'usage',
         ${-creditsNeeded},
         ${currentCredits - creditsNeeded},
         'Invoice sent via SMS',
-        ${phone},
+        ${formattedTo},
         ${user.id},
         'invoice',
         ${message.substring(0, 50)},
         'sent',
-        ${id}
+        ${id},
+        ${smsResult.messageId}
       )
     `
 
     return NextResponse.json({
       success: true,
-      message: 'Invoice SMS sent successfully (demo mode)',
+      message: 'Invoice SMS sent successfully',
       creditsUsed: creditsNeeded,
       creditsRemaining: currentCredits - creditsNeeded,
+      messageId: smsResult.messageId,
     })
   } catch (error) {
     console.error('Error sending invoice SMS:', error)
