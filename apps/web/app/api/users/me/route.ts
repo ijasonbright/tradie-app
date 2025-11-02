@@ -101,9 +101,12 @@ export async function PUT(req: Request) {
     const sql = neon(process.env.DATABASE_URL!)
     const body = await req.json()
 
-    // Get user from database
+    // Get user from database with current values
     const users = await sql`
-      SELECT id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+      SELECT id, phone, profile_photo_url, sms_phone_number
+      FROM users
+      WHERE clerk_user_id = ${clerkUserId}
+      LIMIT 1
     `
 
     if (users.length === 0) {
@@ -117,9 +120,9 @@ export async function PUT(req: Request) {
       UPDATE users
       SET
         full_name = COALESCE(${body.fullName}, full_name),
-        phone = ${body.phone !== undefined ? body.phone : users[0].phone},
-        profile_photo_url = ${body.profilePhotoUrl !== undefined ? body.profilePhotoUrl : users[0].profile_photo_url},
-        sms_phone_number = ${body.smsPhoneNumber !== undefined ? body.smsPhoneNumber : users[0].sms_phone_number},
+        phone = ${body.phone !== undefined ? body.phone : user.phone},
+        profile_photo_url = ${body.profilePhotoUrl !== undefined ? body.profilePhotoUrl : user.profile_photo_url},
+        sms_phone_number = ${body.smsPhoneNumber !== undefined ? body.smsPhoneNumber : user.sms_phone_number},
         updated_at = NOW()
       WHERE id = ${user.id}
       RETURNING
