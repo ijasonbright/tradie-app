@@ -8,6 +8,7 @@ const sql = neon(process.env.DATABASE_URL!)
 /**
  * GET /api/public/invoices/[token]
  * Public endpoint to view an invoice by its public token (no authentication required)
+ * This route must be accessible from mobile browsers
  */
 export async function GET(
   req: Request,
