@@ -12,7 +12,18 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    const sql = neon(process.env.DATABASE_URL!)
 
+    // Check if this is a public access request via token query parameter
+    const url = new URL(req.url)
+    const publicToken = url.searchParams.get('token')
+
+    if (publicToken) {
+      // PUBLIC ACCESS MODE - use public_token instead of ID
+      return await handlePublicInvoiceAccess(sql, publicToken)
+    }
+
+    // AUTHENTICATED ACCESS MODE - require authentication
     // Try to get auth from Clerk (web) first
     let clerkUserId: string | null = null
 
@@ -41,8 +52,6 @@ export async function GET(
     }
 
     const userId = clerkUserId
-
-    const sql = neon(process.env.DATABASE_URL!)
 
     // Get user's internal ID
     const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
@@ -246,5 +255,57 @@ export async function DELETE(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
+  }
+}
+
+// Helper function for public invoice access (no auth required)
+async function handlePublicInvoiceAccess(sql: any, token: string) {
+  try {
+    const invoices = await sql`
+      SELECT i.*, c.first_name, c.last_name, c.company_name, c.is_company, c.email as client_email,
+             o.name as organization_name, o.logo_url as organization_logo, o.phone as organization_phone,
+             o.email as organization_email, o.address_line1 as organization_address_line1,
+             o.address_line2 as organization_address_line2, o.city as organization_city,
+             o.state as organization_state, o.postcode as organization_postcode, o.abn as organization_abn
+      FROM invoices i
+      JOIN clients c ON i.client_id = c.id
+      JOIN organizations o ON i.organization_id = o.id
+      WHERE i.public_token = ${token}
+    `
+
+    if (invoices.length === 0) {
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+    }
+
+    const invoice = invoices[0]
+
+    const lineItems = await sql`SELECT * FROM invoice_line_items WHERE invoice_id = ${invoice.id} ORDER BY line_order ASC`
+    const payments = await sql`SELECT payment_date, amount, payment_method, reference_number, notes FROM invoice_payments WHERE invoice_id = ${invoice.id} ORDER BY payment_date DESC`
+
+    const totalAmount = parseFloat(invoice.total_amount)
+    const paidAmount = parseFloat(invoice.paid_amount || '0')
+    const remainingAmount = totalAmount - paidAmount
+    const dueDate = new Date(invoice.due_date)
+    const isOverdue = dueDate < new Date() && remainingAmount > 0
+    const clientName = invoice.is_company ? invoice.company_name : `${invoice.first_name} ${invoice.last_name}`
+
+    return NextResponse.json({
+      invoice: {
+        id: invoice.id, invoiceNumber: invoice.invoice_number, status: invoice.status,
+        subtotal: invoice.subtotal, gstAmount: invoice.gst_amount, totalAmount: invoice.total_amount,
+        paidAmount: invoice.paid_amount, remainingAmount: remainingAmount.toFixed(2),
+        issueDate: invoice.issue_date, dueDate: invoice.due_date, paidDate: invoice.paid_date,
+        isOverdue, paymentTerms: invoice.payment_terms, notes: invoice.notes, footerText: invoice.footer_text,
+        sentAt: invoice.sent_at, createdAt: invoice.created_at,
+        stripePaymentLinkUrl: invoice.stripe_payment_link_url, isDepositInvoice: invoice.is_deposit_invoice,
+      },
+      lineItems: lineItems.map((item: any) => ({ id: item.id, itemType: item.item_type, description: item.description, quantity: item.quantity, unitPrice: item.unit_price, gstAmount: item.gst_amount, lineTotal: item.line_total })),
+      payments: payments.map((payment: any) => ({ date: payment.payment_date, amount: payment.amount, method: payment.payment_method, reference: payment.reference_number, notes: payment.notes })),
+      client: { name: clientName, email: invoice.client_email },
+      organization: { name: invoice.organization_name, logoUrl: invoice.organization_logo, phone: invoice.organization_phone, email: invoice.organization_email, address: { line1: invoice.organization_address_line1, line2: invoice.organization_address_line2, city: invoice.organization_city, state: invoice.organization_state, postcode: invoice.organization_postcode }, abn: invoice.organization_abn },
+    })
+  } catch (error) {
+    console.error('Error fetching public invoice:', error)
+    return NextResponse.json({ error: 'Failed to fetch invoice', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
   }
 }

@@ -80,9 +80,10 @@ export default function PublicInvoicePage() {
   const fetchInvoice = async () => {
     try {
       // Use absolute URL to avoid issues with mobile browsers
+      // Call existing /api/invoices endpoint with token as query parameter
       const apiUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/api/invoice-public/${token}`
-        : `/api/invoice-public/${token}`
+        ? `${window.location.origin}/api/invoices/dummy?token=${token}`
+        : `/api/invoices/dummy?token=${token}`
 
       const response = await fetch(apiUrl)
       if (!response.ok) {
