@@ -626,6 +626,45 @@ class ApiClient {
       pagination: { total: number; limit: number; offset: number; hasMore: boolean }
     }>(endpoint)
   }
+
+  // ==================== PAYMENT LINKS ====================
+
+  /**
+   * Create a Stripe payment link for a quote deposit
+   */
+  async createQuotePaymentLink(quoteId: string) {
+    return this.request<{
+      success: boolean
+      paymentLink: {
+        id: string
+        url: string
+      }
+      publicUrl: string
+      depositAmount: number
+    }>(`/quotes/${quoteId}/create-payment-link`, {
+      method: 'POST',
+    })
+  }
+
+  /**
+   * Create a Stripe payment link for an invoice
+   */
+  async createInvoicePaymentLink(invoiceId: string, amount?: number) {
+    return this.request<{
+      success: boolean
+      paymentLink: {
+        id: string
+        url: string
+      }
+      publicUrl: string
+      paymentAmount: number
+      remainingAmount: number
+      isPartialPayment: boolean
+    }>(`/invoices/${invoiceId}/create-payment-link`, {
+      method: 'POST',
+      body: amount ? JSON.stringify({ amount }) : undefined,
+    })
+  }
 }
 
 export const apiClient = new ApiClient()
