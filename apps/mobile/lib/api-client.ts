@@ -214,7 +214,7 @@ class ApiClient {
 
   async sendInvoiceEmail(id: string, data: { email: string; subject: string; message: string }) {
     return this.request<{ success: boolean }>(
-      `/invoices/${id}/send-email`,
+      `/invoices/${id}/send`,
       {
         method: 'POST',
         body: JSON.stringify(data),
