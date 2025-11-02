@@ -97,15 +97,14 @@ export async function POST(
 
     // Use custom amount if provided, otherwise use remaining amount
     let paymentAmount = remainingAmount
-    if (customAmount) {
-      const requestedAmount = parseFloat(customAmount)
-      if (requestedAmount <= 0 || requestedAmount > remainingAmount) {
+    if (customAmount !== undefined) {
+      if (customAmount <= 0 || customAmount > remainingAmount) {
         return NextResponse.json(
           { error: 'Invalid payment amount' },
           { status: 400 }
         )
       }
-      paymentAmount = requestedAmount
+      paymentAmount = customAmount
     }
 
     // Generate public token if not already exists
