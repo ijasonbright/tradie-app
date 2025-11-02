@@ -126,7 +126,15 @@ export async function GET(req: Request) {
       `
     }
 
-    return NextResponse.json({ invoices })
+    // Format invoices with client name
+    const formattedInvoices = invoices.map((invoice: any) => ({
+      ...invoice,
+      client_name: invoice.is_company
+        ? invoice.company_name
+        : `${invoice.first_name || ''} ${invoice.last_name || ''}`.trim(),
+    }))
+
+    return NextResponse.json({ invoices: formattedInvoices })
   } catch (error) {
     console.error('Error fetching invoices:', error)
     return NextResponse.json(
