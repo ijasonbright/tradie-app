@@ -122,6 +122,17 @@ export async function POST(
       return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
     }
 
+    // Prepare payment link if invoice is unpaid
+    let paymentLink: string | undefined
+    const totalAmount = parseFloat(invoice.total_amount)
+    const paidAmount = parseFloat(invoice.paid_amount || '0')
+    const remainingAmount = totalAmount - paidAmount
+
+    if (remainingAmount > 0 && invoice.public_token) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
+      paymentLink = `${appUrl}/public/invoices/${invoice.public_token}`
+    }
+
     // Prepare email data
     const emailData = {
       invoiceNumber: invoice.invoice_number,
@@ -131,6 +142,7 @@ export async function POST(
       dueDate: formatDate(invoice.due_date),
       organizationEmail: organization.email || undefined,
       organizationPhone: organization.phone || undefined,
+      paymentLink,
     }
 
     // Determine FROM email address

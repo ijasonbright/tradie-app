@@ -145,7 +145,7 @@ export function generateInvoiceEmailHTML(data: InvoiceEmailData): string {
 }
 
 export function generateInvoiceEmailText(data: InvoiceEmailData): string {
-  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate } = data
+  const { invoiceNumber, clientName, organizationName, totalAmount, dueDate, paymentLink } = data
 
   return `
 Dear ${clientName},
@@ -159,6 +159,7 @@ Invoice Details:
 
 The attached PDF contains full details of the invoice, including itemized charges and payment instructions.
 
+${paymentLink ? `Pay Online: ${paymentLink}\n` : ''}
 If you have any questions about this invoice, please don't hesitate to contact us.
 
 Thank you,

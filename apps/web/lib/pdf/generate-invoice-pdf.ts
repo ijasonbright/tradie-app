@@ -21,6 +21,8 @@ interface InvoiceData {
     payment_terms: string | null
     notes: string | null
     footer_text: string | null
+    public_token: string | null
+    stripe_payment_link_url: string | null
     // Client info from JOIN
     is_company: boolean
     company_name: string | null
@@ -576,12 +578,108 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
     }
   }
 
+  // Payment Link Section (if invoice is unpaid and has payment link)
+  const totalAmount = parseFloat(invoice.total_amount)
+  const paidAmount = parseFloat(invoice.paid_amount || '0')
+  const remainingAmount = totalAmount - paidAmount
+
+  if (remainingAmount > 0 && invoice.public_token) {
+    const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoices/${invoice.public_token}`
+
+    // Add some space before payment section
+    yPosition = Math.min(yPosition, 150) - 20
+
+    // Draw a separator line
+    page.drawLine({
+      start: { x: 50, y: yPosition },
+      end: { x: width - 50, y: yPosition },
+      thickness: 1,
+      color: veryLightGray,
+    })
+    yPosition -= 25
+
+    // "Pay Online" heading
+    page.drawText('Pay Online', {
+      x: 50,
+      y: yPosition,
+      size: 14,
+      font: boldFont,
+      color: primaryColor,
+    })
+    yPosition -= 25
+
+    // Payment instructions
+    page.drawText('You can pay this invoice securely online:', {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: textColor,
+    })
+    yPosition -= 20
+
+    // Draw payment button background
+    const buttonWidth = 200
+    const buttonHeight = 35
+    const buttonX = 50
+    const buttonY = yPosition - buttonHeight + 5
+
+    page.drawRectangle({
+      x: buttonX,
+      y: buttonY,
+      width: buttonWidth,
+      height: buttonHeight,
+      color: primaryColor,
+    })
+
+    // "Pay Now" button text
+    const buttonText = 'Pay Now'
+    const buttonTextSize = 12
+    const buttonTextWidth = boldFont.widthOfTextAtSize(buttonText, buttonTextSize)
+    page.drawText(buttonText, {
+      x: buttonX + (buttonWidth - buttonTextWidth) / 2,
+      y: buttonY + (buttonHeight - buttonTextSize) / 2 + 2,
+      size: buttonTextSize,
+      font: boldFont,
+      color: rgb(1, 1, 1), // White
+    })
+
+    yPosition -= buttonHeight + 10
+
+    // Payment URL (clickable link)
+    page.drawText(paymentUrl, {
+      x: 50,
+      y: yPosition,
+      size: 8,
+      font: regularFont,
+      color: primaryColor,
+    })
+
+    // Add link annotation for the button
+    page.node.set(
+      pdfDoc.context.obj({
+        Type: 'Annot',
+        Subtype: 'Link',
+        Rect: [buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight],
+        Border: [0, 0, 0],
+        A: {
+          Type: 'Action',
+          S: 'URI',
+          URI: paymentUrl,
+        },
+      })
+    )
+
+    yPosition -= 25
+  }
+
   // Footer
   if (invoice.footer_text) {
+    const footerY = Math.min(50, yPosition - 20)
     const footerWidth = regularFont.widthOfTextAtSize(invoice.footer_text, 9)
     page.drawText(invoice.footer_text, {
       x: (width - footerWidth) / 2,
-      y: 50,
+      y: footerY,
       size: 9,
       font: regularFont,
       color: lightGray,
