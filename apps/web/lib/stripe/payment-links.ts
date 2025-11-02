@@ -13,9 +13,14 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 /**
  * Generate a secure random token for public URLs
+ * Using base64url encoding for shorter URLs (16 bytes = 22 chars vs 64 chars with hex)
  */
 export function generatePublicToken(): string {
-  return randomBytes(32).toString('hex')
+  return randomBytes(16)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '')
 }
 
 interface CreateQuoteDepositPaymentLinkParams {
