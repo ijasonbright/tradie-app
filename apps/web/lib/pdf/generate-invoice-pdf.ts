@@ -487,36 +487,145 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
     yPosition -= 30
   }
 
-  // Payment instructions
-  if (organization.bank_name && organization.bank_bsb && organization.bank_account_number) {
-    yPosition -= 20
-    page.drawText('Payment Instructions', {
-      x: 50,
-      y: yPosition,
-      size: 12,
-      font: boldFont,
-      color: primaryColor,
-    })
-    yPosition -= 20
+  // Payment instructions and Pay Online section (side by side)
+  const hasPaymentLink = outstanding > 0 && invoice.public_token
+  const hasBankDetails = organization.bank_name && organization.bank_bsb && organization.bank_account_number
 
-    const paymentDetails = []
-    if (organization.bank_account_name) {
-      paymentDetails.push(`Account Name: ${organization.bank_account_name}`)
-    }
-    paymentDetails.push(`Bank: ${organization.bank_name}`)
-    paymentDetails.push(`BSB: ${organization.bank_bsb}`)
-    paymentDetails.push(`Account Number: ${organization.bank_account_number}`)
+  if (hasBankDetails || hasPaymentLink) {
+    yPosition -= 20
+    const startYPosition = yPosition
 
-    paymentDetails.forEach((detail) => {
-      page.drawText(detail, {
+    // Left side: Bank details
+    if (hasBankDetails) {
+      page.drawText('Payment Instructions', {
         x: 50,
         y: yPosition,
+        size: 12,
+        font: boldFont,
+        color: primaryColor,
+      })
+      yPosition -= 20
+
+      const paymentDetails = []
+      if (organization.bank_account_name) {
+        paymentDetails.push(`Account Name: ${organization.bank_account_name}`)
+      }
+      paymentDetails.push(`Bank: ${organization.bank_name}`)
+      paymentDetails.push(`BSB: ${organization.bank_bsb}`)
+      paymentDetails.push(`Account Number: ${organization.bank_account_number}`)
+
+      paymentDetails.forEach((detail) => {
+        page.drawText(detail, {
+          x: 50,
+          y: yPosition,
+          size: 10,
+          font: regularFont,
+          color: textColor,
+        })
+        yPosition -= 15
+      })
+    }
+
+    // Right side: Pay Online section (inline with bank details)
+    if (hasPaymentLink) {
+      const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoices/${invoice.public_token}`
+      let rightYPosition = startYPosition
+
+      // "Pay Online" heading on right side
+      page.drawText('Pay Online', {
+        x: 320,
+        y: rightYPosition,
+        size: 12,
+        font: boldFont,
+        color: primaryColor,
+      })
+      rightYPosition -= 20
+
+      // Payment instructions
+      page.drawText('Pay securely with card:', {
+        x: 320,
+        y: rightYPosition,
         size: 10,
         font: regularFont,
         color: textColor,
       })
-      yPosition -= 15
-    })
+      rightYPosition -= 25
+
+      // Draw payment button background
+      const buttonWidth = 180
+      const buttonHeight = 35
+      const buttonX = 320
+      const buttonY = rightYPosition - buttonHeight + 5
+
+      page.drawRectangle({
+        x: buttonX,
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+        color: primaryColor,
+      })
+
+      // "Pay Now" button text
+      const buttonText = 'Pay Now'
+      const buttonTextSize = 12
+      const buttonTextWidth = boldFont.widthOfTextAtSize(buttonText, buttonTextSize)
+      page.drawText(buttonText, {
+        x: buttonX + (buttonWidth - buttonTextWidth) / 2,
+        y: buttonY + (buttonHeight - buttonTextSize) / 2 + 2,
+        size: buttonTextSize,
+        font: boldFont,
+        color: rgb(1, 1, 1), // White
+      })
+
+      rightYPosition -= buttonHeight + 10
+
+      // Small URL text below button (compact)
+      const urlText = 'Visit payment link:'
+      page.drawText(urlText, {
+        x: 320,
+        y: rightYPosition,
+        size: 7,
+        font: regularFont,
+        color: lightGray,
+      })
+      rightYPosition -= 10
+
+      // Split URL into multiple lines if needed (to fit in right column)
+      const maxUrlWidth = 220
+      const urlSize = 7
+      const urlParts = []
+      let currentPart = ''
+
+      for (let i = 0; i < paymentUrl.length; i++) {
+        const char = paymentUrl[i]
+        const testPart = currentPart + char
+        const testWidth = regularFont.widthOfTextAtSize(testPart, urlSize)
+
+        if (testWidth > maxUrlWidth && currentPart) {
+          urlParts.push(currentPart)
+          currentPart = char
+        } else {
+          currentPart = testPart
+        }
+      }
+      if (currentPart) {
+        urlParts.push(currentPart)
+      }
+
+      urlParts.forEach((part) => {
+        page.drawText(part, {
+          x: 320,
+          y: rightYPosition,
+          size: urlSize,
+          font: regularFont,
+          color: primaryColor,
+        })
+        rightYPosition -= 9
+      })
+
+      // Update yPosition to the lower of the two columns
+      yPosition = Math.min(yPosition, rightYPosition)
+    }
   }
 
   // Payment terms
@@ -578,82 +687,6 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
     }
   }
 
-  // Payment Link Section (if invoice is unpaid and has payment link)
-  // Reuse totalAmount and paidAmount already calculated earlier (line 448-450)
-  if (outstanding > 0 && invoice.public_token) {
-    const paymentUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'}/public/invoices/${invoice.public_token}`
-
-    // Add some space before payment section
-    yPosition = Math.min(yPosition, 150) - 20
-
-    // Draw a separator line
-    page.drawLine({
-      start: { x: 50, y: yPosition },
-      end: { x: width - 50, y: yPosition },
-      thickness: 1,
-      color: veryLightGray,
-    })
-    yPosition -= 25
-
-    // "Pay Online" heading
-    page.drawText('Pay Online', {
-      x: 50,
-      y: yPosition,
-      size: 14,
-      font: boldFont,
-      color: primaryColor,
-    })
-    yPosition -= 25
-
-    // Payment instructions
-    page.drawText('You can pay this invoice securely online:', {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      font: regularFont,
-      color: textColor,
-    })
-    yPosition -= 20
-
-    // Draw payment button background
-    const buttonWidth = 200
-    const buttonHeight = 35
-    const buttonX = 50
-    const buttonY = yPosition - buttonHeight + 5
-
-    page.drawRectangle({
-      x: buttonX,
-      y: buttonY,
-      width: buttonWidth,
-      height: buttonHeight,
-      color: primaryColor,
-    })
-
-    // "Pay Now" button text
-    const buttonText = 'Pay Now'
-    const buttonTextSize = 12
-    const buttonTextWidth = boldFont.widthOfTextAtSize(buttonText, buttonTextSize)
-    page.drawText(buttonText, {
-      x: buttonX + (buttonWidth - buttonTextWidth) / 2,
-      y: buttonY + (buttonHeight - buttonTextSize) / 2 + 2,
-      size: buttonTextSize,
-      font: boldFont,
-      color: rgb(1, 1, 1), // White
-    })
-
-    yPosition -= buttonHeight + 10
-
-    // Payment URL (users can copy/paste this)
-    page.drawText(paymentUrl, {
-      x: 50,
-      y: yPosition,
-      size: 8,
-      font: regularFont,
-      color: primaryColor,
-    })
-
-    yPosition -= 25
-  }
 
   // Footer
   if (invoice.footer_text) {
