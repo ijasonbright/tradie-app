@@ -612,53 +612,10 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
         // Continue without the link - button will still be visible
       }
 
-      rightYPosition -= buttonHeight + 15
-
-      // Optional: Display URL below button as backup
-      page.drawText('Or visit:', {
-        x: 320,
-        y: rightYPosition,
-        size: 7,
-        font: regularFont,
-        color: lightGray,
-      })
-      rightYPosition -= 10
-
-      // Split URL at strategic points (after slashes or hyphens)
-      const urlParts = []
-      const maxCharsPerLine = 35
-      let currentLine = ''
-
-      for (let i = 0; i < paymentUrl.length; i++) {
-        currentLine += paymentUrl[i]
-
-        // Break at natural points or when line is too long
-        const nextChar = paymentUrl[i + 1]
-        if (currentLine.length >= maxCharsPerLine && (paymentUrl[i] === '/' || paymentUrl[i] === '-' || !nextChar)) {
-          urlParts.push(currentLine)
-          currentLine = ''
-        }
-      }
-
-      if (currentLine) {
-        urlParts.push(currentLine)
-      }
-
-      // Draw URL lines
-      const urlFontSize = 7
-      urlParts.forEach((part, index) => {
-        page.drawText(part, {
-          x: 320,
-          y: rightYPosition,
-          size: urlFontSize,
-          font: regularFont,
-          color: primaryColor,
-        })
-        rightYPosition -= 9
-      })
+      rightYPosition -= buttonHeight + 5
 
       // Update yPosition to the lower of the two columns
-      yPosition = Math.min(yPosition, rightYPosition - 10)
+      yPosition = Math.min(yPosition, rightYPosition)
     }
   }
 
