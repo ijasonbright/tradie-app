@@ -643,7 +643,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
 
     yPosition -= buttonHeight + 10
 
-    // Payment URL (clickable link)
+    // Payment URL (users can copy/paste this)
     page.drawText(paymentUrl, {
       x: 50,
       y: yPosition,
@@ -651,21 +651,6 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Uint8Array>
       font: regularFont,
       color: primaryColor,
     })
-
-    // Add link annotation for the button
-    page.node.set(
-      pdfDoc.context.obj({
-        Type: 'Annot',
-        Subtype: 'Link',
-        Rect: [buttonX, buttonY, buttonX + buttonWidth, buttonY + buttonHeight],
-        Border: [0, 0, 0],
-        A: {
-          Type: 'Action',
-          S: 'URI',
-          URI: paymentUrl,
-        },
-      })
-    )
 
     yPosition -= 25
   }
