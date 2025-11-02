@@ -603,6 +603,57 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_invoices_due_date ON invoices(due_date)`,
       `CREATE INDEX IF NOT EXISTS idx_invoice_line_items_invoice_id ON invoice_line_items(invoice_id)`,
       `CREATE INDEX IF NOT EXISTS idx_invoice_payments_invoice_id ON invoice_payments(invoice_id)`,
+
+      // ========== STRIPE PAYMENT SYSTEM ==========
+
+      // Add payment link fields to quotes
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_required BOOLEAN DEFAULT false NOT NULL`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_percentage DECIMAL(5, 2)`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_amount DECIMAL(10, 2)`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid BOOLEAN DEFAULT false NOT NULL`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_paid_at TIMESTAMP`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_payment_intent_id VARCHAR(255)`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS deposit_payment_link_url VARCHAR(500)`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS public_token VARCHAR(100) UNIQUE`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS accepted_by_name VARCHAR(255)`,
+      `ALTER TABLE quotes ADD COLUMN IF NOT EXISTS accepted_by_email VARCHAR(255)`,
+
+      // Add payment link fields to invoices
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_link_id VARCHAR(255)`,
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_payment_link_url VARCHAR(500)`,
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS public_token VARCHAR(100) UNIQUE`,
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS is_deposit_invoice BOOLEAN DEFAULT false NOT NULL`,
+      `ALTER TABLE invoices ADD COLUMN IF NOT EXISTS related_quote_id UUID REFERENCES quotes(id)`,
+
+      // Create payment_requests table
+      `CREATE TABLE IF NOT EXISTS payment_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        request_type VARCHAR(50) NOT NULL,
+        related_quote_id UUID REFERENCES quotes(id),
+        related_invoice_id UUID REFERENCES invoices(id),
+        related_job_id UUID REFERENCES jobs(id),
+        client_id UUID REFERENCES clients(id) NOT NULL,
+        amount_requested DECIMAL(10, 2) NOT NULL,
+        amount_paid DECIMAL(10, 2) DEFAULT 0 NOT NULL,
+        status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+        stripe_payment_intent_id VARCHAR(255),
+        stripe_payment_link_id VARCHAR(255),
+        stripe_payment_link_url VARCHAR(500),
+        public_token VARCHAR(100) NOT NULL UNIQUE,
+        description TEXT,
+        expires_at TIMESTAMP,
+        paid_at TIMESTAMP,
+        created_by_user_id UUID REFERENCES users(id) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for payment requests
+      `CREATE INDEX IF NOT EXISTS idx_payment_requests_organization_id ON payment_requests(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_payment_requests_client_id ON payment_requests(client_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_payment_requests_status ON payment_requests(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_payment_requests_public_token ON payment_requests(public_token)`,
     ]
 
     const results = []
