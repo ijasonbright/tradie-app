@@ -219,12 +219,19 @@ export async function POST(req: Request) {
     const gstAmount = parseFloat(body.gstAmount || (subtotal * 0.1).toFixed(2))
     const totalAmount = subtotal + gstAmount
 
-    // Create quote
+    // Prepare deposit fields
+    const depositRequired = body.depositRequired || false
+    const depositPercentage = body.depositPercentage || null
+    const depositAmount = body.depositAmount || null
+
+    // Create quote with deposit fields
     const quotes = await sql`
       INSERT INTO quotes (
         organization_id, quote_number, client_id, created_by_user_id,
         title, description, status, subtotal, gst_amount, total_amount,
-        valid_until_date, notes, created_at, updated_at
+        valid_until_date, notes,
+        deposit_required, deposit_percentage, deposit_amount,
+        created_at, updated_at
       ) VALUES (
         ${organizationId},
         ${quoteNumber},
@@ -238,12 +245,38 @@ export async function POST(req: Request) {
         ${totalAmount},
         ${body.validUntilDate || null},
         ${body.notes || null},
+        ${depositRequired},
+        ${depositPercentage},
+        ${depositAmount},
         NOW(),
         NOW()
       ) RETURNING *
     `
 
-    return NextResponse.json({ quote: quotes[0] }, { status: 201 })
+    const newQuote = quotes[0]
+
+    // Insert line items if provided
+    if (body.lineItems && Array.isArray(body.lineItems) && body.lineItems.length > 0) {
+      for (let i = 0; i < body.lineItems.length; i++) {
+        const item = body.lineItems[i]
+        await sql`
+          INSERT INTO quote_line_items (
+            quote_id, item_type, description, quantity, unit_price, gst_amount, line_total, line_order
+          ) VALUES (
+            ${newQuote.id},
+            ${item.itemType || item.item_type || 'service'},
+            ${item.description},
+            ${item.quantity},
+            ${item.unitPrice || item.unit_price},
+            ${item.gstAmount || item.gst_amount || '0'},
+            ${item.lineTotal || item.line_total},
+            ${item.lineOrder !== undefined ? item.lineOrder : i}
+          )
+        `
+      }
+    }
+
+    return NextResponse.json({ quote: newQuote }, { status: 201 })
   } catch (error) {
     console.error('Error creating quote:', error)
     return NextResponse.json(
