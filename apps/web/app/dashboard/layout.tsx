@@ -47,6 +47,7 @@ export default function DashboardLayout({
     { href: '/dashboard/clients', label: 'Clients', icon: '👥' },
     { href: '/dashboard/jobs', label: 'Jobs', icon: '🔨' },
     { href: '/dashboard/calendar', label: 'Calendar', icon: '📅' },
+    { href: '/dashboard/team/map', label: 'Map', icon: '🗺️' },
     { href: '/dashboard/expenses', label: 'Expenses', icon: '💳' },
     { href: '/dashboard/quotes', label: 'Quotes', icon: '📋' },
     { href: '/dashboard/invoices', label: 'Invoices', icon: '🧾' },
