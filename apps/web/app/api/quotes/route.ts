@@ -161,17 +161,35 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     // Validate required fields
-    if (!body.organizationId || !body.clientId || !body.title) {
+    if (!body.clientId || !body.title) {
       return NextResponse.json(
-        { error: 'Missing required fields: organizationId, clientId, title' },
+        { error: 'Missing required fields: clientId, title' },
         { status: 400 }
       )
+    }
+
+    // Get user's organization (use provided organizationId or get the first active membership)
+    let organizationId = body.organizationId
+
+    if (!organizationId) {
+      const memberships = await sql`
+        SELECT organization_id, role FROM organization_members
+        WHERE user_id = ${user.id}
+        AND status = 'active'
+        LIMIT 1
+      `
+
+      if (memberships.length === 0) {
+        return NextResponse.json({ error: 'No active organization membership' }, { status: 403 })
+      }
+
+      organizationId = memberships[0].organization_id
     }
 
     // Check user has permission in this organization
     const members = await sql`
       SELECT role FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${organizationId}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -191,7 +209,7 @@ export async function POST(req: Request) {
     const year = new Date().getFullYear()
     const quoteCount = await sql`
       SELECT COUNT(*) as count FROM quotes
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${organizationId}
       AND quote_number LIKE ${'QTE-' + year + '-%'}
     `
     const quoteNumber = `QTE-${year}-${String(Number(quoteCount[0].count) + 1).padStart(3, '0')}`
@@ -208,7 +226,7 @@ export async function POST(req: Request) {
         title, description, status, subtotal, gst_amount, total_amount,
         valid_until_date, notes, created_at, updated_at
       ) VALUES (
-        ${body.organizationId},
+        ${organizationId},
         ${quoteNumber},
         ${body.clientId},
         ${user.id},
