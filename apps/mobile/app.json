@@ -10,15 +10,38 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradieapp"
+      "bundleIdentifier": "com.tradieapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to share it with your team for better job coordination.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
+        "NSLocationAlwaysUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
-      "package": "com.tradieapp"
+      "package": "com.tradieapp",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION"
+      ]
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Tradie App to use your location to share it with your team for better job coordination.",
+          "locationAlwaysPermission": "Allow Tradie App to track your location in the background to keep your team updated.",
+          "locationWhenInUsePermission": "Allow Tradie App to use your location while using the app.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
     ],
     "scheme": "tradieapp",
     "extra": {
