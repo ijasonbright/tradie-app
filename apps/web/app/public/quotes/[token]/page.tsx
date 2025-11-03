@@ -80,7 +80,7 @@ export default function PublicQuotePage() {
 
   const fetchQuote = async () => {
     try {
-      const response = await fetch(`/api/share/quotes/${token}`)
+      const response = await fetch(`/api/v/quotes/${token}`)
       if (!response.ok) {
         throw new Error('Quote not found')
       }
@@ -108,7 +108,7 @@ export default function PublicQuotePage() {
     setSubmitMessage(null)
 
     try {
-      const response = await fetch(`/api/share/quotes/${token}/accept`, {
+      const response = await fetch(`/api/v/quotes/${token}/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,7 +144,7 @@ export default function PublicQuotePage() {
     setSubmitMessage(null)
 
     try {
-      const response = await fetch(`/api/share/quotes/${token}/reject`, {
+      const response = await fetch(`/api/v/quotes/${token}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: rejectReason }),
