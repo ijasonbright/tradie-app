@@ -136,14 +136,14 @@ class ApiClient {
     if (params?.end_date) queryParams.append('end_date', params.end_date)
 
     const query = queryParams.toString()
-    const endpoint = query ? `/calendar/appointments?${query}` : '/calendar/appointments'
+    const endpoint = query ? `/appointments?${query}` : '/appointments'
 
     return this.request<{ appointments: any[] }>(endpoint)
   }
 
   async createAppointment(data: any) {
     return this.request<{ success: boolean; appointment: any }>(
-      '/calendar/appointments',
+      '/appointments',
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -152,12 +152,12 @@ class ApiClient {
   }
 
   async getAppointment(id: string) {
-    return this.request<{ appointment: any }>(`/calendar/appointments/${id}`)
+    return this.request<{ appointment: any }>(`/appointments/${id}`)
   }
 
   async updateAppointment(id: string, data: any) {
     return this.request<{ success: boolean; appointment: any }>(
-      `/calendar/appointments/${id}`,
+      `/appointments/${id}`,
       {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -167,7 +167,7 @@ class ApiClient {
 
   async deleteAppointment(id: string) {
     return this.request<{ success: boolean }>(
-      `/calendar/appointments/${id}`,
+      `/appointments/${id}`,
       {
         method: 'DELETE',
       }

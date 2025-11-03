@@ -112,7 +112,7 @@ export default function CalendarPage() {
       const startDate = getViewStartDate()
       const endDate = getViewEndDate()
 
-      let url = `/api/calendar/appointments?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+      let url = `/api/appointments?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
       if (selectedUserId !== 'all') {
         url += `&assignedToUserId=${selectedUserId}`
       }
@@ -280,8 +280,8 @@ export default function CalendarPage() {
 
     try {
       const url = editingAppointment
-        ? `/api/calendar/appointments/${editingAppointment.id}`
-        : '/api/calendar/appointments'
+        ? `/api/appointments/${editingAppointment.id}`
+        : '/api/appointments'
 
       const method = editingAppointment ? 'PUT' : 'POST'
 
@@ -396,7 +396,7 @@ export default function CalendarPage() {
     if (!confirm('Are you sure you want to delete this appointment?')) return
 
     try {
-      const res = await fetch(`/api/calendar/appointments/${appointmentId}`, {
+      const res = await fetch(`/api/appointments/${appointmentId}`, {
         method: 'DELETE',
       })
 
