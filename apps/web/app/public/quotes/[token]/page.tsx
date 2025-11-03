@@ -494,7 +494,7 @@ export default function PublicQuotePage() {
                     }}
                   />
                   <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', fontStyle: 'italic' }}>
-                    Update if needed - we'll use this to send confirmation
+                    Update if needed - we&apos;ll use this to send confirmation
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
