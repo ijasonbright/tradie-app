@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, Switch } from 'react-native'
 import { useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/api-client'
@@ -28,6 +28,12 @@ export default function NewQuoteScreen() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [lineItems, setLineItems] = useState<LineItem[]>([])
+
+  // Deposit/Part Payment fields
+  const [depositRequired, setDepositRequired] = useState(false)
+  const [depositType, setDepositType] = useState<'percentage' | 'amount'>('percentage')
+  const [depositPercentage, setDepositPercentage] = useState('30')
+  const [depositAmount, setDepositAmount] = useState('')
 
   // Modal states
   const [showClientPicker, setShowClientPicker] = useState(false)
@@ -92,6 +98,20 @@ export default function NewQuoteScreen() {
       subtotal: subtotal.toFixed(2),
       gst_amount: gstAmount.toFixed(2),
       total_amount: (subtotal + gstAmount).toFixed(2),
+    }
+  }
+
+  const calculateDepositAmount = () => {
+    const totals = calculateTotals(lineItems)
+    const total = parseFloat(totals.total_amount)
+
+    if (!depositRequired) return '0.00'
+
+    if (depositType === 'percentage') {
+      const percentage = parseFloat(depositPercentage) || 0
+      return ((total * percentage) / 100).toFixed(2)
+    } else {
+      return parseFloat(depositAmount || '0').toFixed(2)
     }
   }
 
@@ -162,6 +182,17 @@ export default function NewQuoteScreen() {
       setSaving(true)
       const totals = calculateTotals(lineItems)
 
+      // Prepare deposit data
+      const depositData = depositRequired ? {
+        depositRequired: true,
+        depositPercentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
+        depositAmount: depositType === 'amount' ? parseFloat(depositAmount) : null,
+      } : {
+        depositRequired: false,
+        depositPercentage: null,
+        depositAmount: null,
+      }
+
       const quoteData = {
         clientId: selectedClient.id,
         title,
@@ -171,6 +202,7 @@ export default function NewQuoteScreen() {
         gstAmount: totals.gst_amount,
         totalAmount: totals.total_amount,
         status: 'draft',
+        ...depositData,
         lineItems: lineItems.map((item, index) => ({
           ...item,
           lineOrder: index,
@@ -303,6 +335,89 @@ export default function NewQuoteScreen() {
               <Text style={styles.totalLabel}>Total</Text>
               <Text style={styles.totalValue}>{formatCurrency(totals.total_amount)}</Text>
             </View>
+          </View>
+        )}
+
+        {/* Deposit / Part Payment */}
+        {lineItems.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.depositHeader}>
+              <Text style={styles.sectionTitle}>Deposit / Part Payment</Text>
+              <Switch
+                value={depositRequired}
+                onValueChange={setDepositRequired}
+                trackColor={{ false: '#d1d5db', true: brandColor }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            {depositRequired && (
+              <>
+                <View style={styles.depositTypeContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.depositTypeButton,
+                      depositType === 'percentage' && { backgroundColor: brandColor },
+                    ]}
+                    onPress={() => setDepositType('percentage')}
+                  >
+                    <Text
+                      style={[
+                        styles.depositTypeText,
+                        depositType === 'percentage' && styles.depositTypeTextActive,
+                      ]}
+                    >
+                      Percentage
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.depositTypeButton,
+                      depositType === 'amount' && { backgroundColor: brandColor },
+                    ]}
+                    onPress={() => setDepositType('amount')}
+                  >
+                    <Text
+                      style={[
+                        styles.depositTypeText,
+                        depositType === 'amount' && styles.depositTypeTextActive,
+                      ]}
+                    >
+                      Fixed Amount
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {depositType === 'percentage' ? (
+                  <>
+                    <Text style={styles.fieldLabel}>Deposit Percentage</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={depositPercentage}
+                      onChangeText={setDepositPercentage}
+                      keyboardType="decimal-pad"
+                      placeholder="30"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.fieldLabel}>Deposit Amount</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={depositAmount}
+                      onChangeText={setDepositAmount}
+                      keyboardType="decimal-pad"
+                      placeholder="0.00"
+                    />
+                  </>
+                )}
+
+                <View style={styles.depositCalculation}>
+                  <Text style={styles.depositLabel}>Deposit Amount:</Text>
+                  <Text style={styles.depositValue}>{formatCurrency(calculateDepositAmount())}</Text>
+                </View>
+              </>
+            )}
           </View>
         )}
       </ScrollView>
@@ -620,5 +735,53 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  depositHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 0,
+  },
+  depositTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+    marginTop: 16,
+  },
+  depositTypeButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    alignItems: 'center',
+  },
+  depositTypeText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  depositTypeTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  depositCalculation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+  },
+  depositLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  depositValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#10b981',
   },
 })
