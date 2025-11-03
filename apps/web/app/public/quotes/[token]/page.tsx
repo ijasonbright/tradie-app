@@ -89,6 +89,12 @@ export default function PublicQuotePage() {
       setLineItems(data.lineItems)
       setOrganization(data.organization)
       setClient(data.client)
+
+      // Pre-fill acceptance form with client details
+      if (data.client) {
+        setAcceptName(data.client.name || '')
+        setAcceptEmail(data.client.email || '')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load quote')
     } finally {
@@ -444,7 +450,10 @@ export default function PublicQuotePage() {
                 padding: '24px',
                 marginTop: '32px',
               }}>
-                <h3 style={{ marginTop: 0, marginBottom: '16px', color: '#065f46' }}>Accept This Quote</h3>
+                <h3 style={{ marginTop: 0, marginBottom: '8px', color: '#065f46' }}>Accept This Quote</h3>
+                <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#065f46' }}>
+                  Please confirm your details before accepting:
+                </p>
                 <div style={{ marginBottom: '16px' }}>
                   <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>
                     Your Name *
@@ -461,6 +470,7 @@ export default function PublicQuotePage() {
                       border: '1px solid #d1d5db',
                       fontSize: '14px',
                       boxSizing: 'border-box',
+                      backgroundColor: '#f9fafb',
                     }}
                   />
                 </div>
@@ -480,8 +490,12 @@ export default function PublicQuotePage() {
                       border: '1px solid #d1d5db',
                       fontSize: '14px',
                       boxSizing: 'border-box',
+                      backgroundColor: '#f9fafb',
                     }}
                   />
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', fontStyle: 'italic' }}>
+                    Update if needed - we'll use this to send confirmation
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <button
