@@ -1,19 +1,24 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSignIn } from '@clerk/nextjs'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 
 export default function MobileOAuthPage() {
   const { provider } = useParams()
-  const searchParams = useSearchParams()
-  const { signIn } = useSignIn()
+  const { signIn, isLoaded } = useSignIn()
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const startOAuth = async () => {
-      if (!signIn) return
+      // Wait for Clerk to fully load
+      if (!isLoaded || !signIn) {
+        console.log('Waiting for Clerk to load...', { isLoaded, signIn: !!signIn })
+        return
+      }
 
       try {
+        console.log('Starting OAuth flow for provider:', provider)
         const callbackUrl = `${window.location.origin}/api/mobile-auth/oauth/callback`
 
         // Start OAuth with the specific provider
@@ -22,13 +27,14 @@ export default function MobileOAuthPage() {
           redirectUrl: callbackUrl,
           redirectUrlComplete: callbackUrl,
         })
-      } catch (error) {
+      } catch (error: any) {
         console.error('OAuth error:', error)
+        setError(error?.message || 'Failed to start OAuth')
       }
     }
 
     startOAuth()
-  }, [signIn, provider])
+  }, [signIn, isLoaded, provider])
 
   return (
     <div style={{
@@ -44,21 +50,36 @@ export default function MobileOAuthPage() {
         padding: '2rem',
         background: 'white',
         borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        maxWidth: '400px'
       }}>
-        <div style={{
-          border: '3px solid #f3f3f3',
-          borderTop: '3px solid #2563eb',
-          borderRadius: '50%',
-          width: '40px',
-          height: '40px',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 1rem'
-        }} />
-        <h2 style={{ color: '#333', margin: '0 0 0.5rem' }}>
-          Signing in with {String(provider).charAt(0).toUpperCase() + String(provider).slice(1)}
-        </h2>
-        <p style={{ color: '#666', margin: 0 }}>Please wait...</p>
+        {error ? (
+          <>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+            <h2 style={{ color: '#ef4444', margin: '0 0 0.5rem' }}>
+              Sign in failed
+            </h2>
+            <p style={{ color: '#666', margin: 0 }}>{error}</p>
+          </>
+        ) : (
+          <>
+            <div style={{
+              border: '3px solid #f3f3f3',
+              borderTop: '3px solid #2563eb',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 1rem'
+            }} />
+            <h2 style={{ color: '#333', margin: '0 0 0.5rem' }}>
+              Signing in with {String(provider).charAt(0).toUpperCase() + String(provider).slice(1)}
+            </h2>
+            <p style={{ color: '#666', margin: 0 }}>
+              {!isLoaded ? 'Loading...' : 'Redirecting to sign in...'}
+            </p>
+          </>
+        )}
 
         <style jsx>{`
           @keyframes spin {
