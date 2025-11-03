@@ -27,6 +27,10 @@ export default function QuoteDetailScreen() {
 
       // Build client_name from response
       const quoteData = response.quote
+      if (!quoteData) {
+        throw new Error('Quote data not found in response')
+      }
+
       const clientName = quoteData.is_company && quoteData.company_name
         ? quoteData.company_name
         : [quoteData.first_name, quoteData.last_name].filter(Boolean).join(' ') || 'Unknown Client'
@@ -36,7 +40,7 @@ export default function QuoteDetailScreen() {
     } catch (err: any) {
       console.error('Failed to fetch quote:', err)
       setError(err.message || 'Failed to load quote details')
-      Alert.alert('Error', 'Failed to load quote details')
+      Alert.alert('Error', err.message || 'Failed to load quote details')
     } finally {
       setLoading(false)
     }
@@ -155,13 +159,13 @@ export default function QuoteDetailScreen() {
             {lineItems.map((item: any, index: number) => (
               <View key={item.id || index} style={styles.lineItem}>
                 <View style={styles.lineItemHeader}>
-                  <Text style={styles.lineItemDescription}>{item.description}</Text>
+                  <Text style={styles.lineItemDescription}>{item.description || 'No description'}</Text>
                 </View>
                 <View style={styles.lineItemDetails}>
                   <Text style={styles.lineItemQuantity}>
-                    {parseFloat(item.quantity).toFixed(2)} × {formatCurrency(item.unit_price)}
+                    {parseFloat(item.quantity || 0).toFixed(2)} × {formatCurrency(item.unit_price || 0)}
                   </Text>
-                  <Text style={styles.lineItemTotal}>{formatCurrency(item.line_total)}</Text>
+                  <Text style={styles.lineItemTotal}>{formatCurrency(item.line_total || 0)}</Text>
                 </View>
               </View>
             ))}
@@ -172,16 +176,16 @@ export default function QuoteDetailScreen() {
         <View style={styles.section}>
           <View style={styles.amountRow}>
             <Text style={styles.label}>Subtotal</Text>
-            <Text style={styles.value}>{formatCurrency(quote.subtotal)}</Text>
+            <Text style={styles.value}>{formatCurrency(quote.subtotal || 0)}</Text>
           </View>
           <View style={styles.amountRow}>
             <Text style={styles.label}>GST (10%)</Text>
-            <Text style={styles.value}>{formatCurrency(quote.gst_amount)}</Text>
+            <Text style={styles.value}>{formatCurrency(quote.gst_amount || 0)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.amountRow}>
             <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>{formatCurrency(quote.total_amount)}</Text>
+            <Text style={styles.totalValue}>{formatCurrency(quote.total_amount || 0)}</Text>
           </View>
         </View>
 

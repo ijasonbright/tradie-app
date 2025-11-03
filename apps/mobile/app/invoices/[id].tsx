@@ -249,6 +249,17 @@ export default function InvoiceDetailScreen() {
             </Text>
           </TouchableOpacity>
         )}
+        {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={() => router.push(`/invoices/${id}/edit`)}
+          >
+            <MaterialCommunityIcons name="pencil" size={20} color={brandColor} />
+            <Text style={[styles.actionButtonText, { color: brandColor }]}>
+              Edit Invoice
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
