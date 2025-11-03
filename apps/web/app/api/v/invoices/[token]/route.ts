@@ -3,13 +3,12 @@ import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
-const sql = neon(process.env.DATABASE_URL!)
-
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     const { token } = await params
 
     const invoices = await sql`

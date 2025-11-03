@@ -6,13 +6,12 @@ import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
-const sql = neon(process.env.DATABASE_URL!)
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const sql = neon(process.env.DATABASE_URL!)
     // Try to get auth from Clerk (web) first
     let clerkUserId: string | null = null
 
