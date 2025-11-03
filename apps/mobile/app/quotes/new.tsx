@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, Switch } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Modal, Switch, KeyboardAvoidingView, Platform } from 'react-native'
 import { useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/api-client'
@@ -229,7 +229,11 @@ export default function NewQuoteScreen() {
   const totals = calculateTotals(lineItems)
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}
+    >
       <Stack.Screen
         options={{
           title: 'New Quote',
@@ -243,7 +247,11 @@ export default function NewQuoteScreen() {
         }}
       />
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Client Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Client</Text>
@@ -339,87 +347,87 @@ export default function NewQuoteScreen() {
         )}
 
         {/* Deposit / Part Payment */}
-        {lineItems.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.depositHeader}>
-              <Text style={styles.sectionTitle}>Deposit / Part Payment</Text>
-              <Switch
-                value={depositRequired}
-                onValueChange={setDepositRequired}
-                trackColor={{ false: '#d1d5db', true: brandColor }}
-                thumbColor="#fff"
-              />
-            </View>
+        <View style={styles.section}>
+          <View style={styles.depositHeader}>
+            <Text style={styles.sectionTitle}>Deposit / Part Payment</Text>
+            <Switch
+              value={depositRequired}
+              onValueChange={setDepositRequired}
+              trackColor={{ false: '#d1d5db', true: brandColor }}
+              thumbColor="#fff"
+            />
+          </View>
 
-            {depositRequired && (
-              <>
-                <View style={styles.depositTypeContainer}>
-                  <TouchableOpacity
+          {depositRequired && (
+            <>
+              <View style={styles.depositTypeContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.depositTypeButton,
+                    depositType === 'percentage' && { backgroundColor: brandColor },
+                  ]}
+                  onPress={() => setDepositType('percentage')}
+                >
+                  <Text
                     style={[
-                      styles.depositTypeButton,
-                      depositType === 'percentage' && { backgroundColor: brandColor },
+                      styles.depositTypeText,
+                      depositType === 'percentage' && styles.depositTypeTextActive,
                     ]}
-                    onPress={() => setDepositType('percentage')}
                   >
-                    <Text
-                      style={[
-                        styles.depositTypeText,
-                        depositType === 'percentage' && styles.depositTypeTextActive,
-                      ]}
-                    >
-                      Percentage
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                    Percentage
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.depositTypeButton,
+                    depositType === 'amount' && { backgroundColor: brandColor },
+                  ]}
+                  onPress={() => setDepositType('amount')}
+                >
+                  <Text
                     style={[
-                      styles.depositTypeButton,
-                      depositType === 'amount' && { backgroundColor: brandColor },
+                      styles.depositTypeText,
+                      depositType === 'amount' && styles.depositTypeTextActive,
                     ]}
-                    onPress={() => setDepositType('amount')}
                   >
-                    <Text
-                      style={[
-                        styles.depositTypeText,
-                        depositType === 'amount' && styles.depositTypeTextActive,
-                      ]}
-                    >
-                      Fixed Amount
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    Fixed Amount
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-                {depositType === 'percentage' ? (
-                  <>
-                    <Text style={styles.fieldLabel}>Deposit Percentage</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={depositPercentage}
-                      onChangeText={setDepositPercentage}
-                      keyboardType="decimal-pad"
-                      placeholder="30"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Text style={styles.fieldLabel}>Deposit Amount</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={depositAmount}
-                      onChangeText={setDepositAmount}
-                      keyboardType="decimal-pad"
-                      placeholder="0.00"
-                    />
-                  </>
-                )}
+              {depositType === 'percentage' ? (
+                <>
+                  <Text style={styles.fieldLabel}>Deposit Percentage</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={depositPercentage}
+                    onChangeText={setDepositPercentage}
+                    keyboardType="decimal-pad"
+                    placeholder="30"
+                  />
+                </>
+              ) : (
+                <>
+                  <Text style={styles.fieldLabel}>Deposit Amount</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={depositAmount}
+                    onChangeText={setDepositAmount}
+                    keyboardType="decimal-pad"
+                    placeholder="0.00"
+                  />
+                </>
+              )}
 
+              {lineItems.length > 0 && (
                 <View style={styles.depositCalculation}>
                   <Text style={styles.depositLabel}>Deposit Amount:</Text>
                   <Text style={styles.depositValue}>{formatCurrency(calculateDepositAmount())}</Text>
                 </View>
-              </>
-            )}
-          </View>
-        )}
+              )}
+            </>
+          )}
+        </View>
       </ScrollView>
 
       {/* Client Picker Modal */}
@@ -530,7 +538,7 @@ export default function NewQuoteScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
@@ -541,6 +549,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 40,
   },
   createButton: {
     fontSize: 16,
