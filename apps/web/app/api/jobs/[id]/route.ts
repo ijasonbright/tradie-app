@@ -231,7 +231,8 @@ export async function PUT(
     const job = jobs[0]
 
     // Check permissions
-    const canEdit = job.role === 'owner' || job.role === 'admin' || job.can_edit_all_jobs || job.created_by_user_id === user.id
+    // Allow editing if: owner, admin, has can_edit_all_jobs permission, created the job, or is assigned to the job
+    const canEdit = job.role === 'owner' || job.role === 'admin' || job.can_edit_all_jobs || job.created_by_user_id === user.id || job.assigned_to_user_id === user.id
     if (!canEdit) {
       return NextResponse.json({ error: 'Insufficient permissions to edit this job' }, { status: 403 })
     }
