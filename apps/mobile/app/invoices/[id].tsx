@@ -122,7 +122,7 @@ export default function InvoiceDetailScreen() {
         options={{
           title: invoice.invoice_number || 'Invoice',
           headerRight: () => (
-            <TouchableOpacity onPress={() => Alert.alert('Edit', 'Edit invoice functionality coming soon')}>
+            <TouchableOpacity onPress={() => router.push(`/invoices/${id}/edit`)}>
               <MaterialCommunityIcons name="pencil" size={24} color={brandColor} />
             </TouchableOpacity>
           ),

@@ -206,6 +206,16 @@ class ApiClient {
     )
   }
 
+  async updateInvoice(id: string, data: any) {
+    return this.request<{ invoice: any }>(
+      `/invoices/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   async sendInvoice(id: string) {
     return this.request<{ success: boolean; message: string }>(
       `/invoices/${id}/send`,
