@@ -9,19 +9,19 @@ import { useFocusEffect } from '@react-navigation/native'
 
 interface TeamLocation {
   id: string
-  userId: string
+  user_id: string
   latitude: number
   longitude: number
   accuracy: number | null
   heading: number | null
   speed: number | null
-  lastUpdatedAt: string
-  fullName: string
+  last_updated_at: string
+  full_name: string
   email: string
-  profilePhotoUrl: string | null
+  profile_photo_url: string | null
   role: string
-  primaryTradeName: string | null
-  minutesSinceUpdate: number
+  primary_trade_name: string | null
+  minutes_since_update: number
 }
 
 interface MapOverviewData {
@@ -187,8 +187,8 @@ export default function MapScreen() {
               latitude: location.latitude,
               longitude: location.longitude,
             }}
-            title={location.fullName}
-            description={`${location.role}${location.primaryTradeName ? ` • ${location.primaryTradeName}` : ''} • ${getTimeAgoText(location.minutesSinceUpdate)}`}
+            title={location.full_name}
+            description={`${location.role}${location.primary_trade_name ? ` • ${location.primary_trade_name}` : ''} • ${getTimeAgoText(location.minutes_since_update)}`}
             pinColor={getMarkerColor(location.role)}
           >
             <View style={styles.markerContainer}>
@@ -197,7 +197,7 @@ export default function MapScreen() {
                 size={36}
                 color={getMarkerColor(location.role)}
               />
-              {location.minutesSinceUpdate < 5 && (
+              {location.minutes_since_update < 5 && (
                 <View style={[styles.activeDot, { backgroundColor: getMarkerColor(location.role) }]} />
               )}
             </View>

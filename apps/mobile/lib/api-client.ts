@@ -757,7 +757,7 @@ class ApiClient {
     if (params?.jobStatus) queryParams.append('jobStatus', params.jobStatus)
 
     const query = queryParams.toString()
-    const endpoint = query ? `/map/overview?${query}` : '/map/overview'
+    const endpoint = query ? `/mobile-auth/map-overview?${query}` : '/mobile-auth/map-overview'
 
     return this.request<{
       teamLocations: any[]
