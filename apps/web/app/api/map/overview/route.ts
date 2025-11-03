@@ -4,6 +4,7 @@ import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // GET - Get map overview with team locations and job locations
 export async function GET(req: Request) {

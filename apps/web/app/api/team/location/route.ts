@@ -4,6 +4,7 @@ import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 
 // POST - Update current location
 export async function POST(req: Request) {
