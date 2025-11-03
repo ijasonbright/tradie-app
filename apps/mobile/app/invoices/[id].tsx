@@ -238,13 +238,15 @@ export default function InvoiceDetailScreen() {
             </TouchableOpacity>
           </>
         )}
-        {invoice.status === 'draft' && (
+        {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
           <TouchableOpacity
             style={[styles.actionButton, styles.secondaryButton]}
             onPress={() => router.push(`/invoices/${id}/send`)}
           >
             <MaterialCommunityIcons name="send" size={20} color={brandColor} />
-            <Text style={[styles.actionButtonText, { color: brandColor }]}>Send Invoice</Text>
+            <Text style={[styles.actionButtonText, { color: brandColor }]}>
+              {invoice.status === 'draft' ? 'Send Invoice' : 'Resend Invoice'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
