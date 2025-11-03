@@ -72,37 +72,70 @@ export async function GET(req: Request) {
     // Calculate the timestamp for filtering
     const maxAgeDate = new Date(Date.now() - maxAgeMinutes * 60 * 1000)
 
-    const locations = await sql`
-      SELECT
-        tml.id,
-        tml.user_id,
-        tml.latitude,
-        tml.longitude,
-        tml.accuracy,
-        tml.heading,
-        tml.speed,
-        tml.altitude,
-        tml.is_active,
-        tml.last_updated_at,
-        u.full_name,
-        u.email,
-        u.phone,
-        u.profile_photo_url,
-        om.role,
-        om.employment_type,
-        tt.name as primary_trade_name,
-        -- Calculate minutes since last update
-        EXTRACT(EPOCH FROM (NOW() - tml.last_updated_at)) / 60 as minutes_since_update
-      FROM team_member_locations tml
-      INNER JOIN users u ON tml.user_id = u.id
-      INNER JOIN organization_members om ON tml.user_id = om.user_id AND tml.organization_id = om.organization_id
-      LEFT JOIN trade_types tt ON om.primary_trade_id = tt.id
-      WHERE tml.organization_id = ${organizationId}
-      AND om.status = 'active'
-      ${includeInactive ? sql`` : sql`AND tml.is_active = true`}
-      AND tml.last_updated_at > ${maxAgeDate.toISOString()}
-      ORDER BY tml.last_updated_at DESC
-    `
+    // Build the query conditionally based on includeInactive
+    let locations
+    if (includeInactive) {
+      locations = await sql`
+        SELECT
+          tml.id,
+          tml.user_id,
+          tml.latitude,
+          tml.longitude,
+          tml.accuracy,
+          tml.heading,
+          tml.speed,
+          tml.altitude,
+          tml.is_active,
+          tml.last_updated_at,
+          u.full_name,
+          u.email,
+          u.phone,
+          u.profile_photo_url,
+          om.role,
+          om.employment_type,
+          tt.name as primary_trade_name,
+          EXTRACT(EPOCH FROM (NOW() - tml.last_updated_at)) / 60 as minutes_since_update
+        FROM team_member_locations tml
+        INNER JOIN users u ON tml.user_id = u.id
+        INNER JOIN organization_members om ON tml.user_id = om.user_id AND tml.organization_id = om.organization_id
+        LEFT JOIN trade_types tt ON om.primary_trade_id = tt.id
+        WHERE tml.organization_id = ${organizationId}
+        AND om.status = 'active'
+        AND tml.last_updated_at > ${maxAgeDate.toISOString()}
+        ORDER BY tml.last_updated_at DESC
+      `
+    } else {
+      locations = await sql`
+        SELECT
+          tml.id,
+          tml.user_id,
+          tml.latitude,
+          tml.longitude,
+          tml.accuracy,
+          tml.heading,
+          tml.speed,
+          tml.altitude,
+          tml.is_active,
+          tml.last_updated_at,
+          u.full_name,
+          u.email,
+          u.phone,
+          u.profile_photo_url,
+          om.role,
+          om.employment_type,
+          tt.name as primary_trade_name,
+          EXTRACT(EPOCH FROM (NOW() - tml.last_updated_at)) / 60 as minutes_since_update
+        FROM team_member_locations tml
+        INNER JOIN users u ON tml.user_id = u.id
+        INNER JOIN organization_members om ON tml.user_id = om.user_id AND tml.organization_id = om.organization_id
+        LEFT JOIN trade_types tt ON om.primary_trade_id = tt.id
+        WHERE tml.organization_id = ${organizationId}
+        AND om.status = 'active'
+        AND tml.is_active = true
+        AND tml.last_updated_at > ${maxAgeDate.toISOString()}
+        ORDER BY tml.last_updated_at DESC
+      `
+    }
 
     return NextResponse.json({
       locations,
