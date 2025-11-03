@@ -194,9 +194,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
+      // Check if response is HTML (404 error) instead of JSON
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('text/html')) {
+        throw new Error('Email/password sign-in is temporarily unavailable. Please use "Sign in with Apple" instead.')
+      }
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to sign in')
+        try {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to sign in')
+        } catch (parseError) {
+          throw new Error('Email/password sign-in is temporarily unavailable. Please use "Sign in with Apple" instead.')
+        }
       }
 
       const { token, user: userData } = await response.json()

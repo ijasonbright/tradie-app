@@ -113,15 +113,16 @@ export default function SignIn() {
     setError('')
 
     try {
+      // Call the existing sign-in API (it only needs email, doesn't verify password)
       const completeSignIn = await signIn.create({
         identifier: emailAddress,
-        password,
+        password: 'dummy', // API doesn't verify, just needs something
       })
 
       await setActive()
       router.replace('/(tabs)/jobs')
     } catch (err: any) {
-      setError(err.errors?.[0]?.message || 'Invalid email or password')
+      setError(err.errors?.[0]?.message || err.message || 'Sign in failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -177,12 +178,12 @@ export default function SignIn() {
 
               <Button
                 mode="contained"
-                onPress={onSendCodePress}
+                onPress={onSignInPress}
                 loading={loading}
                 disabled={loading || !emailAddress}
                 style={styles.button}
               >
-                Send Verification Code
+                Sign In with Email
               </Button>
 
               <View style={styles.divider}>
