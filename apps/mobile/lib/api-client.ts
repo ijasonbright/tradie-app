@@ -695,6 +695,80 @@ class ApiClient {
       body: JSON.stringify(amount ? { amount } : {}),
     })
   }
+
+  // ==================== LOCATION TRACKING ====================
+
+  /**
+   * Update current user location
+   */
+  async updateLocation(data: {
+    latitude: number
+    longitude: number
+    accuracy?: number
+    heading?: number
+    speed?: number
+    altitude?: number
+    isActive?: boolean
+  }) {
+    return this.request<{ location: any }>('/team/location', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  /**
+   * Toggle location sharing on/off
+   */
+  async toggleLocationSharing(isActive: boolean) {
+    return this.request<{
+      success: boolean
+      message: string
+      location: any
+    }>('/team/location', {
+      method: 'PUT',
+      body: JSON.stringify({ isActive }),
+    })
+  }
+
+  /**
+   * Get all team member locations
+   */
+  async getTeamLocations(params?: { includeInactive?: boolean; maxAge?: number }) {
+    const queryParams = new URLSearchParams()
+    if (params?.includeInactive) queryParams.append('includeInactive', 'true')
+    if (params?.maxAge) queryParams.append('maxAge', params.maxAge.toString())
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/team/locations?${query}` : '/team/locations'
+
+    return this.request<{
+      locations: any[]
+      count: number
+      maxAgeMinutes: number
+    }>(endpoint)
+  }
+
+  /**
+   * Get map overview with team locations and job locations
+   */
+  async getMapOverview(params?: { maxAge?: number; jobStatus?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.maxAge) queryParams.append('maxAge', params.maxAge.toString())
+    if (params?.jobStatus) queryParams.append('jobStatus', params.jobStatus)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/map/overview?${query}` : '/map/overview'
+
+    return this.request<{
+      teamLocations: any[]
+      jobLocations: any[]
+      stats: {
+        activeTeamMembers: number
+        activeJobs: number
+        maxAgeMinutes: number
+      }
+    }>(endpoint)
+  }
 }
 
 export const apiClient = new ApiClient()
