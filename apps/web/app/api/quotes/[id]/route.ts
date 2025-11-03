@@ -57,6 +57,8 @@ export async function GET(
         q.status, q.subtotal, q.gst_amount, q.total_amount, q.valid_until_date,
         q.sent_at, q.accepted_at, q.rejected_at, q.rejection_reason,
         q.converted_to_job_id, q.notes, q.created_at, q.updated_at,
+        q.deposit_required, q.deposit_percentage, q.deposit_amount, q.deposit_paid,
+        q.public_token,
         o.name as organization_name,
         c.company_name, c.first_name, c.last_name, c.is_company, c.email as client_email,
         u.full_name as created_by_name
