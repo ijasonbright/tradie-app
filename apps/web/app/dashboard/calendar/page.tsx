@@ -117,7 +117,12 @@ export default function CalendarPage() {
         url += `&assignedToUserId=${selectedUserId}`
       }
 
-      const res = await fetch(url)
+      const res = await fetch(url, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      })
       const data = await res.json()
       setAppointments(data.appointments || [])
     } catch (error) {
@@ -328,6 +333,12 @@ export default function CalendarPage() {
         setAppointmentDate('')
         setAppointmentTime('')
         setAppointmentDuration('120')
+      } else if (res.status === 404) {
+        // Appointment already deleted, close form and refresh the list
+        alert('This appointment has already been deleted. Refreshing list...')
+        setShowAddForm(false)
+        setEditingAppointment(null)
+        fetchAppointments()
       } else {
         const error = await res.json()
         alert(`Error: ${error.error}`)
@@ -401,6 +412,10 @@ export default function CalendarPage() {
       })
 
       if (res.ok) {
+        fetchAppointments()
+      } else if (res.status === 404) {
+        // Appointment already deleted, refresh the list to remove stale data
+        alert('This appointment has already been deleted. Refreshing list...')
         fetchAppointments()
       } else {
         const error = await res.json()
