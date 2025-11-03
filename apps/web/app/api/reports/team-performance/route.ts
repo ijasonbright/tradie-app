@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/reports/team-performance - Team performance metrics
 export async function GET(req: Request) {
   try {

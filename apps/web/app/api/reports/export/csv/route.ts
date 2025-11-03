@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 
 // Helper function to convert array of objects to CSV
 function convertToCSV(data: any[], headers: string[]): string {

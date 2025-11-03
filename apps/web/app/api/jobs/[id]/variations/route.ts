@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 
 // GET /api/jobs/[id]/variations - List all variations for a job
 export async function GET(

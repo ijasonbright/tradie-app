@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/reports/time-tracking - Time tracking report with date range filtering
 export async function GET(req: Request) {
   try {

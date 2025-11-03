@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/subcontractors/[id]/statement - Generate subcontractor statement (CSV format)
 export async function GET(
   req: Request,

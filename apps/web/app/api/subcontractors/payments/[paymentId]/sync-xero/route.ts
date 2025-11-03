@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 // POST /api/subcontractors/payments/[paymentId]/sync-xero - Sync payment to Xero as Bill
 export async function POST(
   req: Request,

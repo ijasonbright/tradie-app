@@ -5,6 +5,8 @@ import { randomBytes } from 'crypto'
 import { sendEmail } from '@/lib/email/ses'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
+export const dynamic = 'force-dynamic'
+
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null
 
 export async function POST(request: NextRequest) {
