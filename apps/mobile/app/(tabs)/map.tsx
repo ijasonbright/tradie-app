@@ -82,7 +82,16 @@ export default function MapScreen() {
       }
     } catch (error: any) {
       console.error('Failed to fetch map data:', error)
-      Alert.alert('Error', 'Failed to load team locations')
+      // Set empty data to show the map with no locations instead of erroring
+      setMapData({
+        teamLocations: [],
+        jobLocations: [],
+        stats: {
+          activeTeamMembers: 0,
+          activeJobs: 0,
+          maxAgeMinutes: 120,
+        },
+      })
     } finally {
       setLoading(false)
     }
