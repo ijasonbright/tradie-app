@@ -1,52 +1,49 @@
 'use client'
 
-import { SignIn, useAuth } from '@clerk/nextjs'
 import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { useAuth, useClerk } from '@clerk/nextjs'
 
 export default function MobileOAuthPage() {
-  const { provider } = useParams()
-  const { signOut, isSignedIn } = useAuth()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const { provider} = useParams()
+  const { isLoaded, isSignedIn } = useAuth()
+  const clerk = useClerk()
 
-  // Callback URL after sign-in completes
-  const callbackUrl = '/api/mobile-auth/oauth/callback'
-
-  // Force sign out first to clear any cached sessions
   useEffect(() => {
-    if (isSignedIn && !isSigningOut) {
-      setIsSigningOut(true)
-      signOut().then(() => {
-        setIsSigningOut(false)
-      })
-    }
-  }, [isSignedIn, signOut, isSigningOut])
+    if (!isLoaded) return
 
-  // Show loading while signing out
-  if (isSigningOut || isSignedIn) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Preparing sign in...</h2>
-          <p className="text-gray-600 mt-2">Clearing previous session</p>
-        </div>
-      </div>
-    )
-  }
+    const handleOAuth = async () => {
+      try {
+        // If already signed in, sign out first
+        if (isSignedIn) {
+          await clerk.signOut()
+        }
+
+        // Start OAuth flow
+        // This opens the provider's OAuth flow and returns to the callback URL
+        const callbackUrl = `${window.location.origin}/api/mobile-auth/oauth/callback`
+
+        await clerk.authenticateWithRedirect({
+          strategy: provider === 'apple' ? 'oauth_apple' : provider === 'google' ? 'oauth_google' : 'oauth_facebook',
+          redirectUrl: callbackUrl,
+          redirectUrlComplete: callbackUrl,
+        })
+      } catch (err) {
+        console.error('OAuth error:', err)
+      }
+    }
+
+    handleOAuth()
+  }, [isLoaded, isSignedIn, provider, clerk])
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          Sign in with {String(provider).charAt(0).toUpperCase() + String(provider).slice(1)}
-        </h1>
-        <SignIn
-          afterSignInUrl={callbackUrl}
-          afterSignUpUrl={callbackUrl}
-          redirectUrl={callbackUrl}
-          forceRedirectUrl={callbackUrl}
-        />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <h2 className="text-xl font-semibold text-gray-800">
+          Signing in with {String(provider).charAt(0).toUpperCase() + String(provider).slice(1)}
+        </h2>
+        <p className="text-gray-600 mt-2">Please wait...</p>
       </div>
     </div>
   )
