@@ -14,6 +14,7 @@ export default function QuoteDetailScreen() {
   const [lineItems, setLineItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [converting, setConverting] = useState(false)
 
   useEffect(() => {
     fetchQuote()
@@ -81,6 +82,44 @@ export default function QuoteDetailScreen() {
   const formatCurrency = (amount: number | string) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount
     return `$${num.toFixed(2)}`
+  }
+
+  const handleConvertToJob = async () => {
+    Alert.alert(
+      'Convert to Job',
+      'This will create a new job from this quote. You can then add scheduling and team assignments.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Convert',
+          onPress: async () => {
+            try {
+              setConverting(true)
+              const response = await apiClient.request(`/quotes/${id}/convert-to-job`, {
+                method: 'POST',
+              })
+
+              if (response.success && response.job) {
+                // Refresh the quote to show it's been converted
+                await fetchQuote()
+
+                // Navigate to the job details page
+                Alert.alert('Success', 'Quote converted to job successfully!', [
+                  {
+                    text: 'View Job',
+                    onPress: () => router.push(`/jobs/${response.job.id}`),
+                  },
+                ])
+              }
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to convert quote to job')
+            } finally {
+              setConverting(false)
+            }
+          },
+        },
+      ]
+    )
   }
 
   if (loading) {
@@ -255,13 +294,26 @@ export default function QuoteDetailScreen() {
           </TouchableOpacity>
         )}
 
-        {quote.status === 'accepted' && (
+        {quote.status === 'accepted' && !quote.converted_to_job_id && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: brandColor }]}
-            onPress={() => Alert.alert('Convert to Job', 'This feature will be available soon')}
+            onPress={handleConvertToJob}
+            disabled={converting}
           >
             <MaterialCommunityIcons name="briefcase-plus" size={20} color="#fff" />
-            <Text style={styles.actionButtonText}>Convert to Job</Text>
+            <Text style={styles.actionButtonText}>
+              {converting ? 'Converting...' : 'Convert to Job'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {quote.converted_to_job_id && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: '#10b981' }]}
+            onPress={() => router.push(`/jobs/${quote.converted_to_job_id}`)}
+          >
+            <MaterialCommunityIcons name="briefcase-check" size={20} color="#fff" />
+            <Text style={styles.actionButtonText}>View Job</Text>
           </TouchableOpacity>
         )}
       </View>
