@@ -355,6 +355,7 @@ async function handlePublicQuoteAccess(sql: any, token: string) {
         depositAmount,
         depositPercentage: quote.deposit_percentage,
         depositPaid: quote.deposit_paid || false,
+        depositPaymentLinkUrl: quote.deposit_payment_link_url,
         acceptedByName: quote.accepted_by_name,
         acceptedByEmail: quote.accepted_by_email,
         notes: quote.notes,

@@ -73,6 +73,7 @@ export default function PublicQuotePage() {
   const [rejectReason, setRejectReason] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [creatingPaymentLink, setCreatingPaymentLink] = useState(false)
 
   useEffect(() => {
     fetchQuote()
@@ -99,6 +100,27 @@ export default function PublicQuotePage() {
       setError(err instanceof Error ? err.message : 'Failed to load quote')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePayDeposit = async () => {
+    setCreatingPaymentLink(true)
+    try {
+      const response = await fetch(`${window.location.origin}/api/quotes/create-deposit-link?token=${token}`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment link')
+      }
+
+      const data = await response.json()
+
+      // Redirect to Stripe payment page
+      window.location.href = data.paymentUrl
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to create payment link')
+      setCreatingPaymentLink(false)
     }
   }
 
@@ -330,22 +352,24 @@ export default function PublicQuotePage() {
                     }}>
                       ✓ Paid
                     </div>
-                  ) : quote.depositPaymentLinkUrl ? (
-                    <a
-                      href={quote.depositPaymentLinkUrl}
+                  ) : (
+                    <button
+                      onClick={handlePayDeposit}
+                      disabled={creatingPaymentLink}
                       style={{
                         backgroundColor: '#3b82f6',
                         color: '#fff',
                         padding: '12px 24px',
                         borderRadius: '6px',
-                        textDecoration: 'none',
+                        border: 'none',
                         fontWeight: 'bold',
-                        display: 'inline-block',
+                        cursor: creatingPaymentLink ? 'not-allowed' : 'pointer',
+                        opacity: creatingPaymentLink ? 0.7 : 1,
                       }}
                     >
-                      Pay Deposit
-                    </a>
-                  ) : null}
+                      {creatingPaymentLink ? 'Creating payment link...' : 'Pay Deposit'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
