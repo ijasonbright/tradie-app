@@ -55,6 +55,21 @@ export default function TeamMapPage() {
         throw new Error('Failed to fetch team locations')
       }
       const data = await response.json()
+
+      // Convert numeric strings to numbers (PostgreSQL returns them as strings)
+      if (data.locations) {
+        data.locations = data.locations.map((loc: any) => ({
+          ...loc,
+          latitude: parseFloat(loc.latitude),
+          longitude: parseFloat(loc.longitude),
+          accuracy: loc.accuracy ? parseFloat(loc.accuracy) : null,
+          heading: loc.heading ? parseFloat(loc.heading) : null,
+          speed: loc.speed ? parseFloat(loc.speed) : null,
+          altitude: loc.altitude ? parseFloat(loc.altitude) : null,
+          minutes_since_update: parseFloat(loc.minutes_since_update),
+        }))
+      }
+
       setMapData(data)
       setError(null)
 
