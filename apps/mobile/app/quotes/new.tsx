@@ -428,6 +428,20 @@ export default function NewQuoteScreen() {
             </>
           )}
         </View>
+
+        {/* Create Quote Button */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={[styles.createQuoteButton, { backgroundColor: brandColor }]}
+            onPress={handleCreate}
+            disabled={saving}
+          >
+            <MaterialCommunityIcons name="check" size={24} color="#fff" />
+            <Text style={styles.createQuoteButtonText}>
+              {saving ? 'Creating Quote...' : 'Create Quote'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       {/* Client Picker Modal */}
@@ -492,7 +506,10 @@ export default function NewQuoteScreen() {
         transparent={true}
         onRequestClose={() => setEditingIndex(null)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Line Item</Text>
@@ -501,7 +518,11 @@ export default function NewQuoteScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView
+              style={styles.modalBody}
+              contentContainerStyle={styles.modalBodyContent}
+              keyboardShouldPersistTaps="handled"
+            >
               <Text style={styles.fieldLabel}>Description</Text>
               <TextInput
                 style={styles.input}
@@ -536,7 +557,7 @@ export default function NewQuoteScreen() {
               </TouchableOpacity>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   )
@@ -709,6 +730,23 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     padding: 20,
+  },
+  modalBodyContent: {
+    paddingBottom: 40,
+  },
+  createQuoteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  createQuoteButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   clientOption: {
     paddingVertical: 16,
