@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 import { useAuth, useClerk } from '@clerk/nextjs'
 
 export default function MobileOAuthPage() {
-  const { provider} = useParams()
+  const { provider } = useParams()
   const { isLoaded, isSignedIn } = useAuth()
   const clerk = useClerk()
 
@@ -17,14 +17,24 @@ export default function MobileOAuthPage() {
         // If already signed in, sign out first
         if (isSignedIn) {
           await clerk.signOut()
+          // Wait a bit for sign out to complete
+          await new Promise(resolve => setTimeout(resolve, 500))
         }
 
-        // Start OAuth flow
-        // This opens the provider's OAuth flow and returns to the callback URL
+        // Start OAuth flow using Clerk's signIn method
         const callbackUrl = `${window.location.origin}/api/mobile-auth/oauth/callback`
 
-        await clerk.authenticateWithRedirect({
-          strategy: provider === 'apple' ? 'oauth_apple' : provider === 'google' ? 'oauth_google' : 'oauth_facebook',
+        const strategyMap = {
+          apple: 'oauth_apple',
+          google: 'oauth_google',
+          facebook: 'oauth_facebook',
+        } as const
+
+        const strategy = strategyMap[provider as keyof typeof strategyMap] || 'oauth_apple'
+
+        // Use Clerk's signIn.authenticateWithRedirect for OAuth
+        await clerk.signIn.authenticateWithRedirect({
+          strategy,
           redirectUrl: callbackUrl,
           redirectUrlComplete: callbackUrl,
         })
