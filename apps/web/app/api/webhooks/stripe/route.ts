@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 const sql = process.env.DATABASE_URL ? neon(process.env.DATABASE_URL) : null
 const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-09-30.clover' })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-10-29.clover' })
   : null
 
 export async function POST(req: Request) {

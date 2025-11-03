@@ -2,7 +2,7 @@ import Stripe from 'stripe'
 import { randomBytes } from 'crypto'
 
 const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-09-30.clover' })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-10-29.clover' })
   : null
 
 if (!stripe) {
