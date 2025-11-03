@@ -654,6 +654,29 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_payment_requests_client_id ON payment_requests(client_id)`,
       `CREATE INDEX IF NOT EXISTS idx_payment_requests_status ON payment_requests(status)`,
       `CREATE INDEX IF NOT EXISTS idx_payment_requests_public_token ON payment_requests(public_token)`,
+
+      // ========== TEAM MEMBER LOCATIONS ==========
+      // Create team_member_locations table for real-time location tracking
+      `CREATE TABLE IF NOT EXISTS team_member_locations (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+        organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+        latitude NUMERIC(10, 7) NOT NULL,
+        longitude NUMERIC(10, 7) NOT NULL,
+        accuracy NUMERIC(10, 2),
+        heading NUMERIC(5, 2),
+        speed NUMERIC(10, 2),
+        altitude NUMERIC(10, 2),
+        is_active BOOLEAN DEFAULT true NOT NULL,
+        last_updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for team_member_locations
+      `CREATE INDEX IF NOT EXISTS idx_team_member_locations_user_id ON team_member_locations(user_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_team_member_locations_organization_id ON team_member_locations(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_team_member_locations_last_updated ON team_member_locations(last_updated_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_team_member_locations_active ON team_member_locations(organization_id, is_active, last_updated_at) WHERE is_active = true`,
     ]
 
     const results = []
