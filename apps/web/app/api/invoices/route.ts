@@ -227,12 +227,17 @@ export async function POST(req: Request) {
     const gstAmount = parseFloat(body.gstAmount || (subtotal * 0.1).toFixed(2))
     const totalAmount = subtotal + gstAmount
 
+    // Generate unique public token for sharing
+    const publicToken = crypto.randomBytes(16).toString('base64url')
+
     // Create invoice
     const invoices = await sql`
       INSERT INTO invoices (
         organization_id, invoice_number, job_id, client_id, created_by_user_id,
         status, subtotal, gst_amount, total_amount, paid_amount,
-        issue_date, due_date, payment_terms, notes, footer_text, created_at, updated_at
+        issue_date, due_date, payment_terms, notes, footer_text,
+        public_token,
+        created_at, updated_at
       ) VALUES (
         ${body.organizationId},
         ${invoiceNumber},
@@ -249,6 +254,7 @@ export async function POST(req: Request) {
         ${body.paymentTerms || null},
         ${body.notes || null},
         ${body.footerText || null},
+        ${publicToken},
         NOW(),
         NOW()
       ) RETURNING *

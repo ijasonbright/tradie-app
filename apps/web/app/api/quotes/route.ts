@@ -224,6 +224,9 @@ export async function POST(req: Request) {
     const depositPercentage = body.depositPercentage || null
     const depositAmount = body.depositAmount || null
 
+    // Generate unique public token for sharing
+    const publicToken = crypto.randomBytes(16).toString('base64url')
+
     // Create quote with deposit fields
     const quotes = await sql`
       INSERT INTO quotes (
@@ -231,6 +234,7 @@ export async function POST(req: Request) {
         title, description, status, subtotal, gst_amount, total_amount,
         valid_until_date, notes,
         deposit_required, deposit_percentage, deposit_amount,
+        public_token,
         created_at, updated_at
       ) VALUES (
         ${organizationId},
@@ -248,6 +252,7 @@ export async function POST(req: Request) {
         ${depositRequired},
         ${depositPercentage},
         ${depositAmount},
+        ${publicToken},
         NOW(),
         NOW()
       ) RETURNING *
