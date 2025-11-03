@@ -108,7 +108,7 @@ export default function PublicQuotePage() {
     setSubmitMessage(null)
 
     try {
-      const response = await fetch(`${window.location.origin}/api/quotes/dummy?token=${token}/accept`, {
+      const response = await fetch(`${window.location.origin}/api/quotes/accept?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,7 +144,7 @@ export default function PublicQuotePage() {
     setSubmitMessage(null)
 
     try {
-      const response = await fetch(`${window.location.origin}/api/quotes/dummy?token=${token}/reject`, {
+      const response = await fetch(`${window.location.origin}/api/quotes/reject?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: rejectReason }),
