@@ -45,6 +45,12 @@ export default function NewQuotePage() {
     { itemType: 'labor', description: '', quantity: '1', unitPrice: '0', lineTotal: 0 }
   ])
 
+  // Deposit fields
+  const [depositRequired, setDepositRequired] = useState(false)
+  const [depositType, setDepositType] = useState<'percentage' | 'amount'>('percentage')
+  const [depositPercentage, setDepositPercentage] = useState('30')
+  const [depositAmount, setDepositAmount] = useState('')
+
   useEffect(() => {
     fetchOrganizations()
   }, [])
@@ -131,6 +137,18 @@ export default function NewQuotePage() {
     return { subtotal, gst, total }
   }
 
+  const calculateDepositAmount = () => {
+    const totals = calculateTotals()
+    if (!depositRequired) return 0
+
+    if (depositType === 'percentage') {
+      const percentage = parseFloat(depositPercentage) || 0
+      return (totals.total * percentage) / 100
+    } else {
+      return parseFloat(depositAmount) || 0
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -144,15 +162,34 @@ export default function NewQuotePage() {
     try {
       const totals = calculateTotals()
 
-      // Create quote
+      // Prepare deposit data
+      const depositData = depositRequired ? {
+        depositRequired: true,
+        depositPercentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
+        depositAmount: depositType === 'amount' ? parseFloat(depositAmount) : null,
+      } : {
+        depositRequired: false,
+        depositPercentage: null,
+        depositAmount: null,
+      }
+
+      // Create quote with deposit data
       const quoteRes = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          ...depositData,
           subtotal: totals.subtotal.toFixed(2),
           gstAmount: totals.gst.toFixed(2),
           status: 'draft',
+          lineItems: lineItems.map((item, i) => ({
+            itemType: item.itemType,
+            description: item.description,
+            quantity: parseFloat(item.quantity),
+            unitPrice: parseFloat(item.unitPrice),
+            lineOrder: i,
+          })),
         }),
       })
 
@@ -163,24 +200,6 @@ export default function NewQuotePage() {
 
       const quoteData = await quoteRes.json()
       const quoteId = quoteData.quote.id
-
-      // Add line items
-      for (let i = 0; i < lineItems.length; i++) {
-        const item = lineItems[i]
-        if (!item.description || !item.quantity || !item.unitPrice) continue
-
-        await fetch(`/api/quotes/${quoteId}/line-items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            itemType: item.itemType,
-            description: item.description,
-            quantity: parseFloat(item.quantity),
-            unitPrice: parseFloat(item.unitPrice),
-            lineOrder: i,
-          }),
-        })
-      }
 
       // Redirect to quote detail
       router.push(`/dashboard/quotes/${quoteId}`)
@@ -193,6 +212,7 @@ export default function NewQuotePage() {
   }
 
   const totals = calculateTotals()
+  const depositAmountValue = calculateDepositAmount()
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -386,6 +406,107 @@ export default function NewQuotePage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Deposit Section */}
+            <div className="border-t pt-6">
+              <div className="flex items-center gap-3 mb-4">
+                <input
+                  type="checkbox"
+                  id="depositRequired"
+                  checked={depositRequired}
+                  onChange={(e) => setDepositRequired(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="depositRequired" className="text-sm font-medium text-gray-900">
+                  Require Deposit / Part Payment
+                </label>
+              </div>
+
+              {depositRequired && (
+                <div className="ml-7 space-y-4 bg-amber-50 p-4 rounded-md border border-amber-200">
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="depositType"
+                        value="percentage"
+                        checked={depositType === 'percentage'}
+                        onChange={() => setDepositType('percentage')}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Percentage</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="depositType"
+                        value="amount"
+                        checked={depositType === 'amount'}
+                        onChange={() => setDepositType('amount')}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="text-sm text-gray-700">Fixed Amount</span>
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {depositType === 'percentage' ? (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Deposit Percentage
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={depositPercentage}
+                            onChange={(e) => setDepositPercentage(e.target.value)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-8"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Deposit Amount
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <span className="text-gray-500 sm:text-sm">$</span>
+                          </div>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={depositAmount}
+                            onChange={(e) => setDepositAmount(e.target.value)}
+                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pl-7"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Calculated Deposit
+                      </label>
+                      <div className="px-3 py-2 bg-white rounded-md border border-gray-300 text-sm font-semibold text-gray-900">
+                        ${depositAmountValue.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-600">
+                    Client must pay the deposit before they can accept the quote.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Notes */}
