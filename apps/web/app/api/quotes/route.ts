@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+import { randomBytes } from 'crypto'
 
 export const dynamic = 'force-dynamic'
 
@@ -225,7 +226,7 @@ export async function POST(req: Request) {
     const depositAmount = body.depositAmount || null
 
     // Generate unique public token for sharing
-    const publicToken = crypto.randomBytes(16).toString('base64url')
+    const publicToken = randomBytes(16).toString('base64url')
 
     // Create quote with deposit fields
     const quotes = await sql`
