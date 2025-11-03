@@ -323,6 +323,16 @@ class ApiClient {
     )
   }
 
+  async sendQuoteSMS(id: string, data: { phone: string; message: string }) {
+    return this.request<{ success: boolean }>(
+      `/quotes/${id}/send-sms`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   // Time Tracking API
   async getTimeLogs(jobId: string) {
     return this.request<{ timeLogs: any[] }>(`/jobs/${jobId}/time-logs`)
