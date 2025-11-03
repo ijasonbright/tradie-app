@@ -18,6 +18,7 @@ interface Appointment {
   client_first_name: string | null
   client_last_name: string | null
   is_company: boolean
+  job_id: string | null
   job_number: string | null
   job_title: string | null
   location_address: string | null
@@ -774,18 +775,29 @@ export default function CalendarPage() {
                     )}
                   </div>
                   <div className="ml-4 flex gap-2">
-                    <button
-                      onClick={() => handleEdit(apt)}
-                      className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(apt.id)}
-                      className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
+                    {apt.appointment_type === 'job' && apt.job_id ? (
+                      <Link
+                        href={`/dashboard/jobs/${apt.job_id}`}
+                        className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700 inline-block"
+                      >
+                        View Job
+                      </Link>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEdit(apt)}
+                          className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(apt.id)}
+                          className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
