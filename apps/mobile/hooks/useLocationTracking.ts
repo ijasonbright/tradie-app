@@ -67,17 +67,29 @@ export function useLocationTracking(): LocationTrackingState & LocationTrackingA
     const checkInitialStatus = async () => {
       try {
         const { status: foregroundStatus } = await Location.getForegroundPermissionsAsync()
-        const { status: backgroundStatus } = await Location.getBackgroundPermissionsAsync()
 
-        const hasBothPermissions =
-          foregroundStatus === Location.PermissionStatus.GRANTED &&
-          backgroundStatus === Location.PermissionStatus.GRANTED
+        // In Expo Go, background permission check might fail, so we handle it gracefully
+        let backgroundStatus = Location.PermissionStatus.DENIED
+        try {
+          const result = await Location.getBackgroundPermissionsAsync()
+          backgroundStatus = result.status
+        } catch (err) {
+          console.warn('Background permission check not available (Expo Go)')
+        }
 
-        setHasPermission(hasBothPermissions)
+        // For Expo Go, we consider foreground permission sufficient
+        const hasPermissions = foregroundStatus === Location.PermissionStatus.GRANTED
+
+        setHasPermission(hasPermissions)
 
         // Check if location tracking is currently enabled
-        const isTaskRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)
-        setIsEnabled(isTaskRunning)
+        try {
+          const isTaskRunning = await Location.hasStartedLocationUpdatesAsync(LOCATION_TASK_NAME)
+          setIsEnabled(isTaskRunning)
+        } catch (err) {
+          console.warn('Location task check not available:', err)
+          setIsEnabled(false)
+        }
       } catch (err) {
         console.error('Error checking location permissions:', err)
         setHasPermission(false)
@@ -107,18 +119,22 @@ export function useLocationTracking(): LocationTrackingState & LocationTrackingA
         return false
       }
 
-      // Request background location permission
-      const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync()
+      // Try to request background location permission
+      // Note: This will fail in Expo Go, but that's okay - foreground is enough for testing
+      try {
+        const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync()
 
-      if (backgroundStatus !== Location.PermissionStatus.GRANTED) {
-        setError('Background location permission denied')
-        setHasPermission(false)
-        Alert.alert(
-          'Background Permission Required',
-          'Background location permission allows your team to see your location even when the app is closed.',
-          [{ text: 'OK' }]
-        )
-        return false
+        if (backgroundStatus !== Location.PermissionStatus.GRANTED) {
+          console.warn('Background location permission denied - continuing with foreground only')
+          Alert.alert(
+            'Foreground Location Only',
+            'Background location is not available in Expo Go. Your location will only update while the app is open. To enable background tracking, build a development build.',
+            [{ text: 'OK' }]
+          )
+        }
+      } catch (err) {
+        console.warn('Background permission not available (Expo Go limitation):', err)
+        // Continue anyway with foreground permission
       }
 
       setHasPermission(true)
