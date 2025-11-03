@@ -126,11 +126,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithOAuth = async (provider: 'apple' | 'google' | 'facebook' = 'apple') => {
     try {
-      // Open provider-specific OAuth initiation page
-      // This will start the OAuth flow with the selected provider
+      // Open provider-specific OAuth page
+      // This will start the OAuth flow with the selected provider using Clerk's client-side SDK
       // After sign-in, it redirects to /api/mobile-auth/oauth/callback which generates token
       // and redirects to tradieapp://auth-callback
-      const signInUrl = `${WEB_URL}/api/mobile-auth/oauth/${provider}`
+      const signInUrl = `${WEB_URL}/oauth-mobile/${provider}`
 
       console.log('Opening OAuth URL:', signInUrl, 'for provider:', provider)
 

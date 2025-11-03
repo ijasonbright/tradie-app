@@ -15,6 +15,7 @@ const isPublicRoute = createRouteMatcher([
   '/verify-email-address(.*)',
   '/verify(.*)',
   '/mobile-callback',
+  '/oauth-mobile/(.*)',
   '/public/(.*)',
 ])
 

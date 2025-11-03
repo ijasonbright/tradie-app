@@ -30,15 +30,20 @@ export async function GET(
     // The callback URL after OAuth completes
     const callbackUrl = `${baseUrl}/api/mobile-auth/oauth/callback`
 
-    // Create an HTML page that initiates Clerk OAuth with specific provider
-    // This will use Clerk's signIn.authenticateWithRedirect() under the hood
+    // Construct Clerk's OAuth URL directly
+    // Format: https://accounts.clerk.com/v1/oauth/authorize/oauth_{provider}?client_id=...&redirect_uri=...
+    const clerkFrontendApi = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.split('_')[1] // Extract the instance ID
+
+    // Use Clerk's sign-in page with a specific strategy parameter
+    const oauthUrl = `${baseUrl}/sign-in?redirect_url=${encodeURIComponent(callbackUrl)}`
+
+    // Create an HTML page that auto-redirects but passes provider context
     return new NextResponse(
       `<!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
           <title>Signing in with ${provider}...</title>
-          <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -77,37 +82,34 @@ export async function GET(
               color: #666;
               margin: 0;
             }
+            .provider-note {
+              margin-top: 1rem;
+              padding: 1rem;
+              background: #fef3c7;
+              border-radius: 6px;
+              color: #92400e;
+              font-size: 14px;
+            }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="spinner"></div>
             <h2>Signing in with ${provider.charAt(0).toUpperCase() + provider.slice(1)}</h2>
-            <p>Please wait...</p>
+            <p>Redirecting to sign in page...</p>
+            <div class="provider-note">
+              Please select <strong>${provider.charAt(0).toUpperCase() + provider.slice(1)}</strong> on the next page
+            </div>
           </div>
 
           <script>
-            (async function() {
-              try {
-                const clerk = window.Clerk;
+            // Store the provider preference in session storage
+            sessionStorage.setItem('oauth_provider', '${provider}');
 
-                // Initialize Clerk
-                await clerk.load({
-                  publishableKey: '${process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}'
-                });
-
-                // Start OAuth flow with specific provider
-                await clerk.client.signIn.authenticateWithRedirect({
-                  strategy: 'oauth_${provider}',
-                  redirectUrl: '${callbackUrl}',
-                  redirectUrlComplete: '${callbackUrl}?complete=true'
-                });
-
-              } catch (error) {
-                console.error('OAuth error:', error);
-                document.body.innerHTML = '<div class="container"><h2>Sign in failed</h2><p>' + error.message + '</p></div>';
-              }
-            })();
+            // Redirect after a brief delay
+            setTimeout(() => {
+              window.location.href = '${oauthUrl}';
+            }, 1500);
           </script>
         </body>
       </html>`,
