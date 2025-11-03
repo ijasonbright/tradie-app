@@ -19,6 +19,11 @@ interface QuoteData {
     total_amount: string
     valid_until_date: string
     notes: string | null
+    // Deposit fields
+    deposit_required: boolean
+    deposit_percentage: string | null
+    deposit_amount: string | null
+    deposit_paid: boolean
     // Client info from JOIN
     is_company: boolean
     company_name: string | null
@@ -31,6 +36,7 @@ interface QuoteData {
     billing_state: string | null
     billing_postcode: string | null
   }
+  paymentLink?: string
   lineItems: QuoteLineItem[]
   organization: {
     name: string
@@ -441,6 +447,86 @@ export async function generateQuotePDF(data: QuoteData): Promise<Uint8Array> {
     color: rgb(1, 1, 1),
   })
   yPosition -= 50
+
+  // Deposit section if required
+  if (quote.deposit_required) {
+    yPosition -= 10
+
+    // Calculate deposit amount
+    const totalAmount = parseFloat(quote.total_amount)
+    let depositAmount = 0
+    if (quote.deposit_percentage) {
+      depositAmount = (totalAmount * parseFloat(quote.deposit_percentage)) / 100
+    } else if (quote.deposit_amount) {
+      depositAmount = parseFloat(quote.deposit_amount)
+    }
+
+    // Deposit header box
+    page.drawRectangle({
+      x: 50,
+      y: yPosition - 5,
+      width: 495,
+      height: 35,
+      color: rgb(0.97, 0.98, 0.99), // Very light blue
+      borderColor: primaryColor,
+      borderWidth: 2,
+    })
+
+    // Deposit text
+    page.drawText('DEPOSIT REQUIRED', {
+      x: 60,
+      y: yPosition + 15,
+      size: 11,
+      font: boldFont,
+      color: primaryColor,
+    })
+
+    const depositText = quote.deposit_percentage
+      ? `${parseFloat(quote.deposit_percentage).toFixed(0)}% deposit: ${formatCurrency(depositAmount.toFixed(2))}`
+      : `Deposit: ${formatCurrency(depositAmount.toFixed(2))}`
+
+    page.drawText(depositText, {
+      x: 60,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: textColor,
+    })
+
+    const remainingAmount = totalAmount - depositAmount
+    const remainingText = `Remaining: ${formatCurrency(remainingAmount.toFixed(2))}`
+    const remainingWidth = regularFont.widthOfTextAtSize(remainingText, 10)
+    page.drawText(remainingText, {
+      x: 535 - remainingWidth,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: lightGray,
+    })
+
+    yPosition -= 50
+
+    // Payment link section if available
+    if (data.paymentLink) {
+      page.drawText('Pay Deposit Online:', {
+        x: 50,
+        y: yPosition,
+        size: 11,
+        font: boldFont,
+        color: primaryColor,
+      })
+      yPosition -= 18
+
+      page.drawText(data.paymentLink, {
+        x: 50,
+        y: yPosition,
+        size: 9,
+        font: regularFont,
+        color: rgb(0.15, 0.39, 0.92),
+      })
+      yPosition -= 25
+    }
+  }
 
   // Description section
   if (quote.description && yPosition > 150) {

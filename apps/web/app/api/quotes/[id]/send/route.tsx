@@ -54,7 +54,7 @@ export async function POST(
     }
     const user = users[0]
 
-    // Get quote with full details
+    // Get quote with full details including deposit fields
     const quotes = await sql`
       SELECT q.*, o.name as organization_name,
              c.company_name, c.first_name, c.last_name, c.is_company,
@@ -88,11 +88,46 @@ export async function POST(
       ORDER BY line_order ASC
     `
 
-    // Generate PDF
+    // Generate public token for approval link
+    let publicToken = quote.public_token
+
+    if (!publicToken) {
+      const { generatePublicToken } = await import('@/lib/stripe/payment-links')
+      publicToken = generatePublicToken()
+
+      // Update quote with the new token
+      await sql`
+        UPDATE quotes
+        SET public_token = ${publicToken}, updated_at = NOW()
+        WHERE id = ${id}
+      `
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
+    const approvalLink = `${appUrl}/public/quotes/${publicToken}`
+
+    // Calculate deposit amount if required
+    let depositAmount: string | undefined
+    if (quote.deposit_required) {
+      const totalAmount = parseFloat(quote.total_amount)
+      if (quote.deposit_percentage) {
+        const percentage = parseFloat(quote.deposit_percentage)
+        depositAmount = ((totalAmount * percentage) / 100).toFixed(2)
+      } else if (quote.deposit_amount) {
+        depositAmount = parseFloat(quote.deposit_amount).toFixed(2)
+      }
+    }
+
+    // Generate PDF with updated quote data including public token
     const pdfData = {
-      quote,
+      quote: {
+        ...quote,
+        public_token: publicToken,
+      },
       lineItems,
       organization,
+      approvalLink,
+      depositAmount: depositAmount ? `$${depositAmount}` : undefined,
     } as any
 
     const pdfBytes = await generateQuotePDF(pdfData)
@@ -118,7 +153,7 @@ export async function POST(
     // Prepare email content using templates
     const subject = `Quote ${quote.quote_number} from ${organization.name}`
 
-    const htmlBody = generateQuoteEmailHTML({
+    const emailData = {
       quoteNumber: quote.quote_number,
       clientName,
       organizationName: organization.name,
@@ -128,17 +163,14 @@ export async function POST(
       organizationPhone: organization.phone || undefined,
       logoUrl: organization.logo_url || undefined,
       primaryColor: organization.primary_color || undefined,
-    })
+      approvalLink,
+      depositRequired: quote.deposit_required || false,
+      depositAmount: depositAmount ? formatCurrency(depositAmount) : undefined,
+      depositPercentage: quote.deposit_percentage ? parseFloat(quote.deposit_percentage).toFixed(0) : undefined,
+    }
 
-    const textBody = generateQuoteEmailText({
-      quoteNumber: quote.quote_number,
-      clientName,
-      organizationName: organization.name,
-      totalAmount: formatCurrency(quote.total_amount),
-      validUntilDate: formatDate(quote.valid_until_date),
-      organizationEmail: organization.email || undefined,
-      organizationPhone: organization.phone || undefined,
-    })
+    const htmlBody = generateQuoteEmailHTML(emailData)
+    const textBody = generateQuoteEmailText(emailData)
 
     // Determine FROM email address
     const fromEmail = process.env.DEFAULT_FROM_EMAIL || 'hello@taskforce.com.au'

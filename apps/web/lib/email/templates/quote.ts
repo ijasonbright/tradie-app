@@ -8,10 +8,14 @@ interface QuoteEmailData {
   organizationPhone?: string
   logoUrl?: string
   primaryColor?: string
+  approvalLink?: string
+  depositRequired?: boolean
+  depositAmount?: string
+  depositPercentage?: string
 }
 
 export function generateQuoteEmailHTML(data: QuoteEmailData): string {
-  const { quoteNumber, clientName, organizationName, totalAmount, validUntilDate, organizationEmail, organizationPhone, logoUrl, primaryColor } = data
+  const { quoteNumber, clientName, organizationName, totalAmount, validUntilDate, organizationEmail, organizationPhone, logoUrl, primaryColor, approvalLink, depositRequired, depositAmount, depositPercentage } = data
   const brandColor = primaryColor || '#7c3aed'
 
   return `
@@ -58,6 +62,12 @@ export function generateQuoteEmailHTML(data: QuoteEmailData): string {
                         <td style="color: #666; font-size: 14px;">Total Amount:</td>
                         <td align="right" style="color: ${brandColor}; font-size: 18px; font-weight: bold;">${totalAmount}</td>
                       </tr>
+                      ${depositRequired && depositAmount ? `
+                      <tr>
+                        <td style="color: #666; font-size: 14px;">${depositPercentage ? `Deposit Required (${depositPercentage}%):` : 'Deposit Required:'}</td>
+                        <td align="right" style="color: #f59e0b; font-size: 16px; font-weight: bold;">${depositAmount}</td>
+                      </tr>
+                      ` : ''}
                       <tr>
                         <td style="color: #666; font-size: 14px;">Valid Until:</td>
                         <td align="right" style="color: #333; font-size: 14px; font-weight: bold;">${validUntilDate}</td>
@@ -66,6 +76,25 @@ export function generateQuoteEmailHTML(data: QuoteEmailData): string {
                   </td>
                 </tr>
               </table>
+
+              ${approvalLink ? `
+              <!-- Approval Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="${approvalLink}" style="display: inline-block; background-color: ${brandColor}; color: #ffffff; padding: 16px 40px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                      ${depositRequired ? 'Approve Quote & Pay Deposit' : 'View & Approve Quote'}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              ${depositRequired ? `
+              <p style="margin: 20px 0; padding: 16px; background-color: #fffbeb; border-left: 4px solid #f59e0b; font-size: 14px; color: #92400e; border-radius: 4px;">
+                <strong>Deposit Required:</strong> To proceed with this quote, a deposit payment of ${depositAmount} is required. You can securely pay online using the button above.
+              </p>
+              ` : ''}
+              ` : ''}
 
               <p style="margin: 30px 0 20px 0; font-size: 16px; color: #555; line-height: 1.6;">
                 The attached PDF contains full details of the quote, including itemized pricing and service descriptions.
@@ -112,7 +141,7 @@ export function generateQuoteEmailHTML(data: QuoteEmailData): string {
 }
 
 export function generateQuoteEmailText(data: QuoteEmailData): string {
-  const { quoteNumber, clientName, organizationName, totalAmount, validUntilDate } = data
+  const { quoteNumber, clientName, organizationName, totalAmount, validUntilDate, approvalLink, depositRequired, depositAmount, depositPercentage } = data
 
   return `
 Dear ${clientName},
@@ -122,8 +151,15 @@ Thank you for your interest in our services! Please find attached your quote fro
 Quote Details:
 - Quote Number: ${quoteNumber}
 - Total Amount: ${totalAmount}
+${depositRequired && depositAmount ? `- Deposit Required${depositPercentage ? ` (${depositPercentage}%)` : ''}: ${depositAmount}` : ''}
 - Valid Until: ${validUntilDate}
 
+${approvalLink ? `
+${depositRequired ? 'APPROVE QUOTE & PAY DEPOSIT' : 'VIEW & APPROVE QUOTE'}
+Click here: ${approvalLink}
+
+${depositRequired ? `DEPOSIT REQUIRED: To proceed with this quote, a deposit payment of ${depositAmount} is required. You can securely pay online using the link above.\n` : ''}
+` : ''}
 The attached PDF contains full details of the quote, including itemized pricing and service descriptions.
 
 If you have any questions about this quote or would like to proceed, please don't hesitate to contact us.
