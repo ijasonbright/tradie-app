@@ -324,11 +324,55 @@ export default function JobDetailScreen() {
       scheduledEndDateTime.setMinutes(scheduledEndTime.getMinutes())
       scheduledEndDateTime.setSeconds(0)
 
+      // Update the job with scheduled times
       await apiClient.updateJob(id as string, {
         scheduledDate: dateString,
         scheduledStartTime: scheduledDateTime.toISOString(),
         scheduledEndTime: scheduledEndDateTime.toISOString(),
       })
+
+      // Build location address
+      const locationAddress = [
+        job.site_address_line1,
+        job.site_address_line2,
+        job.site_city,
+        job.site_state,
+        job.site_postcode
+      ].filter(Boolean).join(', ')
+
+      // Check if an appointment already exists for this job
+      // Fetch all appointments and filter for this specific job
+      const existingAppointments = await apiClient.getAppointments({})
+
+      // Find if there's already an appointment for this job
+      // (real appointment entry, not the UNION query result which is read-only)
+      const existingAppointment = existingAppointments.appointments?.find(
+        (apt: any) => apt.job_id === job.id && apt.id !== job.id
+      )
+
+      const appointmentData = {
+        title: job.title,
+        description: job.description,
+        appointmentType: 'job',
+        startTime: scheduledDateTime.toISOString(),
+        endTime: scheduledEndDateTime.toISOString(),
+        allDay: false,
+        locationAddress: locationAddress || null,
+      }
+
+      if (existingAppointment) {
+        // Update existing appointment
+        await apiClient.updateAppointment(existingAppointment.id, appointmentData)
+      } else {
+        // Create new appointment
+        await apiClient.createAppointment({
+          ...appointmentData,
+          organizationId: job.organization_id,
+          jobId: job.id,
+          clientId: job.client_id,
+          assignedToUserId: job.assigned_to_user_id,
+        })
+      }
 
       setShowScheduleModal(false)
       await fetchJob()
