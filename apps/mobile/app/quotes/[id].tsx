@@ -189,6 +189,41 @@ export default function QuoteDetailScreen() {
           </View>
         </View>
 
+        {/* Deposit Required */}
+        {quote.deposit_required && (
+          <View style={[styles.section, styles.depositSection]}>
+            <View style={styles.depositHeader}>
+              <MaterialCommunityIcons name="cash-multiple" size={24} color="#f59e0b" />
+              <Text style={styles.depositTitle}>Deposit Required</Text>
+            </View>
+            <View style={styles.depositContent}>
+              <View style={styles.depositRow}>
+                <Text style={styles.depositLabel}>
+                  {quote.deposit_percentage
+                    ? `Deposit (${parseFloat(quote.deposit_percentage).toFixed(0)}%)`
+                    : 'Deposit Amount'}
+                </Text>
+                <Text style={styles.depositAmount}>
+                  {quote.deposit_percentage
+                    ? formatCurrency((parseFloat(quote.total_amount) * parseFloat(quote.deposit_percentage)) / 100)
+                    : formatCurrency(quote.deposit_amount || 0)}
+                </Text>
+              </View>
+              {quote.deposit_paid && (
+                <View style={styles.depositPaidBadge}>
+                  <MaterialCommunityIcons name="check-circle" size={16} color="#10b981" />
+                  <Text style={styles.depositPaidText}>Deposit Paid</Text>
+                </View>
+              )}
+              {!quote.deposit_paid && (
+                <Text style={styles.depositNote}>
+                  A deposit payment is required before this quote can be approved.
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Description */}
         {quote.description && (
           <View style={styles.section}>
@@ -401,5 +436,62 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  depositSection: {
+    backgroundColor: '#fffbeb',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+  },
+  depositHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  depositTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400e',
+    marginLeft: 8,
+  },
+  depositContent: {
+    marginTop: 8,
+  },
+  depositRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  depositLabel: {
+    fontSize: 14,
+    color: '#92400e',
+    fontWeight: '500',
+  },
+  depositAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#b45309',
+  },
+  depositPaidBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#d1fae5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  depositPaidText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#065f46',
+    marginLeft: 4,
+  },
+  depositNote: {
+    fontSize: 12,
+    color: '#92400e',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
 })
