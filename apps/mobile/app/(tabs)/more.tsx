@@ -192,6 +192,14 @@ export default function MoreScreen() {
         <Text style={styles.sectionTitle}>APP SETTINGS</Text>
 
         <List.Item
+          title="Location Tracking"
+          description="Share your location with team"
+          left={(props) => <List.Icon {...props} icon="map-marker-radius" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          onPress={() => router.push('/profile/location')}
+        />
+
+        <List.Item
           title="Notifications"
           description="Manage push notifications"
           left={(props) => <List.Icon {...props} icon="bell" />}
