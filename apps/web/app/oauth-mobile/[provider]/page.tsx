@@ -1,24 +1,38 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSignIn } from '@clerk/nextjs'
+import { useSignIn, useClerk, useAuth } from '@clerk/nextjs'
 import { useParams } from 'next/navigation'
 
 export default function MobileOAuthPage() {
   const { provider } = useParams()
   const { signIn, isLoaded } = useSignIn()
+  const { signOut } = useClerk()
+  const { isSignedIn } = useAuth()
   const [error, setError] = useState<string | null>(null)
+  const [status, setStatus] = useState<string>('Initializing...')
 
   useEffect(() => {
     const startOAuth = async () => {
       // Wait for Clerk to fully load
       if (!isLoaded || !signIn) {
         console.log('Waiting for Clerk to load...', { isLoaded, signIn: !!signIn })
+        setStatus('Loading...')
         return
       }
 
       try {
+        // If already signed in, sign out first
+        if (isSignedIn) {
+          console.log('Already signed in, signing out first...')
+          setStatus('Signing out...')
+          await signOut()
+          // Wait a moment for sign out to complete
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        }
+
         console.log('Starting OAuth flow for provider:', provider)
+        setStatus('Redirecting to sign in...')
         const callbackUrl = `${window.location.origin}/api/mobile-auth/oauth/callback`
 
         // Start OAuth with the specific provider
@@ -34,7 +48,7 @@ export default function MobileOAuthPage() {
     }
 
     startOAuth()
-  }, [signIn, isLoaded, provider])
+  }, [signIn, isLoaded, provider, isSignedIn, signOut])
 
   return (
     <div style={{
@@ -76,7 +90,7 @@ export default function MobileOAuthPage() {
               Signing in with {String(provider).charAt(0).toUpperCase() + String(provider).slice(1)}
             </h2>
             <p style={{ color: '#666', margin: 0 }}>
-              {!isLoaded ? 'Loading...' : 'Redirecting to sign in...'}
+              {status}
             </p>
           </>
         )}
