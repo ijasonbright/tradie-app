@@ -23,7 +23,16 @@ export default function QuotesTab() {
       setLoading(true)
       const params = filter !== 'all' ? { status: filter } : undefined
       const response = await apiClient.getQuotes(params)
-      setQuotes(response.quotes || [])
+
+      // Build client_name for each quote
+      const quotesWithClientName = (response.quotes || []).map((quote: any) => {
+        const clientName = quote.is_company && quote.company_name
+          ? quote.company_name
+          : [quote.first_name, quote.last_name].filter(Boolean).join(' ') || 'Unknown Client'
+        return { ...quote, client_name: clientName }
+      })
+
+      setQuotes(quotesWithClientName)
     } catch (err) {
       console.error('Failed to fetch quotes:', err)
     } finally {

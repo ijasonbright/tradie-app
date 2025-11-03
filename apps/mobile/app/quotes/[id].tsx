@@ -24,7 +24,14 @@ export default function QuoteDetailScreen() {
       setLoading(true)
       setError(null)
       const response = await apiClient.getQuote(id as string)
-      setQuote(response.quote)
+
+      // Build client_name from response
+      const quoteData = response.quote
+      const clientName = quoteData.is_company && quoteData.company_name
+        ? quoteData.company_name
+        : [quoteData.first_name, quoteData.last_name].filter(Boolean).join(' ') || 'Unknown Client'
+
+      setQuote({ ...quoteData, client_name: clientName })
       setLineItems(response.lineItems || [])
     } catch (err: any) {
       console.error('Failed to fetch quote:', err)

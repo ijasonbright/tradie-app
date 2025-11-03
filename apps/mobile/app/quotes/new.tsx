@@ -48,7 +48,16 @@ export default function NewQuoteScreen() {
   const fetchClients = async () => {
     try {
       const response = await apiClient.getClients()
-      setClients(response.clients || [])
+
+      // Build client_name for each client
+      const clientsWithName = (response.clients || []).map((client: any) => {
+        const clientName = client.is_company && client.company_name
+          ? client.company_name
+          : [client.first_name, client.last_name].filter(Boolean).join(' ') || 'Unknown Client'
+        return { ...client, client_name: clientName }
+      })
+
+      setClients(clientsWithName)
     } catch (err) {
       console.error('Failed to fetch clients:', err)
     } finally {
@@ -331,6 +340,22 @@ export default function NewQuoteScreen() {
                     {client.email && <Text style={styles.clientOptionEmail}>{client.email}</Text>}
                   </TouchableOpacity>
                 ))}
+
+                {/* Create New Client Option */}
+                <TouchableOpacity
+                  style={[styles.clientOption, styles.createClientOption]}
+                  onPress={() => {
+                    setShowClientPicker(false)
+                    router.push('/clients/new?returnTo=/quotes/new')
+                  }}
+                >
+                  <View style={styles.createClientContent}>
+                    <MaterialCommunityIcons name="plus-circle" size={24} color={brandColor} />
+                    <Text style={[styles.clientOptionName, { color: brandColor, marginLeft: 12 }]}>
+                      Create New Client
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </ScrollView>
             )}
           </View>
@@ -573,6 +598,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginTop: 4,
+  },
+  createClientOption: {
+    borderBottomWidth: 0,
+    borderTopWidth: 2,
+    borderTopColor: '#e5e7eb',
+    paddingTop: 20,
+    marginTop: 12,
+  },
+  createClientContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   saveItemButton: {
     padding: 16,
