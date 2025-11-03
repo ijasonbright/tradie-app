@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'use'
+import { useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 
 export default function PaymentSuccessPage() {
