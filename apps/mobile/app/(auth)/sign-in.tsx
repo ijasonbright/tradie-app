@@ -128,14 +128,14 @@ export default function SignIn() {
     }
   }
 
-  const onOAuthSignIn = async () => {
+  const onOAuthSignIn = async (provider: 'apple' | 'google' | 'facebook') => {
     if (!isLoaded) return
 
     setOAuthLoading(true)
     setError('')
 
     try {
-      await signInWithOAuth()
+      await signInWithOAuth(provider)
       // Browser will open for sign-in
       // Don't redirect here - the deep link handler in auth.tsx will handle it
     } catch (err: any) {
@@ -194,13 +194,35 @@ export default function SignIn() {
 
               <Button
                 mode="outlined"
-                onPress={onOAuthSignIn}
+                onPress={() => onOAuthSignIn('apple')}
                 loading={oauthLoading}
                 disabled={oauthLoading || loading}
                 style={styles.oauthButton}
                 icon="apple"
               >
                 Sign in with Apple
+              </Button>
+
+              <Button
+                mode="outlined"
+                onPress={() => onOAuthSignIn('google')}
+                loading={oauthLoading}
+                disabled={oauthLoading || loading}
+                style={[styles.oauthButton, styles.googleButton]}
+                icon="google"
+              >
+                Sign in with Google
+              </Button>
+
+              <Button
+                mode="outlined"
+                onPress={() => onOAuthSignIn('facebook')}
+                loading={oauthLoading}
+                disabled={oauthLoading || loading}
+                style={[styles.oauthButton, styles.facebookButton]}
+                icon="facebook"
+              >
+                Sign in with Facebook
               </Button>
 
               <View style={styles.footer}>
@@ -325,6 +347,13 @@ const styles = StyleSheet.create({
   oauthButton: {
     paddingVertical: 8,
     borderColor: '#2563eb',
+    marginTop: 12,
+  },
+  googleButton: {
+    borderColor: '#DB4437',
+  },
+  facebookButton: {
+    borderColor: '#1877F2',
   },
   error: {
     color: '#ef4444',

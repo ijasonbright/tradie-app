@@ -21,7 +21,7 @@ type AuthContextType = {
   isSignedIn: boolean
   user: User | null
   signIn: (email: string, password: string) => Promise<void>
-  signInWithOAuth: () => Promise<void>
+  signInWithOAuth: (provider?: 'apple' | 'google' | 'facebook') => Promise<void>
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   signOut: () => Promise<void>
 }
@@ -124,14 +124,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const signInWithOAuth = async () => {
+  const signInWithOAuth = async (provider: 'apple' | 'google' | 'facebook' = 'apple') => {
     try {
-      // Open Clerk's sign-in page directly
-      // After sign-in, Clerk will redirect to /mobile-callback which generates token
+      // Open provider-specific OAuth initiation page
+      // This will start the OAuth flow with the selected provider
+      // After sign-in, it redirects to /api/mobile-auth/oauth/callback which generates token
       // and redirects to tradieapp://auth-callback
-      const signInUrl = `${WEB_URL}/sign-in?redirect_url=${encodeURIComponent('/mobile-callback')}`
+      const signInUrl = `${WEB_URL}/api/mobile-auth/oauth/${provider}`
 
-      console.log('Opening sign-in URL:', signInUrl)
+      console.log('Opening OAuth URL:', signInUrl, 'for provider:', provider)
 
       const result = await WebBrowser.openAuthSessionAsync(
         signInUrl,
