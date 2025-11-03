@@ -58,6 +58,19 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="quotes"
+        options={{
+          title: 'Quotes',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons
+              name="file-document-outline"
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="invoices"
         options={{
           title: 'Invoices',

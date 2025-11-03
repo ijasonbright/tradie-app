@@ -304,6 +304,16 @@ class ApiClient {
     )
   }
 
+  async updateQuote(id: string, data: any) {
+    return this.request<{ quote: any }>(
+      `/quotes/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
   async sendQuote(id: string) {
     return this.request<{ success: boolean; message: string }>(
       `/quotes/${id}/send`,
