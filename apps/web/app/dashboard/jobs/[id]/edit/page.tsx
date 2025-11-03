@@ -36,9 +36,9 @@ interface TradeType {
   default_employee_hourly_rate: string
 }
 
-export default function EditJobPage({ params }: { params: Promise<{ id: string }> }) {
+export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const [jobId, setJobId] = useState<string | null>(null)
+  const jobId = params.id
   const [job, setJob] = useState<Job | null>(null)
   const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,15 +64,7 @@ export default function EditJobPage({ params }: { params: Promise<{ id: string }
   })
 
   useEffect(() => {
-    params.then((p) => {
-      setJobId(p.id)
-    })
-  }, [params])
-
-  useEffect(() => {
     const loadJob = async () => {
-      if (!jobId) return
-
       try {
         const res = await fetch(`/api/jobs/${jobId}`)
         if (!res.ok) {
