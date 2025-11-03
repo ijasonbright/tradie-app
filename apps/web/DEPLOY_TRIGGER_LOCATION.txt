@@ -1,0 +1,2 @@
+This file triggers a deployment to fix /api/team/location 404 issue
+Timestamp: 2025-01-03 11:47:00
