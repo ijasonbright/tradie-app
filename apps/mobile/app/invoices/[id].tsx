@@ -11,6 +11,8 @@ export default function InvoiceDetailScreen() {
   const { brandColor } = useTheme()
 
   const [invoice, setInvoice] = useState<any>(null)
+  const [lineItems, setLineItems] = useState<any[]>([])
+  const [payments, setPayments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -24,6 +26,8 @@ export default function InvoiceDetailScreen() {
       setError(null)
       const response = await apiClient.getInvoice(id as string)
       setInvoice(response.invoice)
+      setLineItems(response.lineItems || [])
+      setPayments(response.payments || [])
     } catch (err: any) {
       console.error('Failed to fetch invoice:', err)
       setError(err.message || 'Failed to load invoice details')
@@ -152,6 +156,26 @@ export default function InvoiceDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* Line Items */}
+        {lineItems && lineItems.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Line Items</Text>
+            {lineItems.map((item: any, index: number) => (
+              <View key={item.id || index} style={styles.lineItem}>
+                <View style={styles.lineItemHeader}>
+                  <Text style={styles.lineItemDescription}>{item.description}</Text>
+                </View>
+                <View style={styles.lineItemDetails}>
+                  <Text style={styles.lineItemQuantity}>
+                    {parseFloat(item.quantity).toFixed(2)} × {formatCurrency(item.unit_price)}
+                  </Text>
+                  <Text style={styles.lineItemTotal}>{formatCurrency(item.line_total)}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Amounts */}
         <View style={styles.section}>
@@ -361,6 +385,33 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  lineItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  lineItemHeader: {
+    marginBottom: 6,
+  },
+  lineItemDescription: {
+    fontSize: 15,
+    color: '#1f2937',
+    fontWeight: '500',
+  },
+  lineItemDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  lineItemQuantity: {
+    fontSize: 13,
+    color: '#6b7280',
+  },
+  lineItemTotal: {
+    fontSize: 15,
+    color: '#1f2937',
     fontWeight: '600',
   },
 })
