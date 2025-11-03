@@ -58,6 +58,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Team Map',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="map-marker-multiple" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="quotes"
         options={{
           title: 'Quotes',
