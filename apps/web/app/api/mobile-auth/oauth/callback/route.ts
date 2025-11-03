@@ -167,7 +167,82 @@ export async function GET(request: NextRequest) {
       profilePhotoUrl: dbUser.profile_photo_url,
     }))}`
 
-    return NextResponse.redirect(redirectUrl)
+    // Use HTML with meta redirect and JavaScript fallback for deep link
+    return new NextResponse(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Redirecting to app...</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              background: #f5f5f5;
+            }
+            .container {
+              text-align: center;
+              padding: 2rem;
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .spinner {
+              border: 3px solid #f3f3f3;
+              border-top: 3px solid #10b981;
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              animation: spin 1s linear infinite;
+              margin: 0 auto 1rem;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            h2 {
+              color: #333;
+              margin: 0 0 0.5rem;
+            }
+            p {
+              color: #666;
+              margin: 0;
+            }
+            .success {
+              color: #10b981;
+              font-size: 3rem;
+              margin: 0 0 1rem;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="success">✓</div>
+            <h2>Sign in successful!</h2>
+            <p>Returning to the app...</p>
+            <div class="spinner" style="margin-top: 1rem;"></div>
+          </div>
+
+          <script>
+            // Immediate redirect to deep link
+            window.location.href = '${redirectUrl}';
+
+            // Fallback: Close window after 2 seconds if redirect didn't work
+            setTimeout(() => {
+              window.close();
+            }, 2000);
+          </script>
+        </body>
+      </html>`,
+      {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      }
+    )
 
   } catch (error) {
     console.error('Mobile OAuth callback error:', error)
