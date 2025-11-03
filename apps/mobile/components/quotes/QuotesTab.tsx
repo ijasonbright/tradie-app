@@ -20,7 +20,10 @@ export default function QuotesTab() {
 
   const fetchQuotes = async () => {
     try {
-      setLoading(true)
+      // Only show loading spinner on initial load, not on filter change
+      if (!quotes.length && !refreshing) {
+        setLoading(true)
+      }
       const params = filter !== 'all' ? { status: filter } : undefined
       const response = await apiClient.getQuotes(params)
 
@@ -187,22 +190,22 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: 'row',
-    padding: 12,
+    padding: 8,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    gap: 6,
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginHorizontal: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderRadius: 6,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
   },
   filterButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6b7280',
   },
