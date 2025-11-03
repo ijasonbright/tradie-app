@@ -68,6 +68,9 @@ export async function GET(req: Request) {
     // - Same organization
     // - Active location sharing (unless includeInactive=true)
     // - Updated within maxAgeMinutes
+    // Calculate the timestamp for filtering
+    const maxAgeDate = new Date(Date.now() - maxAgeMinutes * 60 * 1000)
+
     const locations = await sql`
       SELECT
         tml.id,
@@ -96,7 +99,7 @@ export async function GET(req: Request) {
       WHERE tml.organization_id = ${organizationId}
       AND om.status = 'active'
       ${includeInactive ? sql`` : sql`AND tml.is_active = true`}
-      AND tml.last_updated_at > NOW() - INTERVAL '${sql.raw(maxAgeMinutes.toString())} minutes'
+      AND tml.last_updated_at > ${maxAgeDate.toISOString()}
       ORDER BY tml.last_updated_at DESC
     `
 
