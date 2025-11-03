@@ -194,23 +194,35 @@ export function useLocationTracking(): LocationTrackingState & LocationTrackingA
         }
       }
 
-      // Register background task if not already registered
-      if (!isBackgroundTaskRegistered) {
-        isBackgroundTaskRegistered = true
-      }
+      // Try to start background location updates (will fail in Expo Go)
+      try {
+        // Register background task if not already registered
+        if (!isBackgroundTaskRegistered) {
+          isBackgroundTaskRegistered = true
+        }
 
-      // Start background location updates
-      await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
-        accuracy: Location.Accuracy.Balanced,
-        timeInterval: 300000, // 5 minutes
-        distanceInterval: 100, // 100 meters
-        showsBackgroundLocationIndicator: true,
-        foregroundService: {
-          notificationTitle: 'Location Tracking Active',
-          notificationBody: 'Your location is being shared with your team',
-          notificationColor: '#007AFF',
-        },
-      })
+        // Start background location updates
+        await Location.startLocationUpdatesAsync(LOCATION_TASK_NAME, {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 300000, // 5 minutes
+          distanceInterval: 100, // 100 meters
+          showsBackgroundLocationIndicator: true,
+          foregroundService: {
+            notificationTitle: 'Location Tracking Active',
+            notificationBody: 'Your location is being shared with your team',
+            notificationColor: '#007AFF',
+          },
+        })
+        console.log('Background location tracking enabled')
+      } catch (bgErr) {
+        console.warn('Background location not available (Expo Go limitation):', bgErr)
+        // Continue without background tracking - we'll just update location manually
+        Alert.alert(
+          'Foreground Only',
+          'Location tracking enabled for foreground only. In Expo Go, your location will only update while the app is open. Build a development build for full background tracking.',
+          [{ text: 'OK' }]
+        )
+      }
 
       // Get initial location
       await updateCurrentLocation()
