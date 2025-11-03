@@ -5,23 +5,23 @@ import { APIProvider, Map, AdvancedMarker, InfoWindow } from '@vis.gl/react-goog
 
 interface TeamLocation {
   id: string
-  userId: string
+  user_id: string
   latitude: number
   longitude: number
   accuracy: number | null
   heading: number | null
   speed: number | null
   altitude: number | null
-  isActive: boolean
-  lastUpdatedAt: string
-  fullName: string
+  is_active: boolean
+  last_updated_at: string
+  full_name: string
   email: string
   phone: string | null
-  profilePhotoUrl: string | null
+  profile_photo_url: string | null
   role: string
-  employmentType: string | null
-  primaryTradeName: string | null
-  minutesSinceUpdate: number
+  employment_type: string | null
+  primary_trade_name: string | null
+  minutes_since_update: number
 }
 
 interface MapData {
@@ -195,9 +195,9 @@ export default function TeamMapPage() {
                   style={{ backgroundColor: getMarkerColor(location.role) }}
                 >
                   <span className="text-white font-bold text-sm">
-                    {location.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                    {location.full_name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || '??'}
                   </span>
-                  {location.minutesSinceUpdate < 5 && (
+                  {location.minutes_since_update < 5 && (
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse" />
                   )}
                 </div>
@@ -211,10 +211,10 @@ export default function TeamMapPage() {
               >
                 <div className="p-2 min-w-[250px]">
                   <div className="flex items-start gap-3 mb-3">
-                    {selectedLocation.profilePhotoUrl ? (
+                    {selectedLocation.profile_photo_url ? (
                       <img
-                        src={selectedLocation.profilePhotoUrl}
-                        alt={selectedLocation.fullName}
+                        src={selectedLocation.profile_photo_url}
+                        alt={selectedLocation.full_name}
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (
@@ -222,20 +222,20 @@ export default function TeamMapPage() {
                         className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
                         style={{ backgroundColor: getMarkerColor(selectedLocation.role) }}
                       >
-                        {selectedLocation.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                        {selectedLocation.full_name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || '??'}
                       </div>
                     )}
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{selectedLocation.fullName}</h3>
+                      <h3 className="font-semibold text-gray-900">{selectedLocation.full_name}</h3>
                       <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${getRoleBadgeColor(selectedLocation.role)}`}>
                         {selectedLocation.role}
                       </span>
                     </div>
                   </div>
 
-                  {selectedLocation.primaryTradeName && (
+                  {selectedLocation.primary_trade_name && (
                     <div className="text-sm text-gray-600 mb-2">
-                      <span className="font-medium">Trade:</span> {selectedLocation.primaryTradeName}
+                      <span className="font-medium">Trade:</span> {selectedLocation.primary_trade_name}
                     </div>
                   )}
 
@@ -251,7 +251,7 @@ export default function TeamMapPage() {
 
                   <div className="border-t pt-2 mt-2">
                     <div className="text-xs text-gray-500">
-                      Last updated: {getTimeAgoText(selectedLocation.minutesSinceUpdate)}
+                      Last updated: {getTimeAgoText(selectedLocation.minutes_since_update)}
                     </div>
                     {selectedLocation.accuracy && (
                       <div className="text-xs text-gray-500">
@@ -310,10 +310,10 @@ export default function TeamMapPage() {
               }`}
             >
               <div className="flex items-center gap-3 mb-2">
-                {location.profilePhotoUrl ? (
+                {location.profile_photo_url ? (
                   <img
-                    src={location.profilePhotoUrl}
-                    alt={location.fullName}
+                    src={location.profile_photo_url}
+                    alt={location.full_name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
                 ) : (
@@ -321,16 +321,16 @@ export default function TeamMapPage() {
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
                     style={{ backgroundColor: getMarkerColor(location.role) }}
                   >
-                    {location.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2)}
+                    {location.full_name?.split(' ').map((n) => n[0]).join('').substring(0, 2) || '??'}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-gray-900 truncate">{location.fullName}</h3>
+                  <h3 className="font-medium text-gray-900 truncate">{location.full_name}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${getRoleBadgeColor(location.role)}`}>
                       {location.role}
                     </span>
-                    {location.minutesSinceUpdate < 5 && (
+                    {location.minutes_since_update < 5 && (
                       <span className="inline-flex items-center gap-1 text-xs text-green-600">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                         Live
@@ -339,13 +339,13 @@ export default function TeamMapPage() {
                   </div>
                 </div>
               </div>
-              {location.primaryTradeName && (
+              {location.primary_trade_name && (
                 <div className="text-xs text-gray-600 mb-1">
-                  {location.primaryTradeName}
+                  {location.primary_trade_name}
                 </div>
               )}
               <div className="text-xs text-gray-500">
-                Updated {getTimeAgoText(location.minutesSinceUpdate)}
+                Updated {getTimeAgoText(location.minutes_since_update)}
               </div>
             </div>
           ))}
