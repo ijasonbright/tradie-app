@@ -167,12 +167,14 @@ export async function GET(request: NextRequest) {
       profilePhotoUrl: dbUser.profile_photo_url,
     }))}`
 
-    // Use HTML with meta redirect and JavaScript fallback for deep link
+    // Use HTML with meta refresh for deep link redirect
+    // This works with WebBrowser.openAuthSessionAsync by triggering the redirect URL callback
     return new NextResponse(
       `<!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0;url=${redirectUrl}">
           <title>Redirecting to app...</title>
           <style>
             body {
@@ -228,13 +230,8 @@ export async function GET(request: NextRequest) {
           </div>
 
           <script>
-            // Immediate redirect to deep link
-            window.location.href = '${redirectUrl}';
-
-            // Fallback: Close window after 2 seconds if redirect didn't work
-            setTimeout(() => {
-              window.close();
-            }, 2000);
+            // Immediate redirect to deep link (backup to meta refresh)
+            window.location.replace('${redirectUrl}');
           </script>
         </body>
       </html>`,
