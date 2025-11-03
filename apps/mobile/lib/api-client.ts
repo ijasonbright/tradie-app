@@ -710,7 +710,7 @@ class ApiClient {
     altitude?: number
     isActive?: boolean
   }) {
-    return this.request<{ location: any }>('/team/location', {
+    return this.request<{ location: any }>('/mobile-auth/location', {
       method: 'POST',
       body: JSON.stringify(data),
     })
@@ -724,7 +724,7 @@ class ApiClient {
       success: boolean
       message: string
       location: any
-    }>('/team/location', {
+    }>('/mobile-auth/location', {
       method: 'PUT',
       body: JSON.stringify({ isActive }),
     })
