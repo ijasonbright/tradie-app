@@ -23,9 +23,12 @@ interface Quote {
   last_name: string | null
   is_company: boolean
   client_email: string
+  client_phone: string | null
+  client_mobile: string | null
   organization_name: string
   created_by_name: string
   converted_to_job_id: string | null
+  public_token: string
 }
 
 interface LineItem {
@@ -46,8 +49,20 @@ export default function QuoteDetailPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([])
   const [loading, setLoading] = useState(true)
   const [converting, setConverting] = useState(false)
-  const [sending, setSending] = useState(false)
   const [downloading, setDownloading] = useState(false)
+
+  // Send modal state
+  const [showSendModal, setShowSendModal] = useState(false)
+  const [sendViaEmail, setSendViaEmail] = useState(true)
+  const [sendViaSMS, setSendViaSMS] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  // Form fields
+  const [emailAddress, setEmailAddress] = useState('')
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailMessage, setEmailMessage] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [smsMessage, setSmsMessage] = useState('')
 
   useEffect(() => {
     if (params.id) {
@@ -107,6 +122,121 @@ export default function QuoteDetailPage() {
     return `$${parseFloat(amount).toFixed(2)}`
   }
 
+  const formatPhoneNumber = (phone: string): string => {
+    let cleaned = phone.replace(/\D/g, '')
+    if (cleaned.startsWith('0')) {
+      cleaned = '61' + cleaned.substring(1)
+    }
+    if (!cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned
+    }
+    return cleaned
+  }
+
+  const openSendModal = () => {
+    if (!quote) return
+
+    const clientName = getClientName()
+    const quoteLink = `https://tradie-app-web.vercel.app/public/quotes/${quote.public_token}`
+
+    // Pre-fill form fields
+    setEmailAddress(quote.client_email || '')
+    setEmailSubject(`Quote ${quote.quote_number} from ${quote.organization_name}`)
+    setEmailMessage(
+      `Hi ${clientName},\n\n` +
+      `Please find your quote ${quote.quote_number} for ${formatCurrency(quote.total_amount)}.\n\n` +
+      `${quote.title ? `Project: ${quote.title}\n\n` : ''}` +
+      `Valid until: ${formatDate(quote.valid_until_date)}\n\n` +
+      `View and approve your quote online: ${quoteLink}\n\n` +
+      `Thank you for considering our services!\n\n` +
+      `${quote.organization_name}`
+    )
+
+    const rawPhone = quote.client_mobile || quote.client_phone || ''
+    setPhoneNumber(rawPhone ? formatPhoneNumber(rawPhone) : '')
+    setSmsMessage(
+      `Hi ${clientName}, your quote ${quote.quote_number} for ${formatCurrency(quote.total_amount)} is ready. View and approve it here: ${quoteLink}`
+    )
+
+    setShowSendModal(true)
+  }
+
+  const handleSend = async () => {
+    if (!sendViaEmail && !sendViaSMS) {
+      alert('Please select at least one method (Email or SMS)')
+      return
+    }
+
+    if (sendViaEmail && !emailAddress) {
+      alert('Email address is required')
+      return
+    }
+
+    if (sendViaSMS && !phoneNumber) {
+      alert('Phone number is required')
+      return
+    }
+
+    setSending(true)
+
+    try {
+      // Update quote status to 'sent' if draft
+      if (quote?.status === 'draft') {
+        await fetch(`/api/quotes/${params.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'sent', sentAt: new Date().toISOString() }),
+        })
+      }
+
+      // Send via email
+      if (sendViaEmail) {
+        const emailRes = await fetch(`/api/quotes/${params.id}/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: emailAddress,
+            subject: emailSubject,
+            message: emailMessage,
+          }),
+        })
+
+        if (!emailRes.ok) {
+          const error = await emailRes.json()
+          throw new Error(error.error || 'Failed to send email')
+        }
+      }
+
+      // Send via SMS
+      if (sendViaSMS) {
+        const smsRes = await fetch(`/api/quotes/${params.id}/send-sms`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: formatPhoneNumber(phoneNumber),
+            message: smsMessage,
+          }),
+        })
+
+        if (!smsRes.ok) {
+          const error = await smsRes.json()
+          throw new Error(error.error || 'Failed to send SMS')
+        }
+      }
+
+      alert(
+        `Quote sent successfully via ${sendViaEmail && sendViaSMS ? 'email and SMS' : sendViaEmail ? 'email' : 'SMS'}`
+      )
+      setShowSendModal(false)
+      fetchQuote() // Refresh to show updated status
+    } catch (error) {
+      console.error('Error sending quote:', error)
+      alert(error instanceof Error ? error.message : 'Failed to send quote')
+    } finally {
+      setSending(false)
+    }
+  }
+
   const handleStatusChange = async (newStatus: string) => {
     if (!quote) return
 
@@ -147,7 +277,6 @@ export default function QuoteDetailPage() {
     setConverting(true)
 
     try {
-      // Create job from quote
       const jobRes = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -156,11 +285,11 @@ export default function QuoteDetailPage() {
           clientId: quote.client_id,
           title: quote.title,
           description: quote.description || `Created from ${quote.quote_number}`,
-          jobType: 'service', // Default job type for quote conversions
+          jobType: 'service',
           status: 'scheduled',
-          priority: 'medium', // Default priority
+          priority: 'medium',
           quotedAmount: quote.total_amount,
-          quoteId: quote.id, // Link job back to quote
+          quoteId: quote.id,
         }),
       })
 
@@ -169,7 +298,6 @@ export default function QuoteDetailPage() {
       const jobData = await jobRes.json()
       const jobId = jobData.job.id
 
-      // Update quote to mark as converted
       await fetch(`/api/quotes/${params.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -180,7 +308,6 @@ export default function QuoteDetailPage() {
         }),
       })
 
-      // Redirect to job
       router.push(`/dashboard/jobs/${jobId}`)
     } catch (error) {
       console.error('Error converting quote:', error)
@@ -220,7 +347,6 @@ export default function QuoteDetailPage() {
         throw new Error(error.error || 'Failed to download PDF')
       }
 
-      // Download the PDF
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -238,37 +364,8 @@ export default function QuoteDetailPage() {
     }
   }
 
-  const handleSendQuote = async () => {
-    if (!quote) return
-
-    if (!quote.client_email) {
-      alert('Cannot send quote: Client email is missing')
-      return
-    }
-
-    if (!confirm(`Send quote ${quote.quote_number} to ${quote.client_email}?`)) return
-
-    setSending(true)
-
-    try {
-      const res = await fetch(`/api/quotes/${params.id}/send`, {
-        method: 'POST',
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.error || 'Failed to send quote')
-      }
-
-      alert(`Quote sent successfully to ${quote.client_email}`)
-      fetchQuote() // Refresh to show updated status
-    } catch (error) {
-      console.error('Error sending quote:', error)
-      alert(error instanceof Error ? error.message : 'Failed to send quote')
-    } finally {
-      setSending(false)
-    }
-  }
+  const smsCharCount = smsMessage.length
+  const smsCredits = Math.ceil(smsCharCount / 160)
 
   if (loading) {
     return (
@@ -401,7 +498,6 @@ export default function QuoteDetailPage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
 
           <div className="flex flex-wrap gap-3">
-            {/* Edit button */}
             <Link
               href={`/dashboard/quotes/${params.id}/edit`}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 font-medium"
@@ -409,7 +505,6 @@ export default function QuoteDetailPage() {
               Edit Quote
             </Link>
 
-            {/* Download and Send buttons - always available */}
             <button
               onClick={handleDownloadPDF}
               disabled={downloading}
@@ -419,15 +514,12 @@ export default function QuoteDetailPage() {
             </button>
 
             <button
-              onClick={handleSendQuote}
-              disabled={sending || !quote.client_email}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium disabled:opacity-50"
-              title={!quote.client_email ? 'Client email is required' : ''}
+              onClick={openSendModal}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
             >
-              {sending ? 'Sending...' : 'Send Quote via Email'}
+              Send Quote
             </button>
 
-            {/* Status change buttons */}
             {quote.status === 'draft' && (
               <button
                 onClick={() => handleStatusChange('sent')}
@@ -473,6 +565,151 @@ export default function QuoteDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Send Modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Send Quote</h2>
+                <button
+                  onClick={() => setShowSendModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Send Method Selection */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <p className="text-sm font-medium text-gray-700">Send via:</p>
+
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sendViaEmail}
+                      onChange={(e) => setSendViaEmail(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium">Email (Free)</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sendViaSMS}
+                      onChange={(e) => setSendViaSMS(e.target.checked)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <span className="text-sm font-medium">
+                      SMS ({smsCredits} credit{smsCredits !== 1 ? 's' : ''} - ${(smsCredits * 0.05).toFixed(2)})
+                    </span>
+                  </label>
+                </div>
+
+                {/* Email Fields */}
+                {sendViaEmail && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900">Email Details</h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        value={emailAddress}
+                        onChange={(e) => setEmailAddress(e.target.value)}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="client@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Subject *
+                      </label>
+                      <input
+                        type="text"
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Message *
+                      </label>
+                      <textarea
+                        value={emailMessage}
+                        onChange={(e) => setEmailMessage(e.target.value)}
+                        rows={8}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* SMS Fields */}
+                {sendViaSMS && (
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900">SMS Details</h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="+61 4XX XXX XXX"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Message *
+                      </label>
+                      <textarea
+                        value={smsMessage}
+                        onChange={(e) => setSmsMessage(e.target.value)}
+                        rows={4}
+                        maxLength={480}
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        {smsCharCount} characters • {smsCredits} credit{smsCredits !== 1 ? 's' : ''} (${(smsCredits * 0.05).toFixed(2)})
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={handleSend}
+                    disabled={sending}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium disabled:opacity-50"
+                  >
+                    {sending ? 'Sending...' : 'Send Quote'}
+                  </button>
+                  <button
+                    onClick={() => setShowSendModal(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 font-medium"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

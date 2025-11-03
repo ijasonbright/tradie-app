@@ -259,6 +259,13 @@ export async function POST(req: Request) {
     if (body.lineItems && Array.isArray(body.lineItems) && body.lineItems.length > 0) {
       for (let i = 0; i < body.lineItems.length; i++) {
         const item = body.lineItems[i]
+
+        // Calculate line_total on server side to ensure it's never null
+        const quantity = parseFloat(item.quantity || '0')
+        const unitPrice = parseFloat(item.unitPrice || item.unit_price || '0')
+        const gstAmount = parseFloat(item.gstAmount || item.gst_amount || '0')
+        const lineTotal = (quantity * unitPrice) + gstAmount
+
         await sql`
           INSERT INTO quote_line_items (
             quote_id, item_type, description, quantity, unit_price, gst_amount, line_total, line_order
@@ -266,10 +273,10 @@ export async function POST(req: Request) {
             ${newQuote.id},
             ${item.itemType || item.item_type || 'service'},
             ${item.description},
-            ${item.quantity},
-            ${item.unitPrice || item.unit_price},
-            ${item.gstAmount || item.gst_amount || '0'},
-            ${item.lineTotal || item.line_total},
+            ${quantity},
+            ${unitPrice},
+            ${gstAmount},
+            ${lineTotal},
             ${item.lineOrder !== undefined ? item.lineOrder : i}
           )
         `
