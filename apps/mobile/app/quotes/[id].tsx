@@ -107,7 +107,7 @@ export default function QuoteDetailScreen() {
                 Alert.alert('Success', 'Quote converted to job successfully!', [
                   {
                     text: 'View Job',
-                    onPress: () => router.push(`/jobs/${response.job.id}`),
+                    onPress: () => router.push(`/job/${response.job.id}`),
                   },
                 ])
               }
@@ -310,7 +310,7 @@ export default function QuoteDetailScreen() {
         {quote.converted_to_job_id && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: '#10b981' }]}
-            onPress={() => router.push(`/jobs/${quote.converted_to_job_id}`)}
+            onPress={() => router.push(`/job/${quote.converted_to_job_id}`)}
           >
             <MaterialCommunityIcons name="briefcase-check" size={20} color="#fff" />
             <Text style={styles.actionButtonText}>View Job</Text>
