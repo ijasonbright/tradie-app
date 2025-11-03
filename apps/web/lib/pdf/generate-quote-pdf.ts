@@ -36,7 +36,8 @@ interface QuoteData {
     billing_state: string | null
     billing_postcode: string | null
   }
-  paymentLink?: string
+  approvalLink?: string
+  depositAmount?: string
   lineItems: QuoteLineItem[]
   organization: {
     name: string
@@ -504,11 +505,11 @@ export async function generateQuotePDF(data: QuoteData): Promise<Uint8Array> {
       color: lightGray,
     })
 
-    yPosition -= 50
+    yPosition -= 40
 
-    // Payment link section if available
-    if (data.paymentLink) {
-      page.drawText('Pay Deposit Online:', {
+    // Approval link for quote (if status is sent)
+    if (quote.status === 'sent' && data.approvalLink) {
+      page.drawText('View & Approve Quote Online:', {
         x: 50,
         y: yPosition,
         size: 11,
@@ -517,7 +518,7 @@ export async function generateQuotePDF(data: QuoteData): Promise<Uint8Array> {
       })
       yPosition -= 18
 
-      page.drawText(data.paymentLink, {
+      page.drawText(data.approvalLink, {
         x: 50,
         y: yPosition,
         size: 9,
@@ -526,6 +527,28 @@ export async function generateQuotePDF(data: QuoteData): Promise<Uint8Array> {
       })
       yPosition -= 25
     }
+  }
+
+  // Approval link for quote (if no deposit required but status is sent)
+  if (!quote.deposit_required && quote.status === 'sent' && data.approvalLink) {
+    yPosition -= 10
+    page.drawText('View & Approve Quote Online:', {
+      x: 50,
+      y: yPosition,
+      size: 11,
+      font: boldFont,
+      color: primaryColor,
+    })
+    yPosition -= 18
+
+    page.drawText(data.approvalLink, {
+      x: 50,
+      y: yPosition,
+      size: 9,
+      font: regularFont,
+      color: rgb(0.15, 0.39, 0.92),
+    })
+    yPosition -= 25
   }
 
   // Description section
