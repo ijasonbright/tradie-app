@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { Picker } from '@react-native-picker/picker'
 
 const JOB_TYPE_OPTIONS = [
   { value: 'repair', label: 'Repair' },
@@ -282,84 +283,34 @@ export default function EditJobScreen() {
         {/* Trade Type */}
         <View style={styles.section}>
           <Text style={styles.label}>Trade Type</Text>
-          <View style={styles.pickerContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                !tradeTypeId && styles.optionButtonActive,
-              ]}
-              onPress={() => setTradeTypeId('')}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={tradeTypeId}
+              onValueChange={(value) => setTradeTypeId(value)}
+              style={styles.picker}
             >
-              <Text
-                style={[
-                  styles.optionText,
-                  !tradeTypeId && styles.optionTextActive,
-                ]}
-              >
-                None
-              </Text>
-            </TouchableOpacity>
-            {tradeTypes.map((trade) => (
-              <TouchableOpacity
-                key={trade.id}
-                style={[
-                  styles.optionButton,
-                  tradeTypeId === trade.id && styles.optionButtonActive,
-                ]}
-                onPress={() => setTradeTypeId(trade.id)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    tradeTypeId === trade.id && styles.optionTextActive,
-                  ]}
-                >
-                  {trade.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+              <Picker.Item label="None" value="" />
+              {tradeTypes.map((trade) => (
+                <Picker.Item key={trade.id} label={trade.name} value={trade.id} />
+              ))}
+            </Picker>
           </View>
         </View>
 
         {/* Assigned To */}
         <View style={styles.section}>
           <Text style={styles.label}>Assigned To</Text>
-          <View style={styles.pickerContainer}>
-            <TouchableOpacity
-              style={[
-                styles.optionButton,
-                !assignedToUserId && styles.optionButtonActive,
-              ]}
-              onPress={() => setAssignedToUserId('')}
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={assignedToUserId}
+              onValueChange={(value) => setAssignedToUserId(value)}
+              style={styles.picker}
             >
-              <Text
-                style={[
-                  styles.optionText,
-                  !assignedToUserId && styles.optionTextActive,
-                ]}
-              >
-                Unassigned
-              </Text>
-            </TouchableOpacity>
-            {teamMembers.filter(m => m.status === 'active').map((member) => (
-              <TouchableOpacity
-                key={member.user_id}
-                style={[
-                  styles.optionButton,
-                  assignedToUserId === member.user_id && styles.optionButtonActive,
-                ]}
-                onPress={() => setAssignedToUserId(member.user_id)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    assignedToUserId === member.user_id && styles.optionTextActive,
-                  ]}
-                >
-                  {member.full_name}
-                </Text>
-              </TouchableOpacity>
-            ))}
+              <Picker.Item label="Unassigned" value="" />
+              {teamMembers.filter(m => m.status === 'active').map((member) => (
+                <Picker.Item key={member.user_id} label={member.full_name} value={member.user_id} />
+              ))}
+            </Picker>
           </View>
         </View>
 
@@ -544,6 +495,16 @@ const styles = StyleSheet.create({
   },
   optionTextActive: {
     color: '#fff',
+  },
+  pickerWrapper: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
   },
   row: {
     flexDirection: 'row',
