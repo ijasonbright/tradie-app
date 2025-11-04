@@ -101,6 +101,11 @@ export async function POST(
     const paidAmount = parseFloat(invoice.paid_amount || '0')
     const remainingAmount = totalAmount - paidAmount
 
+    // Get client name early for payment link creation
+    const clientName = invoice.is_company && invoice.company_name
+      ? invoice.company_name
+      : [invoice.first_name, invoice.last_name].filter(Boolean).join(' ') || 'Valued Client'
+
     let publicToken = invoice.public_token
     let paymentLink: string | undefined
 
@@ -169,11 +174,6 @@ export async function POST(
 
     const pdfBytes = await generateInvoicePDF(pdfData)
     const pdfBuffer = Buffer.from(pdfBytes)
-
-    // Get client name
-    const clientName = invoice.is_company && invoice.company_name
-      ? invoice.company_name
-      : [invoice.first_name, invoice.last_name].filter(Boolean).join(' ') || 'Valued Client'
 
     // Format currency
     const formatCurrency = (amount: string) => {
