@@ -75,19 +75,19 @@ export async function GET(request: NextRequest) {
     `
 
     if (settings.length === 0) {
-      // Return default settings if none exist
+      // Return default settings if none exist (in snake_case to match database)
       return NextResponse.json({
-        organizationId: orgId,
-        invoiceRemindersEnabled: true,
-        reminderDaysBeforeDue: '7,3,1',
-        reminderDaysAfterDue: '1,7,14',
-        invoiceReminderMethod: 'email',
-        enableSmsEscalation: true,
-        smsEscalationDaysOverdue: 14,
-        monthlyStatementsEnabled: true,
-        statementDayOfMonth: 1,
-        statementMethod: 'email',
-        includeOnlyOutstanding: true,
+        organization_id: orgId,
+        invoice_reminders_enabled: true,
+        reminder_days_before_due: '7,3,1',
+        reminder_days_after_due: '1,7,14',
+        invoice_reminder_method: 'email',
+        enable_sms_escalation: true,
+        sms_escalation_days_overdue: 14,
+        monthly_statements_enabled: true,
+        statement_day_of_month: 1,
+        statement_method: 'email',
+        include_only_outstanding: true,
       })
     }
 

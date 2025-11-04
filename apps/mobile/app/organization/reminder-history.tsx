@@ -171,12 +171,12 @@ export default function ReminderHistoryScreen() {
             <View key={item.id} style={styles.historyItem}>
               <View style={styles.historyItemHeader}>
                 <View style={styles.historyItemIcon}>
-                  <MaterialCommunityIcons name={getTypeIcon(item.reminderType)} size={20} color="#2563eb" />
+                  <MaterialCommunityIcons name={getTypeIcon(item.reminder_type)} size={20} color="#2563eb" />
                 </View>
                 <View style={styles.historyItemInfo}>
-                  <Text style={styles.historyItemTitle}>{item.clientName}</Text>
+                  <Text style={styles.historyItemTitle}>{item.client_name}</Text>
                   <Text style={styles.historyItemSubtitle}>
-                    {getTypeLabel(item.reminderType)} • {item.sentVia.toUpperCase()}
+                    {getTypeLabel(item.reminder_type)} • {item.sent_via.toUpperCase()}
                   </Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(item.status)}15` }]}>
@@ -189,55 +189,55 @@ export default function ReminderHistoryScreen() {
               <View style={styles.historyItemDetails}>
                 <View style={styles.detailRow}>
                   <MaterialCommunityIcons name="clock-outline" size={14} color="#6b7280" />
-                  <Text style={styles.detailText}>{formatDate(item.sentAt)}</Text>
+                  <Text style={styles.detailText}>{formatDate(item.sent_at)}</Text>
                 </View>
 
-                {item.invoiceAmount && (
+                {item.invoice_amount && (
                   <View style={styles.detailRow}>
                     <MaterialCommunityIcons name="currency-usd" size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>${item.invoiceAmount}</Text>
+                    <Text style={styles.detailText}>${item.invoice_amount}</Text>
                   </View>
                 )}
 
-                {item.daysBeforeDue !== null && item.daysBeforeDue > 0 && (
+                {item.days_before_due !== null && item.days_before_due > 0 && (
                   <View style={styles.detailRow}>
                     <MaterialCommunityIcons name="calendar-clock" size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>{item.daysBeforeDue} days before due</Text>
+                    <Text style={styles.detailText}>{item.days_before_due} days before due</Text>
                   </View>
                 )}
 
-                {item.daysBeforeDue !== null && item.daysBeforeDue < 0 && (
+                {item.days_before_due !== null && item.days_before_due < 0 && (
                   <View style={styles.detailRow}>
                     <MaterialCommunityIcons name="alert-circle" size={14} color="#ef4444" />
                     <Text style={[styles.detailText, { color: '#ef4444' }]}>
-                      {Math.abs(item.daysBeforeDue)} days overdue
+                      {Math.abs(item.days_before_due)} days overdue
                     </Text>
                   </View>
                 )}
 
-                {item.creditsUsed > 0 && (
+                {item.credits_used > 0 && (
                   <View style={styles.detailRow}>
                     <MaterialCommunityIcons name="message-text" size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>{item.creditsUsed} SMS credit{item.creditsUsed === 1 ? '' : 's'}</Text>
+                    <Text style={styles.detailText}>{item.credits_used} SMS credit{item.credits_used === 1 ? '' : 's'}</Text>
                   </View>
                 )}
               </View>
 
-              {item.recipientEmail && (
+              {item.recipient_email && (
                 <Text style={styles.recipientText}>
-                  <MaterialCommunityIcons name="email" size={12} color="#9ca3af" /> {item.recipientEmail}
+                  <MaterialCommunityIcons name="email" size={12} color="#9ca3af" /> {item.recipient_email}
                 </Text>
               )}
-              {item.recipientPhone && (
+              {item.recipient_phone && (
                 <Text style={styles.recipientText}>
-                  <MaterialCommunityIcons name="phone" size={12} color="#9ca3af" /> {item.recipientPhone}
+                  <MaterialCommunityIcons name="phone" size={12} color="#9ca3af" /> {item.recipient_phone}
                 </Text>
               )}
 
-              {item.errorMessage && (
+              {item.error_message && (
                 <View style={styles.errorBox}>
                   <MaterialCommunityIcons name="alert" size={16} color="#ef4444" />
-                  <Text style={styles.errorText}>{item.errorMessage}</Text>
+                  <Text style={styles.errorText}>{item.error_message}</Text>
                 </View>
               )}
             </View>

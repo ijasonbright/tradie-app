@@ -32,17 +32,17 @@ export default function RemindersSettingsScreen() {
     try {
       const settings = await apiClient.getReminderSettings()
 
-      setInvoiceRemindersEnabled(settings.invoiceRemindersEnabled)
-      setReminderDaysBeforeDue(settings.reminderDaysBeforeDue?.split(',').map(d => parseInt(d.trim())) || [7, 3, 1])
-      setReminderDaysAfterDue(settings.reminderDaysAfterDue?.split(',').map(d => parseInt(d.trim())) || [1, 7, 14])
-      setInvoiceReminderMethod(settings.invoiceReminderMethod || 'email')
-      setEnableSmsEscalation(settings.enableSmsEscalation ?? true)
-      setSmsEscalationDaysOverdue(settings.smsEscalationDaysOverdue || 14)
+      setInvoiceRemindersEnabled(settings.invoice_reminders_enabled)
+      setReminderDaysBeforeDue(settings.reminder_days_before_due?.split(',').map((d: string) => parseInt(d.trim())) || [7, 3, 1])
+      setReminderDaysAfterDue(settings.reminder_days_after_due?.split(',').map((d: string) => parseInt(d.trim())) || [1, 7, 14])
+      setInvoiceReminderMethod(settings.invoice_reminder_method || 'email')
+      setEnableSmsEscalation(settings.enable_sms_escalation ?? true)
+      setSmsEscalationDaysOverdue(settings.sms_escalation_days_overdue || 14)
 
-      setMonthlyStatementsEnabled(settings.monthlyStatementsEnabled ?? true)
-      setStatementDayOfMonth(settings.statementDayOfMonth || 1)
-      setStatementMethod(settings.statementMethod || 'email')
-      setIncludeOnlyOutstanding(settings.includeOnlyOutstanding ?? true)
+      setMonthlyStatementsEnabled(settings.monthly_statements_enabled ?? true)
+      setStatementDayOfMonth(settings.statement_day_of_month || 1)
+      setStatementMethod(settings.statement_method || 'email')
+      setIncludeOnlyOutstanding(settings.include_only_outstanding ?? true)
     } catch (err: any) {
       console.error('Failed to fetch reminder settings:', err)
       Alert.alert('Error', 'Failed to load reminder settings')
