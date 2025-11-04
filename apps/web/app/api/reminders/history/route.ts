@@ -85,52 +85,68 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Build WHERE conditions
-    let whereConditions = [`rh.organization_id = ${sql([orgId])}`]
-
-    if (type !== 'all') {
-      whereConditions.push(`rh.reminder_type = ${sql([type])}`)
-    }
-
-    if (status !== 'all') {
-      whereConditions.push(`rh.status = ${sql([status])}`)
-    }
-
-    if (clientId) {
-      whereConditions.push(`rh.client_id = ${sql([clientId])}`)
-    }
-
-    if (startDate) {
-      whereConditions.push(`rh.sent_at >= ${sql([startDate])}`)
-    }
-
-    if (endDate) {
-      const end = new Date(endDate)
-      end.setHours(23, 59, 59, 999)
-      whereConditions.push(`rh.sent_at <= ${sql([end.toISOString()])}`)
-    }
-
-    const whereClause = whereConditions.join(' AND ')
-
-    // Fetch history with client details
-    const history = await sql`
+    // Build dynamic query based on filters
+    let query = `
       SELECT
         rh.*,
         COALESCE(c.company_name, CONCAT(c.first_name, ' ', c.last_name)) as client_name
       FROM reminder_history rh
       INNER JOIN clients c ON rh.client_id = c.id
-      WHERE ${sql.unsafe(whereClause)}
-      ORDER BY rh.sent_at DESC
-      LIMIT ${limit}
-      OFFSET ${offset}
+      WHERE rh.organization_id = $1
     `
-
-    // Get total count for pagination
-    const countResult = await sql`
+    let countQuery = `
       SELECT COUNT(*) as count
       FROM reminder_history rh
-      WHERE ${sql.unsafe(whereClause)}
+      WHERE rh.organization_id = $1
     `
+
+    const params: any[] = [orgId]
+    let paramIndex = 2
+
+    if (type !== 'all') {
+      query += ` AND rh.reminder_type = $${paramIndex}`
+      countQuery += ` AND rh.reminder_type = $${paramIndex}`
+      params.push(type)
+      paramIndex++
+    }
+
+    if (status !== 'all') {
+      query += ` AND rh.status = $${paramIndex}`
+      countQuery += ` AND rh.status = $${paramIndex}`
+      params.push(status)
+      paramIndex++
+    }
+
+    if (clientId) {
+      query += ` AND rh.client_id = $${paramIndex}`
+      countQuery += ` AND rh.client_id = $${paramIndex}`
+      params.push(clientId)
+      paramIndex++
+    }
+
+    if (startDate) {
+      query += ` AND rh.sent_at >= $${paramIndex}`
+      countQuery += ` AND rh.sent_at >= $${paramIndex}`
+      params.push(startDate)
+      paramIndex++
+    }
+
+    if (endDate) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      query += ` AND rh.sent_at <= $${paramIndex}`
+      countQuery += ` AND rh.sent_at <= $${paramIndex}`
+      params.push(end.toISOString())
+      paramIndex++
+    }
+
+    query += ` ORDER BY rh.sent_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`
+
+    // Fetch history with client details
+    const history = await sql(query, [...params, limit, offset])
+
+    // Get total count for pagination
+    const countResult = await sql(countQuery, params)
 
     const total = parseInt(countResult[0]?.count || '0')
 
