@@ -733,9 +733,12 @@ export default function JobDetailPage() {
     )
   }
 
-  const totalHours = timeLogs.reduce((sum, log) => sum + (parseFloat(log.total_hours || '0')), 0)
-  const totalLaborCost = timeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
-  const totalBillingAmount = timeLogs.reduce((sum, log) => sum + (parseFloat(log.billing_amount || '0')), 0)
+  // Filter out rejected time logs for display and calculations
+  const activeTimeLogs = timeLogs.filter(log => log.status !== 'rejected')
+
+  const totalHours = activeTimeLogs.reduce((sum, log) => sum + (parseFloat(log.total_hours || '0')), 0)
+  const totalLaborCost = activeTimeLogs.reduce((sum, log) => sum + (parseFloat(log.labor_cost || '0')), 0)
+  const totalBillingAmount = activeTimeLogs.reduce((sum, log) => sum + (parseFloat(log.billing_amount || '0')), 0)
   const totalMaterialCost = materials.reduce((sum, mat) => sum + (parseFloat(mat.total_cost || '0')), 0)
 
   // Calculate project cost (always actual costs)
@@ -1175,11 +1178,11 @@ export default function JobDetailPage() {
             </form>
           )}
 
-          {timeLogs.length === 0 ? (
+          {activeTimeLogs.length === 0 ? (
             <p className="text-gray-500 text-center py-8">No time logs recorded</p>
           ) : (
             <div className="space-y-3">
-              {timeLogs.map((log) => (
+              {activeTimeLogs.map((log) => (
                 <div key={log.id} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
