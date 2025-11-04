@@ -67,15 +67,29 @@ export async function GET(
       return NextResponse.json({ error: 'Job not found or access denied' }, { status: 404 })
     }
 
-    // Fetch time logs with user names
+    // Fetch time logs with user names and calculated labor cost
     const timeLogs = await sql`
       SELECT
         tl.*,
         u.full_name as user_name,
-        approver.full_name as approved_by_name
+        approver.full_name as approved_by_name,
+        CASE
+          WHEN tl.labor_cost IS NOT NULL AND tl.labor_cost > 0 THEN tl.labor_cost
+          WHEN tl.total_hours IS NOT NULL AND tt.default_employee_hourly_rate IS NOT NULL
+            THEN (tl.total_hours * tt.default_employee_hourly_rate)
+          ELSE NULL
+        END as labor_cost,
+        CASE
+          WHEN tl.billing_amount IS NOT NULL AND tl.billing_amount > 0 THEN tl.billing_amount
+          WHEN tl.total_hours IS NOT NULL AND tt.client_hourly_rate IS NOT NULL
+            THEN (tl.total_hours * tt.client_hourly_rate)
+          ELSE NULL
+        END as billing_amount
       FROM job_time_logs tl
       LEFT JOIN users u ON tl.user_id = u.id
       LEFT JOIN users approver ON tl.approved_by_user_id = approver.id
+      LEFT JOIN jobs j ON tl.job_id = j.id
+      LEFT JOIN trade_types tt ON j.trade_type_id = tt.id
       WHERE tl.job_id = ${jobId}
       ORDER BY tl.created_at DESC
     `
