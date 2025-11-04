@@ -5,7 +5,7 @@ import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/trade-types - List all trade types for organization (mobile-friendly)
+// GET /api/trade-types - List all trade types for organization (mobile-friendly endpoint)
 export async function GET(req: Request) {
   try {
     // Try to get auth from Clerk (web) first
