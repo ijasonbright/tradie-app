@@ -27,10 +27,10 @@ async function runMigration() {
     console.log('Connected successfully!')
 
     // Read the migration file
-    const migrationPath = join(__dirname, '../packages/database/migrations/004_quotes_invoices.sql')
+    const migrationPath = join(__dirname, '../packages/database/migrations/0005_flimsy_galactus.sql')
     const migrationSQL = readFileSync(migrationPath, 'utf-8')
 
-    console.log('Running migration: 004_quotes_invoices.sql')
+    console.log('Running migration: 0005_flimsy_galactus.sql (Reminder System)')
     console.log('Executing migration SQL...')
 
     // Execute the migration

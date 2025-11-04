@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@tradie-app/database'
-import { invoices, clients } from '@tradie-app/database'
-import { eq, and } from 'drizzle-orm'
+import { neon } from '@neondatabase/serverless'
 import { auth } from '@clerk/nextjs/server'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 import { sendStatementEmail } from '../../../../../lib/reminders/send-statement-email'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/clients/[id]/send-statement
@@ -14,32 +15,79 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId, orgId } = await auth()
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
 
-    if (!userId || !orgId) {
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = request.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
+
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const sql = neon(process.env.DATABASE_URL!)
     const clientId = params.id
 
-    // Get client details
-    const [client] = await db
-      .select()
-      .from(clients)
-      .where(
-        and(
-          eq(clients.id, clientId),
-          eq(clients.organizationId, orgId)
-        )
-      )
-      .limit(1)
+    // Get user from database
+    const users = await sql`
+      SELECT id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+    `
 
-    if (!client) {
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const user = users[0]
+
+    // Get organization where user is a member
+    const orgs = await sql`
+      SELECT o.id
+      FROM organizations o
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE om.user_id = ${user.id}
+      AND om.status = 'active'
+      LIMIT 1
+    `
+
+    if (orgs.length === 0) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 404 })
+    }
+
+    const orgId = orgs[0].id
+
+    // Get client details
+    const clientResults = await sql`
+      SELECT * FROM clients
+      WHERE id = ${clientId}
+      AND organization_id = ${orgId}
+      LIMIT 1
+    `
+
+    if (clientResults.length === 0) {
       return NextResponse.json(
         { error: 'Client not found' },
         { status: 404 }
       )
     }
+
+    const client = clientResults[0]
 
     if (!client.email) {
       return NextResponse.json(
@@ -49,16 +97,12 @@ export async function POST(
     }
 
     // Get all invoices for this client
-    const clientInvoices = await db
-      .select()
-      .from(invoices)
-      .where(
-        and(
-          eq(invoices.organizationId, orgId),
-          eq(invoices.clientId, clientId)
-        )
-      )
-      .orderBy(invoices.dueDate)
+    const clientInvoices = await sql`
+      SELECT * FROM invoices
+      WHERE organization_id = ${orgId}
+      AND client_id = ${clientId}
+      ORDER BY due_date
+    `
 
     if (clientInvoices.length === 0) {
       return NextResponse.json(
@@ -68,15 +112,15 @@ export async function POST(
     }
 
     // Calculate total outstanding
-    const outstandingInvoices = clientInvoices.filter(inv =>
+    const outstandingInvoices = clientInvoices.filter((inv: any) =>
       inv.status === 'sent' ||
       inv.status === 'overdue' ||
       inv.status === 'partially_paid'
     )
 
-    const totalOutstanding = outstandingInvoices.reduce((sum, inv) => {
-      const total = parseFloat(inv.totalAmount)
-      const paid = parseFloat(inv.paidAmount || '0')
+    const totalOutstanding = outstandingInvoices.reduce((sum: number, inv: any) => {
+      const total = parseFloat(inv.total_amount)
+      const paid = parseFloat(inv.paid_amount || '0')
       return sum + (total - paid)
     }, 0)
 

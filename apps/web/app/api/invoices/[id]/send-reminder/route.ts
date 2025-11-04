@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@tradie-app/database'
-import { invoices, clients, organizations } from '@tradie-app/database'
-import { eq, and } from 'drizzle-orm'
+import { neon } from '@neondatabase/serverless'
 import { auth } from '@clerk/nextjs/server'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 import { sendReminderEmail } from '../../../../../lib/reminders/send-reminder-email'
 import { sendReminderSms } from '../../../../../lib/reminders/send-reminder-sms'
+
+export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/invoices/[id]/send-reminder
@@ -20,12 +21,34 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId, orgId } = await auth()
+    // Try to get auth from Clerk (web) first
+    let clerkUserId: string | null = null
 
-    if (!userId || !orgId) {
+    try {
+      const authResult = await auth()
+      clerkUserId = authResult.userId
+    } catch (error) {
+      // Clerk auth failed, try JWT token (mobile)
+    }
+
+    // If no Clerk auth, try mobile JWT token
+    if (!clerkUserId) {
+      const authHeader = request.headers.get('authorization')
+      const token = extractTokenFromHeader(authHeader)
+
+      if (token) {
+        const payload = await verifyMobileToken(token)
+        if (payload) {
+          clerkUserId = payload.clerkUserId
+        }
+      }
+    }
+
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const sql = neon(process.env.DATABASE_URL!)
     const invoiceId = params.id
     const body = await request.json()
     const method = body.method || 'email'
@@ -37,30 +60,81 @@ export async function POST(
       )
     }
 
-    // Get invoice with client details
-    const [invoiceData] = await db
-      .select({
-        invoice: invoices,
-        client: clients,
-      })
-      .from(invoices)
-      .innerJoin(clients, eq(invoices.clientId, clients.id))
-      .where(
-        and(
-          eq(invoices.id, invoiceId),
-          eq(invoices.organizationId, orgId)
-        )
-      )
-      .limit(1)
+    // Get user from database
+    const users = await sql`
+      SELECT id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+    `
 
-    if (!invoiceData) {
+    if (users.length === 0) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const user = users[0]
+
+    // Get organization where user is a member
+    const orgs = await sql`
+      SELECT o.id
+      FROM organizations o
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      WHERE om.user_id = ${user.id}
+      AND om.status = 'active'
+      LIMIT 1
+    `
+
+    if (orgs.length === 0) {
+      return NextResponse.json({ error: 'No organization found' }, { status: 404 })
+    }
+
+    const orgId = orgs[0].id
+
+    // Get invoice with client details
+    const invoiceResults = await sql`
+      SELECT
+        i.*,
+        c.id as client_id,
+        c.company_name as client_company_name,
+        c.first_name as client_first_name,
+        c.last_name as client_last_name,
+        c.email as client_email,
+        c.phone as client_phone,
+        c.mobile as client_mobile
+      FROM invoices i
+      INNER JOIN clients c ON i.client_id = c.id
+      WHERE i.id = ${invoiceId}
+      AND i.organization_id = ${orgId}
+      LIMIT 1
+    `
+
+    if (invoiceResults.length === 0) {
       return NextResponse.json(
         { error: 'Invoice not found' },
         { status: 404 }
       )
     }
 
-    const { invoice, client } = invoiceData
+    const row = invoiceResults[0]
+
+    // Reconstruct invoice and client objects
+    const invoice = {
+      id: row.id,
+      invoiceNumber: row.invoice_number,
+      totalAmount: row.total_amount,
+      paidAmount: row.paid_amount,
+      dueDate: row.due_date,
+      status: row.status,
+      organizationId: row.organization_id,
+      clientId: row.client_id,
+    }
+
+    const client = {
+      id: row.client_id,
+      companyName: row.client_company_name,
+      firstName: row.client_first_name,
+      lastName: row.client_last_name,
+      email: row.client_email,
+      phone: row.client_phone,
+      mobile: row.client_mobile,
+    }
 
     // Check if invoice is paid
     if (invoice.status === 'paid') {
@@ -134,7 +208,7 @@ export async function POST(
   } catch (error) {
     console.error('[API] Error in send-reminder endpoint:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
