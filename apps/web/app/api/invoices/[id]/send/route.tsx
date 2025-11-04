@@ -118,8 +118,43 @@ export async function POST(
         `
       }
 
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
-      paymentLink = `${appUrl}/public/invoices/${publicToken}`
+      // Create Stripe Payment Link if it doesn't exist
+      if (!invoice.stripe_payment_link_url) {
+        try {
+          const { createInvoicePaymentLink } = await import('@/lib/stripe/payment-links')
+
+          const { paymentLink: stripePaymentLink } = await createInvoicePaymentLink({
+            invoiceId: id,
+            invoiceNumber: invoice.invoice_number,
+            organizationId: invoice.organization_id,
+            amount: remainingAmount,
+            publicToken,
+            clientName,
+            description: invoice.job_title || undefined,
+          })
+
+          // Update invoice with payment link
+          await sql`
+            UPDATE invoices
+            SET
+              stripe_payment_link_id = ${stripePaymentLink.id},
+              stripe_payment_link_url = ${stripePaymentLink.url},
+              updated_at = NOW()
+            WHERE id = ${id}
+          `
+
+          // Use Stripe payment link in email
+          paymentLink = stripePaymentLink.url
+        } catch (error) {
+          console.error('Failed to create Stripe payment link:', error)
+          // Fallback to public invoice URL if Stripe fails
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
+          paymentLink = `${appUrl}/public/invoices/${publicToken}`
+        }
+      } else {
+        // Use existing Stripe payment link
+        paymentLink = invoice.stripe_payment_link_url
+      }
     }
 
     // Generate PDF with updated invoice data including public token
