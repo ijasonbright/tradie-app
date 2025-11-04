@@ -144,6 +144,14 @@ export default function MoreScreen() {
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => router.push('/documents')}
         />
+
+        <List.Item
+          title="Reminders & Statements"
+          description="Automated invoice reminders and monthly statements"
+          left={(props) => <List.Icon {...props} icon="bell-alert" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          onPress={() => router.push('/organization/reminders')}
+        />
       </View>
 
       <Divider />

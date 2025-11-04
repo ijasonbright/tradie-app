@@ -774,6 +774,93 @@ class ApiClient {
       }
     }>(endpoint)
   }
+
+  // ==================== REMINDERS ====================
+
+  /**
+   * Get reminder settings for current organization
+   */
+  async getReminderSettings() {
+    return this.request<any>('/reminders/settings')
+  }
+
+  /**
+   * Update reminder settings
+   */
+  async updateReminderSettings(data: any) {
+    return this.request<any>('/reminders/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  /**
+   * Get reminder history
+   */
+  async getReminderHistory(params?: {
+    type?: string
+    status?: string
+    clientId?: string
+    startDate?: string
+    endDate?: string
+    limit?: number
+    offset?: number
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.type) queryParams.append('type', params.type)
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.clientId) queryParams.append('clientId', params.clientId)
+    if (params?.startDate) queryParams.append('startDate', params.startDate)
+    if (params?.endDate) queryParams.append('endDate', params.endDate)
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.offset) queryParams.append('offset', params.offset.toString())
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/reminders/history?${query}` : '/reminders/history'
+
+    return this.request<{
+      history: any[]
+      pagination: { total: number; limit: number; offset: number; hasMore: boolean }
+    }>(endpoint)
+  }
+
+  /**
+   * Send test reminder
+   */
+  async sendTestReminder(data: { type: 'email' | 'sms'; testEmail?: string; testPhone?: string }) {
+    return this.request<{ success: boolean; message: string }>(
+      '/reminders/test-send',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Manually send reminder for specific invoice
+   */
+  async sendInvoiceReminder(invoiceId: string, method: 'email' | 'sms' | 'both' = 'email') {
+    return this.request<{ success: boolean }>(
+      `/invoices/${invoiceId}/send-reminder`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ method }),
+      }
+    )
+  }
+
+  /**
+   * Manually send statement to specific client
+   */
+  async sendClientStatement(clientId: string) {
+    return this.request<{ success: boolean; message: string }>(
+      `/clients/${clientId}/send-statement`,
+      {
+        method: 'POST',
+      }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()
