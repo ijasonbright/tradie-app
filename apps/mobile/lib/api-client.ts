@@ -533,6 +533,11 @@ class ApiClient {
     )
   }
 
+  // Trade Types API
+  async getTradeTypes() {
+    return this.request<{ tradeTypes: any[] }>('/trade-types')
+  }
+
   async removeTeamMember(memberId: string) {
     return this.request<{ success: boolean }>(
       `/organizations/members/${memberId}`,
