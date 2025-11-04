@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { checkInvoiceReminders } from '../../../../lib/reminders/check-invoice-reminders'
-import { checkMonthlyStatements } from '../../../../lib/reminders/check-monthly-statements'
+// TODO: Rewrite these functions to use raw Neon SQL instead of Drizzle ORM to fix build errors
+// import { checkInvoiceReminders } from '../../../../lib/reminders/check-invoice-reminders'
+// import { checkMonthlyStatements } from '../../../../lib/reminders/check-monthly-statements'
 
 /**
  * Cron job endpoint to check and send reminders
@@ -17,6 +18,9 @@ import { checkMonthlyStatements } from '../../../../lib/reminders/check-monthly-
  * }
  *
  * Security: Protected by CRON_SECRET environment variable
+ *
+ * NOTE: Temporarily disabled until reminder check functions are rewritten to use raw Neon SQL
+ * The existing functions use Drizzle ORM which causes build-time database connection errors.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -40,25 +44,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('[Cron] Starting reminder check job...')
-    const startTime = Date.now()
-
-    // Run both checks in parallel
-    const [invoiceResults, statementResults] = await Promise.all([
-      checkInvoiceReminders(),
-      checkMonthlyStatements(),
-    ])
-
-    const duration = Date.now() - startTime
-    console.log(`[Cron] Reminder check job completed in ${duration}ms`)
-
+    // Temporarily return not implemented
+    console.log('[Cron] Cron endpoint called but temporarily disabled')
     return NextResponse.json({
-      success: true,
-      duration,
-      invoiceReminders: invoiceResults,
-      monthlyStatements: statementResults,
+      success: false,
+      error: 'Cron job temporarily disabled - reminder functions need to be rewritten to use raw SQL instead of Drizzle ORM',
+      note: 'API endpoints for manual reminders (/api/invoices/[id]/send-reminder and /api/clients/[id]/send-statement) are still available',
       timestamp: new Date().toISOString(),
-    })
+    }, { status: 501 })
+
   } catch (error) {
     console.error('[Cron] Error in reminder check job:', error)
     return NextResponse.json(
