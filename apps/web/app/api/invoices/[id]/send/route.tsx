@@ -147,19 +147,16 @@ export async function POST(
               updated_at = NOW()
             WHERE id = ${id}
           `
-
-          // Use Stripe payment link in email
-          paymentLink = stripePaymentLink.url
         } catch (error) {
           console.error('Failed to create Stripe payment link:', error)
-          // Fallback to public invoice URL if Stripe fails
-          const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
-          paymentLink = `${appUrl}/public/invoices/${publicToken}`
+          // Continue even if Stripe fails - we'll still show the public invoice
         }
-      } else {
-        // Use existing Stripe payment link
-        paymentLink = invoice.stripe_payment_link_url
       }
+
+      // Always use public invoice URL in email (not direct Stripe link)
+      // This shows a nice invoice page with a "Pay Now" button
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://tradie-app-web.vercel.app'
+      paymentLink = `${appUrl}/public/invoices/${publicToken}`
     }
 
     // Generate PDF with updated invoice data including public token
