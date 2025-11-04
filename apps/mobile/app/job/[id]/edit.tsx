@@ -42,6 +42,8 @@ export default function EditJobScreen() {
   const [jobType, setJobType] = useState('repair')
   const [status, setStatus] = useState('scheduled')
   const [priority, setPriority] = useState('medium')
+  const [tradeTypeId, setTradeTypeId] = useState('')
+  const [assignedToUserId, setAssignedToUserId] = useState('')
   const [siteAddressLine1, setSiteAddressLine1] = useState('')
   const [siteAddressLine2, setSiteAddressLine2] = useState('')
   const [siteCity, setSiteCity] = useState('')
@@ -49,6 +51,10 @@ export default function EditJobScreen() {
   const [sitePostcode, setSitePostcode] = useState('')
   const [siteAccessNotes, setSiteAccessNotes] = useState('')
   const [quotedAmount, setQuotedAmount] = useState('')
+
+  // Trade Types and Team Members
+  const [tradeTypes, setTradeTypes] = useState<any[]>([])
+  const [teamMembers, setTeamMembers] = useState<any[]>([])
 
   // Fetch job data
   useEffect(() => {
@@ -58,8 +64,17 @@ export default function EditJobScreen() {
   const fetchJob = async () => {
     try {
       setLoading(true)
-      const response = await apiClient.getJob(id as string)
-      const job = response.job
+
+      // Fetch job, trade types, and team members in parallel
+      const [jobResponse, tradeTypesResponse, teamMembersResponse] = await Promise.all([
+        apiClient.getJob(id as string),
+        apiClient.getTradeTypes(),
+        apiClient.getTeamMembers(),
+      ])
+
+      const job = jobResponse.job
+      setTradeTypes(tradeTypesResponse.tradeTypes || [])
+      setTeamMembers(teamMembersResponse.members || [])
 
       // Populate form fields
       setTitle(job.title || '')
@@ -67,6 +82,8 @@ export default function EditJobScreen() {
       setJobType(job.job_type || 'repair')
       setStatus(job.status || 'scheduled')
       setPriority(job.priority || 'medium')
+      setTradeTypeId(job.trade_type_id || '')
+      setAssignedToUserId(job.assigned_to_user_id || '')
       setSiteAddressLine1(job.site_address_line1 || '')
       setSiteAddressLine2(job.site_address_line2 || '')
       setSiteCity(job.site_city || '')
@@ -98,6 +115,8 @@ export default function EditJobScreen() {
         jobType,
         status,
         priority,
+        tradeTypeId: tradeTypeId || null,
+        assignedToUserId: assignedToUserId || null,
         siteAddressLine1: siteAddressLine1.trim() || null,
         siteAddressLine2: siteAddressLine2.trim() || null,
         siteCity: siteCity.trim() || null,
@@ -234,6 +253,90 @@ export default function EditJobScreen() {
                   ]}
                 >
                   {option.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Trade Type */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Trade Type</Text>
+          <View style={styles.pickerContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                !tradeTypeId && styles.optionButtonActive,
+              ]}
+              onPress={() => setTradeTypeId('')}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  !tradeTypeId && styles.optionTextActive,
+                ]}
+              >
+                None
+              </Text>
+            </TouchableOpacity>
+            {tradeTypes.map((trade) => (
+              <TouchableOpacity
+                key={trade.id}
+                style={[
+                  styles.optionButton,
+                  tradeTypeId === trade.id && styles.optionButtonActive,
+                ]}
+                onPress={() => setTradeTypeId(trade.id)}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    tradeTypeId === trade.id && styles.optionTextActive,
+                  ]}
+                >
+                  {trade.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Assigned To */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Assigned To</Text>
+          <View style={styles.pickerContainer}>
+            <TouchableOpacity
+              style={[
+                styles.optionButton,
+                !assignedToUserId && styles.optionButtonActive,
+              ]}
+              onPress={() => setAssignedToUserId('')}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  !assignedToUserId && styles.optionTextActive,
+                ]}
+              >
+                Unassigned
+              </Text>
+            </TouchableOpacity>
+            {teamMembers.filter(m => m.status === 'active').map((member) => (
+              <TouchableOpacity
+                key={member.user_id}
+                style={[
+                  styles.optionButton,
+                  assignedToUserId === member.user_id && styles.optionButtonActive,
+                ]}
+                onPress={() => setAssignedToUserId(member.user_id)}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    assignedToUserId === member.user_id && styles.optionTextActive,
+                  ]}
+                >
+                  {member.full_name}
                 </Text>
               </TouchableOpacity>
             ))}
