@@ -65,16 +65,36 @@ export default function EditJobScreen() {
     try {
       setLoading(true)
 
-      // Fetch job, trade types, and team members in parallel
-      const [jobResponse, tradeTypesResponse, teamMembersResponse] = await Promise.all([
+      // Fetch job, trade types, and team members - handle each independently
+      const [jobResult, tradeTypesResult, teamMembersResult] = await Promise.allSettled([
         apiClient.getJob(id as string),
         apiClient.getTradeTypes(),
         apiClient.getTeamMembers(),
       ])
 
-      const job = jobResponse.job
-      setTradeTypes(tradeTypesResponse.tradeTypes || [])
-      setTeamMembers(teamMembersResponse.members || [])
+      // Check if job fetch failed (critical)
+      if (jobResult.status === 'rejected') {
+        console.error('Failed to fetch job:', jobResult.reason)
+        throw new Error('Failed to load job details')
+      }
+
+      const job = jobResult.value.job
+
+      // Handle trade types (non-critical)
+      if (tradeTypesResult.status === 'fulfilled') {
+        setTradeTypes(tradeTypesResult.value.tradeTypes || [])
+      } else {
+        console.error('Failed to fetch trade types:', tradeTypesResult.reason)
+        setTradeTypes([])
+      }
+
+      // Handle team members (non-critical)
+      if (teamMembersResult.status === 'fulfilled') {
+        setTeamMembers(teamMembersResult.value.members || [])
+      } else {
+        console.error('Failed to fetch team members:', teamMembersResult.reason)
+        setTeamMembers([])
+      }
 
       // Populate form fields
       setTitle(job.title || '')
@@ -93,7 +113,7 @@ export default function EditJobScreen() {
       setQuotedAmount(job.quoted_amount ? job.quoted_amount.toString() : '')
     } catch (err: any) {
       console.error('Failed to fetch job:', err)
-      Alert.alert('Error', 'Failed to load job details')
+      Alert.alert('Error', err.message || 'Failed to load job details')
     } finally {
       setLoading(false)
     }
