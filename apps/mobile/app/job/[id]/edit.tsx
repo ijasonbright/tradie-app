@@ -1,9 +1,8 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Modal, FlatList } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../../lib/api-client'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { Picker } from '@react-native-picker/picker'
 
 const JOB_TYPE_OPTIONS = [
   { value: 'repair', label: 'Repair' },
@@ -56,6 +55,10 @@ export default function EditJobScreen() {
   // Trade Types and Team Members
   const [tradeTypes, setTradeTypes] = useState<any[]>([])
   const [teamMembers, setTeamMembers] = useState<any[]>([])
+
+  // Modal states for dropdowns
+  const [showTradeTypeModal, setShowTradeTypeModal] = useState(false)
+  const [showAssignedToModal, setShowAssignedToModal] = useState(false)
 
   // Fetch job data
   useEffect(() => {
@@ -283,35 +286,29 @@ export default function EditJobScreen() {
         {/* Trade Type */}
         <View style={styles.section}>
           <Text style={styles.label}>Trade Type</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={tradeTypeId}
-              onValueChange={(value) => setTradeTypeId(value)}
-              style={styles.picker}
-            >
-              <Picker.Item label="None" value="" />
-              {tradeTypes.map((trade) => (
-                <Picker.Item key={trade.id} label={trade.name} value={trade.id} />
-              ))}
-            </Picker>
-          </View>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowTradeTypeModal(true)}
+          >
+            <Text style={styles.dropdownButtonText}>
+              {tradeTypes.find(t => t.id === tradeTypeId)?.name || 'None'}
+            </Text>
+            <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
+          </TouchableOpacity>
         </View>
 
         {/* Assigned To */}
         <View style={styles.section}>
           <Text style={styles.label}>Assigned To</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={assignedToUserId}
-              onValueChange={(value) => setAssignedToUserId(value)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Unassigned" value="" />
-              {teamMembers.filter(m => m.status === 'active').map((member) => (
-                <Picker.Item key={member.user_id} label={member.full_name} value={member.user_id} />
-              ))}
-            </Picker>
-          </View>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowAssignedToModal(true)}
+          >
+            <Text style={styles.dropdownButtonText}>
+              {teamMembers.find(m => m.user_id === assignedToUserId)?.full_name || 'Unassigned'}
+            </Text>
+            <MaterialCommunityIcons name="chevron-down" size={24} color="#666" />
+          </TouchableOpacity>
         </View>
 
         {/* Site Address */}
@@ -416,6 +413,96 @@ export default function EditJobScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Trade Type Modal */}
+      <Modal
+        visible={showTradeTypeModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowTradeTypeModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Trade Type</Text>
+              <TouchableOpacity onPress={() => setShowTradeTypeModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={[{ id: '', name: 'None' }, ...tradeTypes]}
+              keyExtractor={(item) => item.id || 'none'}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalItem,
+                    tradeTypeId === item.id && styles.modalItemSelected
+                  ]}
+                  onPress={() => {
+                    setTradeTypeId(item.id)
+                    setShowTradeTypeModal(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.modalItemText,
+                    tradeTypeId === item.id && styles.modalItemTextSelected
+                  ]}>
+                    {item.name}
+                  </Text>
+                  {tradeTypeId === item.id && (
+                    <MaterialCommunityIcons name="check" size={20} color="#2563eb" />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Assigned To Modal */}
+      <Modal
+        visible={showAssignedToModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAssignedToModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Assign To</Text>
+              <TouchableOpacity onPress={() => setShowAssignedToModal(false)}>
+                <MaterialCommunityIcons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={[{ user_id: '', full_name: 'Unassigned' }, ...teamMembers.filter(m => m.status === 'active')]}
+              keyExtractor={(item) => item.user_id || 'unassigned'}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.modalItem,
+                    assignedToUserId === item.user_id && styles.modalItemSelected
+                  ]}
+                  onPress={() => {
+                    setAssignedToUserId(item.user_id)
+                    setShowAssignedToModal(false)
+                  }}
+                >
+                  <Text style={[
+                    styles.modalItemText,
+                    assignedToUserId === item.user_id && styles.modalItemTextSelected
+                  ]}>
+                    {item.full_name}
+                  </Text>
+                  {assignedToUserId === item.user_id && (
+                    <MaterialCommunityIcons name="check" size={20} color="#2563eb" />
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -496,15 +583,66 @@ const styles = StyleSheet.create({
   optionTextActive: {
     color: '#fff',
   },
-  pickerWrapper: {
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    overflow: 'hidden',
+    padding: 14,
+    minHeight: 50,
   },
-  picker: {
-    height: 50,
+  dropdownButtonText: {
+    fontSize: 16,
+    color: '#111',
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5e5',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111',
+  },
+  modalItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalItemSelected: {
+    backgroundColor: '#f0f7ff',
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: '#333',
+    flex: 1,
+  },
+  modalItemTextSelected: {
+    color: '#2563eb',
+    fontWeight: '600',
   },
   row: {
     flexDirection: 'row',
