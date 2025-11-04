@@ -53,10 +53,16 @@ export async function POST(
 
     const body = await req.json()
 
-    // Validate required fields
-    if (!body.paymentDate || !body.amount || !body.paymentMethod) {
+    // Validate required fields (accept both camelCase and snake_case for compatibility)
+    const paymentDate = body.paymentDate || body.payment_date
+    const amount = body.amount
+    const paymentMethod = body.paymentMethod || body.payment_method
+    const referenceNumber = body.referenceNumber || body.reference_number
+    const notes = body.notes
+
+    if (!paymentDate || !amount || !paymentMethod) {
       return NextResponse.json(
-        { error: 'Missing required fields: paymentDate, amount, paymentMethod' },
+        { error: 'Missing required fields: paymentDate (or payment_date), amount, paymentMethod (or payment_method)' },
         { status: 400 }
       )
     }
@@ -78,7 +84,7 @@ export async function POST(
     const invoice = invoices[0]
 
     // Validate payment amount
-    const paymentAmount = parseFloat(body.amount)
+    const paymentAmount = parseFloat(amount)
     const totalAmount = parseFloat(invoice.total_amount)
     const paidAmount = parseFloat(invoice.paid_amount || '0')
     const remainingBalance = totalAmount - paidAmount
@@ -101,11 +107,11 @@ export async function POST(
         reference_number, notes, recorded_by_user_id, created_at
       ) VALUES (
         ${invoiceId},
-        ${body.paymentDate},
+        ${paymentDate},
         ${paymentAmount},
-        ${body.paymentMethod},
-        ${body.referenceNumber || null},
-        ${body.notes || null},
+        ${paymentMethod},
+        ${referenceNumber || null},
+        ${notes || null},
         ${user.id},
         NOW()
       )
