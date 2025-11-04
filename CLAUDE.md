@@ -51,6 +51,188 @@ Version Control: Git
 Deployment: Vercel (backend), EAS Build (mobile)
 Package Manager: npm or pnpm
 
+## CRITICAL: API Development Patterns & Troubleshooting
+
+### Mobile API Authentication Pattern
+
+**IMPORTANT:** When creating new API endpoints that need to be accessed by the mobile app, you MUST follow these patterns exactly:
+
+#### 1. Database Queries: Use Raw Neon SQL (NOT Drizzle ORM)
+
+**WHY:** Drizzle ORM tries to connect to the database at build time, causing build failures on Vercel with "Database connection string format" errors.
+
+**CORRECT Pattern:**
+```typescript
+import { neon } from '@neondatabase/serverless'
+
+export async function GET(request: NextRequest) {
+  const sql = neon(process.env.DATABASE_URL!)
+
+  const results = await sql`
+    SELECT * FROM jobs WHERE id = ${jobId}
+  `
+
+  return NextResponse.json(results[0])
+}
+```
+
+**WRONG Pattern (DO NOT USE):**
+```typescript
+import { db } from '@tradie-app/database'
+import { jobs } from '@tradie-app/database'
+
+export async function GET(request: NextRequest) {
+  const results = await db.select().from(jobs).where(eq(jobs.id, jobId))
+  // ❌ This will fail at build time!
+}
+```
+
+**Note:** Drizzle ORM is ONLY used for schema definitions in `/packages/database/schema/`. All API routes MUST use raw Neon SQL.
+
+#### 2. Dual Authentication: Clerk (Web) + JWT (Mobile)
+
+All mobile API endpoints must support BOTH authentication methods:
+
+```typescript
+import { auth } from '@clerk/nextjs/server'
+import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+
+export async function GET(request: NextRequest) {
+  // Try Clerk auth first (web)
+  let clerkUserId: string | null = null
+
+  try {
+    const authResult = await auth()
+    clerkUserId = authResult.userId
+  } catch (error) {
+    // Clerk auth failed, try JWT token (mobile)
+  }
+
+  // If no Clerk auth, try mobile JWT token
+  if (!clerkUserId) {
+    const authHeader = request.headers.get('authorization')
+    const token = extractTokenFromHeader(authHeader)
+
+    if (token) {
+      const payload = await verifyMobileToken(token)
+      if (payload) {
+        clerkUserId = payload.clerkUserId
+      }
+    }
+  }
+
+  if (!clerkUserId) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Continue with authenticated logic...
+}
+```
+
+#### 3. Middleware Configuration: Register Mobile API Routes
+
+**CRITICAL:** When you create a new API endpoint that needs mobile access, you MUST add it to the middleware's `isMobileApiRoute` matcher.
+
+**Location:** `/apps/web/middleware.ts`
+
+**How to fix:**
+```typescript
+// API routes that handle their own JWT authentication (for mobile)
+const isMobileApiRoute = createRouteMatcher([
+  '/api/jobs(.*)',
+  '/api/clients(.*)',
+  '/api/appointments(.*)',
+  '/api/invoices(.*)',
+  '/api/payments(.*)',
+  '/api/quotes(.*)',
+  '/api/expenses(.*)',
+  '/api/users/me(.*)',
+  '/api/organizations/current(.*)',
+  '/api/organizations/members(.*)',
+  '/api/docs(.*)',
+  '/api/reminders(.*)', // ← ADD YOUR NEW ENDPOINT HERE
+])
+```
+
+**What happens if you forget this:**
+- Endpoint returns 404 instead of 401/200
+- Clerk middleware blocks the request before it reaches your handler
+- Mobile app gets "API Error: 404" even though the endpoint exists
+- Web requests with Clerk auth might work, but mobile JWT auth fails
+
+#### 4. API Response Format: Use snake_case
+
+**WHY:** Database columns use snake_case, and mobile app expects snake_case from API responses.
+
+**CORRECT:**
+```typescript
+return NextResponse.json({
+  organization_id: orgId,
+  invoice_reminders_enabled: true,
+  reminder_days_before_due: '7,3,1',
+  created_at: new Date().toISOString(),
+})
+```
+
+**WRONG:**
+```typescript
+return NextResponse.json({
+  organizationId: orgId,          // ❌ camelCase
+  invoiceRemindersEnabled: true,  // ❌ camelCase
+  reminderDaysBeforeDue: '7,3,1', // ❌ camelCase
+  createdAt: new Date().toISOString(),
+})
+```
+
+**Note:** The mobile app sends camelCase in request bodies but expects snake_case in responses.
+
+### Troubleshooting Checklist: "Mobile App Getting 404 Errors"
+
+When the mobile app reports 404 errors on an API endpoint, check in this order:
+
+1. **Does the endpoint use Drizzle ORM?**
+   - Search for `import { db }` or `import.*from '@tradie-app/database'`
+   - If yes: Rewrite to use raw Neon SQL (`import { neon } from '@neondatabase/serverless'`)
+
+2. **Is the endpoint in middleware.ts?**
+   - Open `/apps/web/middleware.ts`
+   - Check if your endpoint pattern is in `isMobileApiRoute` matcher
+   - If not: Add it (e.g., `'/api/your-endpoint(.*)'`)
+
+3. **Does the endpoint support JWT auth?**
+   - Check for dual auth pattern (Clerk + JWT)
+   - Must have `extractTokenFromHeader` and `verifyMobileToken` logic
+   - Look at `/api/jobs/route.ts` or `/api/clients/route.ts` for reference
+
+4. **Is the response in snake_case?**
+   - Check all `NextResponse.json()` calls
+   - Database results are already snake_case, don't transform them
+   - Default/fallback objects must use snake_case
+
+5. **Has the deployment completed?**
+   - Build succeeds locally: `cd apps/web && npm run build`
+   - Push to trigger Vercel deployment
+   - Test endpoint: `curl -I https://tradie-app-web.vercel.app/api/your-endpoint`
+   - Should return 401 (Unauthorized) without auth, NOT 404
+
+### Reference: Working Example
+
+See `/apps/web/app/api/reminders/settings/route.ts` for a complete example that follows all patterns:
+- Uses raw Neon SQL (not Drizzle)
+- Implements dual authentication
+- Returns snake_case responses
+- Registered in middleware.ts
+
+### Common Error Messages and Solutions
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Database connection string format for neon() should be: postgresql://...` | Drizzle ORM imported in API route | Replace with raw Neon SQL |
+| `API Error: 404` from mobile app | Endpoint not in middleware.ts | Add to `isMobileApiRoute` matcher |
+| `x-clerk-auth-status: signed-out` with 404 | Middleware blocking request | Add to `isMobileApiRoute` matcher |
+| Mobile app can't read fields | Response using camelCase | Use snake_case in API responses |
+| Build succeeds but 404 in production | Deployment not complete or cached | Wait for deployment, check Vercel logs |
+
 
 Multi-Tenancy Architecture
 Organization Structure
