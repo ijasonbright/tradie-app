@@ -43,16 +43,6 @@ export async function POST(
 
     const { id: invoiceId } = await params
 
-    // Parse body (may be empty for full payment)
-    let customAmount: number | undefined
-    try {
-      const body = await req.json()
-      customAmount = body.amount
-    } catch (error) {
-      // No body or invalid JSON - use full amount
-      customAmount = undefined
-    }
-
     // Get user's internal ID
     const users = await sql`SELECT id FROM users WHERE clerk_user_id = ${userId} LIMIT 1`
     if (users.length === 0) {
@@ -63,15 +53,15 @@ export async function POST(
     // Get the invoice (with organization membership check)
     const invoices = await sql`
       SELECT
-        i.*,
+        inv.*,
         c.first_name,
         c.last_name,
         c.company_name,
         c.is_company
-      FROM invoices i
-      JOIN clients c ON i.client_id = c.id
-      JOIN organization_members om ON i.organization_id = om.organization_id
-      WHERE i.id = ${invoiceId}
+      FROM invoices inv
+      JOIN clients c ON inv.client_id = c.id
+      JOIN organization_members om ON inv.organization_id = om.organization_id
+      WHERE inv.id = ${invoiceId}
         AND om.user_id = ${user.id}
         AND om.status = 'active'
     `
@@ -82,28 +72,24 @@ export async function POST(
 
     const invoice = invoices[0]
 
-    // Calculate amount to request
-    const totalAmount = parseFloat(invoice.total_amount)
-    const paidAmount = parseFloat(invoice.paid_amount || '0')
-    const remainingAmount = totalAmount - paidAmount
-
-    if (remainingAmount <= 0) {
+    // Check if invoice is already paid
+    if (invoice.status === 'paid') {
       return NextResponse.json(
-        { error: 'Invoice is already fully paid' },
+        { error: 'This invoice has already been paid' },
         { status: 400 }
       )
     }
 
-    // Use custom amount if provided, otherwise use remaining amount
-    let paymentAmount = remainingAmount
-    if (customAmount !== undefined) {
-      if (customAmount <= 0 || customAmount > remainingAmount) {
-        return NextResponse.json(
-          { error: 'Invalid payment amount' },
-          { status: 400 }
-        )
-      }
-      paymentAmount = customAmount
+    // Calculate amount to pay (total - already paid)
+    const totalAmount = parseFloat(invoice.total_amount || '0')
+    const paidAmount = parseFloat(invoice.paid_amount || '0')
+    const amountDue = totalAmount - paidAmount
+
+    if (amountDue <= 0) {
+      return NextResponse.json(
+        { error: 'No amount due on this invoice' },
+        { status: 400 }
+      )
     }
 
     // Generate public token if not already exists
@@ -122,20 +108,15 @@ export async function POST(
       ? invoice.company_name
       : `${invoice.first_name} ${invoice.last_name}`
 
-    // Create description
-    const description = customAmount
-      ? `Partial payment for Invoice #${invoice.invoice_number}`
-      : `Payment for Invoice #${invoice.invoice_number}`
-
     // Create Stripe Payment Link
     const { paymentLink } = await createInvoicePaymentLink({
       invoiceId,
       invoiceNumber: invoice.invoice_number,
       organizationId: invoice.organization_id,
-      amount: paymentAmount,
+      amount: amountDue,
       publicToken,
       clientName,
-      description,
+      description: invoice.description || undefined,
     })
 
     // Update invoice with payment link URL
@@ -154,10 +135,8 @@ export async function POST(
         id: paymentLink.id,
         url: paymentLink.url,
       },
-      publicUrl: `${process.env.NEXT_PUBLIC_APP_URL}/public/invoices/${publicToken}`,
-      paymentAmount,
-      remainingAmount,
-      isPartialPayment: customAmount ? true : false,
+      publicUrl: `${process.env.NEXT_PUBLIC_APP_URL}/share/invoices/${publicToken}`,
+      amountDue,
     })
   } catch (error) {
     console.error('Error creating invoice payment link:', error)
