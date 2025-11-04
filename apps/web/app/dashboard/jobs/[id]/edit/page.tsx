@@ -9,6 +9,7 @@ interface Job {
   organization_id: string
   client_id: string
   trade_type_id: string | null
+  assigned_to_user_id: string | null
   pricing_type: string
   title: string
   description: string | null
@@ -36,11 +37,20 @@ interface TradeType {
   default_employee_hourly_rate: string
 }
 
+interface TeamMember {
+  id: string
+  user_id: string
+  full_name: string
+  role: string
+  status: string
+}
+
 export default function EditJobPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const jobId = params.id
   const [job, setJob] = useState<Job | null>(null)
   const [tradeTypes, setTradeTypes] = useState<TradeType[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
@@ -51,6 +61,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
     priority: 'medium',
     pricingType: 'time_and_materials',
     tradeTypeId: '',
+    assignedToUserId: '',
     siteAddressLine1: '',
     siteAddressLine2: '',
     siteCity: '',
@@ -84,6 +95,13 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
         console.log('Trade types count:', tradeTypesData.tradeTypes?.length || 0)
         setTradeTypes(tradeTypesData.tradeTypes || [])
 
+        // Fetch team members
+        const teamRes = await fetch('/api/organizations/members')
+        if (teamRes.ok) {
+          const teamData = await teamRes.json()
+          setTeamMembers(teamData.members || [])
+        }
+
         // Pre-fill form
         setFormData({
           title: jobData.title || '',
@@ -93,6 +111,7 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
           priority: jobData.priority || 'medium',
           pricingType: jobData.pricing_type || 'time_and_materials',
           tradeTypeId: jobData.trade_type_id || '',
+          assignedToUserId: jobData.assigned_to_user_id || '',
           siteAddressLine1: jobData.site_address_line1 || '',
           siteAddressLine2: jobData.site_address_line2 || '',
           siteCity: jobData.site_city || '',
@@ -318,6 +337,25 @@ export default function EditJobPage({ params }: { params: { id: string } }) {
                       ⚠️ This job has no trade type set. Time tracking will show $0.00 costs until a trade type is selected.
                     </span>
                   )}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+                <select
+                  value={formData.assignedToUserId}
+                  onChange={(e) => setFormData({ ...formData, assignedToUserId: e.target.value })}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                >
+                  <option value="">Unassigned</option>
+                  {teamMembers.filter(m => m.status === 'active').map((member) => (
+                    <option key={member.user_id} value={member.user_id}>
+                      {member.full_name} ({member.role})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Select which team member is responsible for this job.
                 </p>
               </div>
 

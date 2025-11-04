@@ -59,13 +59,17 @@ export async function GET(
         o.name as organization_name,
         c.company_name, c.first_name, c.last_name, c.is_company, c.email as client_email, c.phone as client_phone, c.mobile as client_mobile,
         u.full_name as created_by_name,
-        a.full_name as assigned_to_name
+        a.full_name as assigned_to_name,
+        tt.name as trade_type_name,
+        tt.client_hourly_rate as trade_client_hourly_rate,
+        tt.default_employee_hourly_rate as trade_employee_hourly_rate
       FROM jobs j
       INNER JOIN organizations o ON j.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
       INNER JOIN clients c ON j.client_id = c.id
       LEFT JOIN users u ON j.created_by_user_id = u.id
       LEFT JOIN users a ON j.assigned_to_user_id = a.id
+      LEFT JOIN trade_types tt ON j.trade_type_id = tt.id
       WHERE j.id = ${id}
       AND om.user_id = ${user.id}
       AND om.status = 'active'
