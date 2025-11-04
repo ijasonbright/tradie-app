@@ -677,6 +677,69 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_team_member_locations_organization_id ON team_member_locations(organization_id)`,
       `CREATE INDEX IF NOT EXISTS idx_team_member_locations_last_updated ON team_member_locations(last_updated_at DESC)`,
       `CREATE INDEX IF NOT EXISTS idx_team_member_locations_active ON team_member_locations(organization_id, is_active, last_updated_at) WHERE is_active = true`,
+
+      // ========== REMINDER SYSTEM ==========
+      // Create reminder_settings table for automated invoice reminders and monthly statements
+      `CREATE TABLE IF NOT EXISTS reminder_settings (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) NOT NULL UNIQUE,
+        invoice_reminders_enabled BOOLEAN DEFAULT true NOT NULL,
+        reminder_days_before_due TEXT DEFAULT '7,3,1',
+        reminder_days_after_due TEXT DEFAULT '1,7,14',
+        invoice_reminder_method VARCHAR(20) DEFAULT 'email' NOT NULL,
+        enable_sms_escalation BOOLEAN DEFAULT true NOT NULL,
+        sms_escalation_days_overdue INTEGER DEFAULT 14 NOT NULL,
+        monthly_statements_enabled BOOLEAN DEFAULT true NOT NULL,
+        statement_day_of_month INTEGER DEFAULT 1 NOT NULL,
+        statement_method VARCHAR(20) DEFAULT 'email' NOT NULL,
+        include_only_outstanding BOOLEAN DEFAULT true NOT NULL,
+        invoice_reminder_email_template_id UUID,
+        invoice_reminder_sms_template_id UUID,
+        monthly_statement_email_template_id UUID,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create reminder_history table for audit trail
+      `CREATE TABLE IF NOT EXISTS reminder_history (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) NOT NULL,
+        reminder_type VARCHAR(50) NOT NULL,
+        client_id UUID NOT NULL,
+        invoice_id UUID,
+        sent_via VARCHAR(20) NOT NULL,
+        recipient_email VARCHAR(255),
+        recipient_phone VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'sent' NOT NULL,
+        error_message TEXT,
+        days_before_due INTEGER,
+        invoice_amount VARCHAR(50),
+        credits_used INTEGER DEFAULT 0,
+        sms_message_id UUID,
+        sent_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        delivered_at TIMESTAMP
+      )`,
+
+      // Create client_reminder_preferences table (future feature for opt-outs)
+      `CREATE TABLE IF NOT EXISTS client_reminder_preferences (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id) NOT NULL,
+        client_id UUID NOT NULL,
+        disable_invoice_reminders BOOLEAN DEFAULT false NOT NULL,
+        disable_monthly_statements BOOLEAN DEFAULT false NOT NULL,
+        preferred_reminder_method VARCHAR(20),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for reminder system
+      `CREATE INDEX IF NOT EXISTS idx_reminder_settings_organization_id ON reminder_settings(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_reminder_history_organization_id ON reminder_history(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_reminder_history_sent_at ON reminder_history(sent_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_reminder_history_client_id ON reminder_history(client_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_reminder_history_invoice_id ON reminder_history(invoice_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_client_reminder_preferences_organization_id ON client_reminder_preferences(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_client_reminder_preferences_client_id ON client_reminder_preferences(client_id)`,
     ]
 
     const results = []

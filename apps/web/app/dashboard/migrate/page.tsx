@@ -55,6 +55,7 @@ export default function MigratePage() {
           <li>✓ Comprehensive pricing fields - First hour rates, callout fees, after hours pricing</li>
           <li>✓ <strong className="text-green-600">NEW: Calendar & Appointments</strong> - Schedule jobs, meetings, and site visits</li>
           <li>✓ <strong className="text-green-600">NEW: Expense Management</strong> - Submit, track, and approve business expenses</li>
+          <li>✓ <strong className="text-blue-600">NEW: Automated Reminders</strong> - Invoice reminders and monthly statements with email/SMS</li>
         </ul>
 
         <div className="mb-6 rounded-lg bg-yellow-50 p-4">
