@@ -35,6 +35,7 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/organizations/members(.*)',
   '/api/docs(.*)',
   '/api/reminders(.*)',
+  '/api/form-builder(.*)', // Temporary: debugging Vercel 404 issue
   // Note: /api/completion-forms is for web dashboard (uses Clerk auth)
   // Mobile completion forms use /api/jobs/[id]/completion-form (covered by /api/jobs)
 ])
