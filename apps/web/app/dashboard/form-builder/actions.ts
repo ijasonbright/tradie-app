@@ -66,17 +66,31 @@ export async function updateQuestion(
       }
     }
 
+    // Check if template is global or user has access to organization-specific template
     const accessCheck = await sql`
       SELECT q.id
       FROM completion_form_template_questions q
       JOIN completion_form_template_groups g ON q.group_id = g.id
       JOIN completion_form_templates t ON g.template_id = t.id
-      JOIN organizations o ON t.organization_id = o.id
-      JOIN organization_members om ON o.id = om.organization_id
-      JOIN users u ON om.user_id = u.id
       WHERE q.id = ${questionId}
-        AND u.clerk_user_id = ${authResult.userId}
-        AND om.role IN ('owner', 'admin')
+        AND (
+          -- Global templates can be edited by any owner/admin
+          (t.is_global = true AND EXISTS (
+            SELECT 1 FROM organization_members om
+            JOIN users u ON om.user_id = u.id
+            WHERE u.clerk_user_id = ${authResult.userId}
+              AND om.role IN ('owner', 'admin')
+          ))
+          -- Organization-specific templates can only be edited by that org's owner/admin
+          OR (t.is_global = false AND EXISTS (
+            SELECT 1 FROM organizations o
+            JOIN organization_members om ON o.id = om.organization_id
+            JOIN users u ON om.user_id = u.id
+            WHERE t.organization_id = o.id
+              AND u.clerk_user_id = ${authResult.userId}
+              AND om.role IN ('owner', 'admin')
+          ))
+        )
     `
     console.log('[updateQuestion] Full access check result:', accessCheck)
 
@@ -151,17 +165,31 @@ export async function updateAnswerOptions(
     const sql = neon(process.env.DATABASE_URL!)
 
     console.log('[updateAnswerOptions] Checking access for question:', questionId)
+    // Check if template is global or user has access to organization-specific template
     const accessCheck = await sql`
       SELECT q.id
       FROM completion_form_template_questions q
       JOIN completion_form_template_groups g ON q.group_id = g.id
       JOIN completion_form_templates t ON g.template_id = t.id
-      JOIN organizations o ON t.organization_id = o.id
-      JOIN organization_members om ON o.id = om.organization_id
-      JOIN users u ON om.user_id = u.id
       WHERE q.id = ${questionId}
-        AND u.clerk_user_id = ${authResult.userId}
-        AND om.role IN ('owner', 'admin')
+        AND (
+          -- Global templates can be edited by any owner/admin
+          (t.is_global = true AND EXISTS (
+            SELECT 1 FROM organization_members om
+            JOIN users u ON om.user_id = u.id
+            WHERE u.clerk_user_id = ${authResult.userId}
+              AND om.role IN ('owner', 'admin')
+          ))
+          -- Organization-specific templates can only be edited by that org's owner/admin
+          OR (t.is_global = false AND EXISTS (
+            SELECT 1 FROM organizations o
+            JOIN organization_members om ON o.id = om.organization_id
+            JOIN users u ON om.user_id = u.id
+            WHERE t.organization_id = o.id
+              AND u.clerk_user_id = ${authResult.userId}
+              AND om.role IN ('owner', 'admin')
+          ))
+        )
     `
 
     if (accessCheck.length === 0) {
