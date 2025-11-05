@@ -13,6 +13,7 @@ interface FileFieldProps {
 
 export function FileField({ question, value, onChange, jobId }: FileFieldProps) {
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
 
   // Convert value to array for consistent handling
   const photos = Array.isArray(value) ? value : value ? [value] : []
@@ -56,9 +57,13 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
   const uploadImages = async (uris: string[]) => {
     try {
       setIsUploading(true)
+      setUploadProgress({ current: 0, total: uris.length })
       const uploadedUrls: string[] = []
 
-      for (const uri of uris) {
+      for (let i = 0; i < uris.length; i++) {
+        const uri = uris[i]
+        setUploadProgress({ current: i + 1, total: uris.length })
+
         const response = await apiClient.uploadCompletionFormPhoto(
           jobId,
           uri,
@@ -79,6 +84,7 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
       Alert.alert('Error', 'Failed to upload photos')
     } finally {
       setIsUploading(false)
+      setUploadProgress(null)
     }
   }
 
@@ -119,7 +125,14 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
         disabled={isUploading}
       >
         {isUploading ? (
-          <ActivityIndicator color="#007AFF" />
+          <>
+            <ActivityIndicator color="#007AFF" />
+            {uploadProgress && (
+              <Text style={styles.uploadProgressText}>
+                Uploading {uploadProgress.current} of {uploadProgress.total}...
+              </Text>
+            )}
+          </>
         ) : (
           <>
             <Text style={styles.uploadIcon}>📷</Text>
@@ -162,6 +175,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: '600',
+  },
+  uploadProgressText: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginTop: 8,
   },
   image: {
     width: 200,

@@ -160,26 +160,41 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   const { width, height } = page.getSize()
   let yPosition = height - 50
 
-  // Header - Logo (if available)
-  if (logoImage) {
-    page.drawImage(logoImage, {
-      x: 50,
-      y: yPosition - logoHeight,
-      width: logoWidth,
-      height: logoHeight,
-    })
-    yPosition -= logoHeight + 20
-  }
-
-  // Header - Company Name
-  page.drawText(organization.name, {
-    x: 50,
-    y: yPosition,
-    size: logoImage ? 18 : 24,
-    font: boldFont,
+  // Blue header banner (like Asset Register example)
+  const bannerHeight = 80
+  page.drawRectangle({
+    x: 0,
+    y: height - bannerHeight,
+    width: width,
+    height: bannerHeight,
     color: primaryColor,
   })
-  yPosition -= 30
+
+  // Logo in banner (if available)
+  if (logoImage) {
+    const bannerLogoHeight = Math.min(logoHeight, 50)
+    const bannerLogoWidth = logoWidth * (bannerLogoHeight / logoHeight)
+
+    page.drawImage(logoImage, {
+      x: 50,
+      y: height - bannerHeight + ((bannerHeight - bannerLogoHeight) / 2),
+      width: bannerLogoWidth,
+      height: bannerLogoHeight,
+    })
+  }
+
+  // Company name in banner (white text)
+  const companyNameX = logoImage ? 50 + logoWidth + 20 : 50
+  page.drawText(organization.name, {
+    x: companyNameX,
+    y: height - 45,
+    size: 20,
+    font: boldFont,
+    color: rgb(1, 1, 1), // White
+  })
+
+  // Update yPosition to after banner
+  yPosition = height - bannerHeight - 20
 
   // Company details
   const companyDetails = []

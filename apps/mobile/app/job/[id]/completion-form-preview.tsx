@@ -178,16 +178,24 @@ export default function CompletionFormPreviewScreen() {
         )
 
       case 'file':
-        if (typeof answer === 'string' && answer.startsWith('http')) {
+        // Handle both single URL (legacy) and array of URLs (new multi-photo)
+        const photoUrls = Array.isArray(answer) ? answer : (typeof answer === 'string' && answer.startsWith('http')) ? [answer] : []
+
+        if (photoUrls.length > 0) {
           return (
-            <Image
-              source={{ uri: answer }}
-              style={styles.fileImage}
-              resizeMode="cover"
-            />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filePhotosScroll}>
+              {photoUrls.map((url: string, index: number) => (
+                <Image
+                  key={index}
+                  source={{ uri: url }}
+                  style={styles.fileImage}
+                  resizeMode="cover"
+                />
+              ))}
+            </ScrollView>
           )
         }
-        return <Text style={styles.answerText}>{answer}</Text>
+        return <Text style={styles.answerText}>{typeof answer === 'string' ? answer : JSON.stringify(answer)}</Text>
 
       case 'date':
         if (answer) {
@@ -568,10 +576,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  filePhotosScroll: {
+    marginRight: -12, // Offset container padding
+  },
   fileImage: {
-    width: '100%',
+    width: 200,
     height: 200,
     borderRadius: 8,
+    marginRight: 8,
   },
   photosGrid: {
     flexDirection: 'row',
