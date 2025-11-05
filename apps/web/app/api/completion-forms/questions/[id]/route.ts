@@ -39,52 +39,49 @@ export async function PUT(
       )
     }
 
-    // Build update fields
-    const updateFields: any = {}
+    // Build update parts - we'll construct the query conditionally
+    const updates: any[] = []
 
     if (body.question_text !== undefined) {
-      updateFields.question_text = body.question_text
+      updates.push({ field: 'question_text', value: body.question_text })
     }
 
     if (body.field_type !== undefined) {
-      updateFields.field_type = body.field_type
+      updates.push({ field: 'field_type', value: body.field_type })
     }
 
     if (body.is_required !== undefined) {
-      updateFields.is_required = body.is_required
+      updates.push({ field: 'is_required', value: body.is_required })
     }
 
     if (body.help_text !== undefined) {
-      updateFields.help_text = body.help_text
+      updates.push({ field: 'help_text', value: body.help_text })
     }
 
-    if (Object.keys(updateFields).length === 0) {
+    if (updates.length === 0) {
       return NextResponse.json(
         { error: 'No valid fields to update' },
         { status: 400 }
       )
     }
 
-    // Build the SET clause dynamically
-    const setClauses = Object.keys(updateFields).map((key, index) => {
-      return `${key} = $${index + 1}`
-    })
+    // Perform individual updates (Neon tagged templates don't support dynamic field names easily)
+    for (const update of updates) {
+      if (update.field === 'question_text') {
+        await sql`UPDATE completion_form_questions SET question_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+      } else if (update.field === 'field_type') {
+        await sql`UPDATE completion_form_questions SET field_type = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+      } else if (update.field === 'is_required') {
+        await sql`UPDATE completion_form_questions SET is_required = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+      } else if (update.field === 'help_text') {
+        await sql`UPDATE completion_form_questions SET help_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+      }
+    }
 
-    // Add updated_at
-    setClauses.push(`updated_at = NOW()`)
-
-    // Get values in the same order as the SET clauses
-    const values = Object.values(updateFields)
-    values.push(id) // Add ID as the last parameter
-
-    const updateQuery = `
-      UPDATE completion_form_questions
-      SET ${setClauses.join(', ')}
-      WHERE id = $${values.length}
-      RETURNING *
+    // Get the updated question
+    const result = await sql`
+      SELECT * FROM completion_form_questions WHERE id = ${id}
     `
-
-    const result = await sql(updateQuery, values)
 
     if (result.length === 0) {
       return NextResponse.json(
