@@ -1,0 +1,833 @@
+﻿JobTypeFormQuestionId,Description,CreatedOn,CreatedBy,StatusId,ModifiedOn,ModifiedBy,AnswerFormat,Required,PlaceHolder,SortOrder,ValidationMessage,JobTypeFormId,Config,GroupNo,Field,Col,HelpUrl,DefaultText,JobTypeFormSectionId
+626,"1. Deadlocks are fitted to all external doors (all external doors other than any screen door attached to an external door) If ""Yes"" jump to Question 2",19/5/2021 22:21,0,1,22/8/2024 5:36,194664,radioboxlist,1,,1,,70,,61,NULL,0,NULL,NULL,0
+627,"If ""No"" select reason",19/5/2021 22:26,0,1,22/8/2024 5:36,194664,radioboxlist,0,,2,,70,,61,NULL,0,NULL,NULL,0
+628,"2. Do the locks on external doors secure the premises? If ""Yes"" jump to question 3",19/5/2021 22:43,0,1,22/8/2024 5:36,194664,radioboxlist,1,,3,,70,,61,NULL,0,NULL,NULL,0
+629,"If ""No"" select reason",19/5/2021 22:45,0,1,22/8/2024 5:36,194664,radioboxlist,0,,4,,70,,61,NULL,0,NULL,NULL,0
+631,"Is there a rubbish bin for use by the renter, either provided by the local council, or vermin proof and compatible with local council collection?",21/5/2021 1:43,0,1,22/8/2024 5:36,194664,radioboxlist,1,,5,,70,,62,NULL,0,NULL,NULL,0
+632,"Is there a recycling bin for use by the renter, either provided by the local council, or vermin proof and compatible with local council collection?",21/5/2021 1:44,0,1,22/8/2024 5:36,194664,radioboxlist,1,,6,,70,,62,NULL,0,NULL,NULL,0
+633,Is there a toilet in good working order in the rented premises connected to;,26/5/2021 22:30,0,1,22/8/2024 5:36,194664,radioboxlist,1,,7,,70,,63,NULL,0,NULL,NULL,0
+641,(a) A reticulated sewerage system,29/5/2021 20:27,0,1,22/8/2024 5:36,194664,radioboxlist,1,,8,,70,,63,NULL,0,NULL,NULL,0
+642,"(b) a wastewater treatment system permitted under the Code of practice - onsite wastewater management, published under the Environment Protection Act 1970?",29/5/2021 20:29,0,1,22/8/2024 5:36,194664,radioboxlist,1,,9,,70,,63,NULL,0,NULL,NULL,0
+643,(c) a system approved by the local council?,29/5/2021 20:31,0,1,22/8/2024 5:36,194664,radioboxlist,1,,10,,70,,63,NULL,0,NULL,NULL,0
+634,Is the toilet that is in good working order:,26/5/2021 22:54,0,1,22/8/2024 5:36,194664,radioboxlist,1,,11,,70,,63,NULL,0,NULL,NULL,0
+644,"(a) in a room that is intended to be used as a toilet area, whether as a separate toilet or combined bathroom and laundry?",29/5/2021 20:34,0,1,22/8/2024 5:36,194664,radioboxlist,1,,12,,70,,63,NULL,0,NULL,NULL,0
+645,(b) in a separate enclosed structure that is intended to be used as a toilet area?,29/5/2021 20:35,0,1,22/8/2024 5:36,194664,radioboxlist,1,,13,,70,,63,NULL,0,NULL,NULL,0
+635,Is there a bathroom in the rented premises connected to a reasonable supply of hot and cold water and containing a washbasin and a shower or bath?,26/5/2021 22:56,0,1,22/8/2024 5:36,194664,radioboxlist,1,,14,,70,,64,NULL,0,NULL,NULL,0
+636,If there is a shower present with a shower head does it have a 3-star rating under the WELS scheme in the Water Efficiency Labelling and Standards Act 2005?,26/5/2021 22:58,0,1,22/8/2024 5:36,194664,radioboxlist,1,,15,,70,,64,NULL,0,NULL,NULL,0
+637,"If there is a shower present does it have a shower head with a 1 or 2 star rating because one with a 3 star rating cannot be installed, or if installed will not operate effectively due to the age, nature or structure of the plumbing?",26/5/2021 23:00,0,1,22/8/2024 5:36,194664,radioboxlist,1,,16,,70,,64,NULL,0,NULL,NULL,0
+646,(1) Does the rented premises have:,29/5/2021 20:40,0,1,22/8/2024 5:36,194664,checkboxlist,0,,17,,70,,65,NULL,0,NULL,NULL,0
+647,(a) a dedicated area intended to be used for cooking and food preparation?,29/5/2021 20:41,0,1,22/8/2024 5:36,194664,radioboxlist,1,,18,,70,,65,NULL,0,NULL,NULL,0
+648,(b) a sink in good working order that is connected to a reasonable supply of hot and cold water?,29/5/2021 20:41,0,1,22/8/2024 5:36,194664,radioboxlist,1,,19,,70,,65,NULL,0,NULL,NULL,0
+649,(c) a cooktop in good working order that has 2 or more burners.,29/5/2021 20:42,0,1,22/8/2024 5:36,194664,radioboxlist,1,,20,,70,,65,NULL,0,NULL,NULL,0
+651,(d) If the rented premises does not have the above kitchen facilities is it because the premises is a registered place and a permit to include the facilities was refused under the Heritage Act 2017.,29/5/2021 20:43,0,1,22/8/2024 5:36,194664,radioboxlist,1,,21,,70,,65,NULL,0,NULL,NULL,0
+652,"(2) If there is an oven at the rented premises, is it in good working order?",29/5/2021 20:44,0,1,22/8/2024 5:36,194664,radioboxlist,1,,22,,70,,65,NULL,0,NULL,NULL,0
+653,"If there are laundry facilities in the rented premises, are they connected to a reasonable supply of hot and cold water?",29/5/2021 20:47,0,1,22/8/2024 5:36,194664,radioboxlist,1,,23,,70,,66,NULL,0,NULL,NULL,0
+2858,"If NO hot water is supplied, is the cold water considered reasonable to efficiently run a washing machine with an internal heating system?",22/8/2024 5:36,0,1,22/8/2024 5:36,194664,radioboxlist,0,,24,,70,,66,NULL,0,NULL,NULL,0
+654,(1) Is the rented premises structurally sound?,29/5/2021 20:48,0,1,22/8/2024 5:36,194664,radioboxlist,1,,25,,70,,67,NULL,0,NULL,NULL,0
+655,(2) Is the rented premises weatherproof?,29/5/2021 20:49,0,1,22/8/2024 5:36,194664,radioboxlist,1,,26,,70,,67,NULL,0,NULL,NULL,0
+656,Are all rooms in the rented premises free from mould or dampness caused by or related to the building structure?,29/5/2021 20:50,0,1,22/8/2024 5:36,194664,radioboxlist,1,,27,,70,,68,NULL,0,NULL,NULL,0
+657,(1) Are all power outlets and lighting circuits in the rented premises connected to:,29/5/2021 20:55,0,1,22/8/2024 5:36,194664,checkboxlist,0,,28,,70,,74,NULL,0,NULL,NULL,0
+658,"(a) a switchboard-type Circuit Breaker that complies with AS/NZS 3000, “Electrical Installations”, as published from time to time.",29/5/2021 20:55,0,1,22/8/2024 5:36,194664,radioboxlist,1,,29,,70,,74,NULL,0,NULL,NULL,0
+662,Is each window in a room that is likely to be used as a bedroom or living area fitted with a curtain or blind that can be opened or closed by the renter to reasonably block light and provide reasonable privacy to the renter.,29/5/2021 21:00,0,1,22/8/2024 5:36,194664,radioboxlist,1,,31,,70,,69,NULL,0,NULL,NULL,0
+663,(1) Are all external windows in the rented premises that are capable of opening able to be set in a closed or open position?,29/5/2021 21:00,0,1,22/8/2024 5:36,194664,radioboxlist,1,,32,,70,,70,NULL,0,NULL,NULL,0
+664,"(2) Do all external windows in the rented premises that a capable of opening have a functioning latch, window lock or bolt to secure them against external entry?",29/5/2021 21:01,0,1,22/8/2024 5:36,194664,radioboxlist,1,,33,,70,,70,NULL,0,NULL,NULL,0
+2748,"Are all blind cords installed above the recommended height of 1600mm, secured, ensuring complete safety and poses no choke hazard?",24/1/2024 0:19,0,1,10/2/2025 5:11,0,radioboxlist,0,,34,,70,,70,NULL,0,NULL,NULL,0
+665,"(1) Do the interior rooms, corridors and hallways of the rented premises have access to light, whether natural or artificial, which is appropriate for the function or use of those rooms?",29/5/2021 21:02,0,1,22/8/2024 5:36,194664,radioboxlist,1,,35,,70,,71,NULL,0,NULL,NULL,0
+666,(2) Does each habitable room in the rented premises have access to –,29/5/2021 21:03,0,1,22/8/2024 5:36,194664,checkboxlist,0,,36,,70,,71,NULL,0,NULL,NULL,0
+669,"(1) The building is a Class 1 building and each habitable room, bathroom, shower room, toilet, and laundry have ventilation that satisfies the specified Performance Requirements or Acceptable Construction Practice requirements.",29/5/2021 21:06,0,1,22/8/2024 5:36,194664,radioboxlist,1,,38,,70,,72,NULL,0,NULL,NULL,0
+672,"(2) The building is a Class 2 building and each habitable room, bathroom, shower room, toilet, and laundry have ventilation that satisfies the specified Performance Requirements or the Deemed-to-Satisfy Provision requirements.",29/5/2021 21:07,0,1,22/8/2024 5:36,194664,radioboxlist,1,,39,,70,,72,NULL,0,NULL,NULL,0
+675,"(b) If the premises is a Class 1 building, is any fixed heater first installed in the main living area during this period an energy efficient fixed heater.",29/5/2021 21:10,0,1,22/8/2024 5:36,194664,radioboxlist,1,,42,,70,,73,NULL,0,NULL,NULL,0
+679,3) If the rented premises is within a Class 1or 2 building and there is no energy efficient heater in the living area would it be unreasonable to install an energy efficient heater?,29/5/2021 21:11,0,1,10/2/2025 5:11,0,radioboxlist,1,,43,,70,,73,NULL,0,NULL,NULL,0
+677,(a) If the rented premises is within a Class 2 building does it have a fixed heater in good working order in the main living area?,29/5/2021 21:10,0,1,22/8/2024 5:36,194664,radioboxlist,1,,45,,70,,73,NULL,0,NULL,NULL,0
+678,"(b) If the rented premises is within a Class 2 building, is any fixed heater firstinstalled in the main living area during this period an energy efficient fixedheater?",29/5/2021 21:11,0,1,22/8/2024 5:36,194664,radioboxlist,1,,46,,70,,73,NULL,0,NULL,NULL,0
+920,Please add any relevant photos?,30/3/2022 3:14,0,1,22/8/2024 5:36,194664,file,0,,47,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",61,NULL,0,NULL,NULL,0
+921,Please add any relevant photos?,30/3/2022 3:15,0,1,22/8/2024 5:36,194664,file,0,,48,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",62,NULL,0,NULL,NULL,0
+922,Please add any relevant photos?,30/3/2022 3:15,0,1,22/8/2024 5:36,194664,file,0,,49,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",63,NULL,0,NULL,NULL,0
+923,Please add any relevant photos?,30/3/2022 3:16,0,1,22/8/2024 5:36,194664,file,0,,50,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",64,NULL,0,NULL,NULL,0
+924,Please add any relevant photos?,30/3/2022 3:16,0,1,22/8/2024 5:36,194664,file,0,,51,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",65,NULL,0,NULL,NULL,0
+925,Please add any relevant photos?,30/3/2022 3:17,0,1,22/8/2024 5:36,194664,file,0,,52,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",66,NULL,0,NULL,NULL,0
+926,Please add any relevant photos?,30/3/2022 3:17,0,1,22/8/2024 5:36,194664,file,0,,53,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",67,NULL,0,NULL,NULL,0
+927,Please add any relevant photos?,30/3/2022 3:17,0,1,22/8/2024 5:36,194664,file,0,,54,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",68,NULL,0,NULL,NULL,0
+928,Please add any relevant photos?,30/3/2022 3:18,0,1,22/8/2024 5:36,194664,file,0,,55,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",74,NULL,0,NULL,NULL,0
+929,Please add any relevant photos?,30/3/2022 3:18,0,1,22/8/2024 5:36,194664,file,0,,56,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",69,NULL,0,NULL,NULL,0
+930,Please add any relevant photos?,30/3/2022 3:21,0,1,22/8/2024 5:36,194664,file,0,,57,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",70,NULL,0,NULL,NULL,0
+932,Please add any relevant photos?,30/3/2022 3:22,0,1,22/8/2024 5:36,194664,file,0,,58,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",72,NULL,0,NULL,NULL,0
+931,Please add any relevant photos?,30/3/2022 3:21,0,1,22/8/2024 5:36,194664,file,0,,59,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",71,NULL,0,NULL,NULL,0
+933,Please add any relevant photos?,30/3/2022 3:23,0,1,22/8/2024 5:36,194664,file,0,,60,Upload Image (Max40Mb),70,"types:*.jpeg,*.jpg,*.png;size:40960",73,NULL,0,NULL,NULL,0
+935,Add any relevant notes here,30/3/2022 4:55,0,1,22/8/2024 5:36,194664,textarea,0,,61,,70,,61,NULL,0,NULL,NULL,0
+936,Add any relevant notes here,30/3/2022 4:55,0,1,22/8/2024 5:36,194664,textarea,0,,62,,70,,62,NULL,0,NULL,NULL,0
+937,Add any relevant notes here,30/3/2022 4:55,0,1,22/8/2024 5:36,194664,textarea,0,,63,,70,,63,NULL,0,NULL,NULL,0
+938,Add any relevant notes here,30/3/2022 4:56,0,1,22/8/2024 5:36,194664,textarea,0,,64,,70,,63,NULL,0,NULL,NULL,0
+939,Add any relevant notes here,30/3/2022 4:56,0,1,22/8/2024 5:36,194664,textarea,0,,65,,70,,64,NULL,0,NULL,NULL,0
+940,Add any relevant notes here,30/3/2022 4:56,0,1,22/8/2024 5:36,194664,textarea,0,,66,,70,,65,NULL,0,NULL,NULL,0
+941,Add any relevant notes here,30/3/2022 4:56,0,1,22/8/2024 5:36,194664,textarea,0,,67,,70,,66,NULL,0,NULL,NULL,0
+942,Add any relevant notes here,30/3/2022 4:57,0,1,22/8/2024 5:36,194664,textarea,0,,68,,70,,67,NULL,0,NULL,NULL,0
+943,Add any relevant notes here,30/3/2022 4:57,0,1,22/8/2024 5:36,194664,textarea,0,,69,,70,,68,NULL,0,NULL,NULL,0
+944,Add any relevant notes here,30/3/2022 4:57,0,1,22/8/2024 5:36,194664,textarea,0,,70,,70,,74,NULL,0,NULL,NULL,0
+945,Add any relevant notes here,30/3/2022 4:57,0,1,22/8/2024 5:36,194664,textarea,0,,71,,70,,69,NULL,0,NULL,NULL,0
+946,Add any relevant notes here,30/3/2022 4:57,0,1,22/8/2024 5:36,194664,textarea,0,,72,,70,,70,NULL,0,NULL,NULL,0
+947,Add any relevant notes here,30/3/2022 4:58,0,1,22/8/2024 5:36,194664,textarea,0,,73,,70,,71,NULL,0,NULL,NULL,0
+948,Add any relevant notes here,30/3/2022 4:58,0,1,22/8/2024 5:36,194664,textarea,0,,74,,70,,72,NULL,0,NULL,NULL,0
+1165,Add any relevant notes here,20/12/2022 23:54,0,1,22/8/2024 5:36,194664,textarea,0,,75,,70,,73,NULL,0,NULL,NULL,0
+1150,Compliant?,11/11/2022 4:15,0,1,22/8/2024 5:36,194664,iscompliant,0,,76,,70,,61,NULL,0,NULL,NULL,0
+1151,Compliant?,11/11/2022 4:15,0,1,22/8/2024 5:36,194664,iscompliant,0,,77,,70,,62,NULL,0,NULL,NULL,0
+1152,Compliant?,11/11/2022 4:15,0,1,22/8/2024 5:36,194664,iscompliant,0,,78,,70,,63,NULL,0,NULL,NULL,0
+1153,Compliant?,11/11/2022 4:16,0,1,22/8/2024 5:36,194664,iscompliant,0,,79,,70,,64,NULL,0,NULL,NULL,0
+1154,Compliant?,11/11/2022 4:16,0,1,22/8/2024 5:36,194664,iscompliant,0,,80,,70,,65,NULL,0,NULL,NULL,0
+1164,Compliant?,11/11/2022 4:19,0,1,22/8/2024 5:36,194664,iscompliant,0,,81,,70,,73,NULL,0,NULL,NULL,0
+1163,Compliant?,11/11/2022 4:19,0,1,22/8/2024 5:36,194664,iscompliant,0,,82,,70,,72,NULL,0,NULL,NULL,0
+1161,Compliant?,11/11/2022 4:18,0,1,22/8/2024 5:36,194664,iscompliant,0,,83,,70,,71,NULL,0,NULL,NULL,0
+1160,Compliant?,11/11/2022 4:18,0,1,22/8/2024 5:36,194664,iscompliant,0,,84,,70,,70,NULL,0,NULL,NULL,0
+1159,Compliant?,11/11/2022 4:18,0,1,22/8/2024 5:36,194664,iscompliant,0,,85,,70,,69,NULL,0,NULL,NULL,0
+1158,Compliant?,11/11/2022 4:17,0,1,22/8/2024 5:36,194664,iscompliant,0,,86,,70,,74,NULL,0,NULL,NULL,0
+2751,Observation / Additional Notes,9/5/2024 6:55,0,1,22/8/2024 5:36,194664,textarea,0,Please add any observation / additional notes if required,87,,70,,159,NULL,0,NULL,NULL,0
+1157,Compliant?,11/11/2022 4:17,0,1,22/8/2024 5:36,194664,iscompliant,0,,88,,70,,68,NULL,0,NULL,NULL,0
+1156,Compliant?,11/11/2022 4:17,0,1,22/8/2024 5:36,194664,iscompliant,0,,89,,70,,67,NULL,0,NULL,NULL,0
+1155,Compliant?,11/11/2022 4:17,0,1,22/8/2024 5:36,194664,iscompliant,0,,90,,70,,66,NULL,0,NULL,NULL,0
+625,Inspector Name,18/5/2021 22:32,0,1,22/8/2024 5:36,194664,textbox,1,,91,,70,,60,NULL,0,NULL,NULL,0
+680,Contractors Name,4/6/2021 16:05,0,1,23/5/2024 0:59,0,textbox,1,,1,,71,,75,NULL,0,NULL,NULL,0
+682,Photo of contractors licence (if required),4/6/2021 16:08,0,1,12/8/2022 2:55,0,file,0,,2,Upload Image (Max 40MB),71,"types:*.jpeg,*.jpg,*.png;size:40960",75,NULL,0,NULL,NULL,0
+683,Completion Notes,4/6/2021 16:09,0,1,23/5/2024 0:59,0,textarea,1,Please add any relevant notes,3,,71,,76,NULL,0,NULL,NULL,0
+681,Image of repaired or installed item,4/6/2021 16:07,0,1,24/8/2022 1:22,0,file,0,,6,Upload Image (Max 40MB),71,"types:*.jpeg,*.jpg,*.png;size:40960",75,NULL,0,NULL,NULL,0
+685,Take two or three photos of the most common type of globe in your house or apartment? (Please take photo with the light off where possible),5/7/2021 8:06,0,1,23/7/2021 5:42,0,file,0,,1,Upload Image (Max 40MB),72,"types:*.jpeg,*.jpg,*.png;size:40960",77,NULL,0,NULL,NULL,0
+690,How many of these globes are in your house or apartment?,5/7/2021 8:24,0,1,23/7/2021 5:43,0,dropdown,0,Total number of these most common globes,2,,72,,77,NULL,0,NULL,NULL,0
+695,Has your house or apartment previously had an LED upgrade?,8/7/2021 2:04,0,1,23/7/2021 5:34,257325,radioboxlist,1,,3,,72,,77,NULL,0,NULL,NULL,0
+686,Please take a photo of the hot water system if possible including the surrounding area?,5/7/2021 8:15,0,1,23/7/2021 5:34,257325,file,0,,4,Upload Image (Max 40MB),72,"types:*.jpeg,*.jpg,*.png;size:40960",79,NULL,0,NULL,NULL,0
+696,Access to the hot water system is?,21/7/2021 23:51,0,1,23/7/2021 5:34,257325,radioboxlist,0,,5,,72,,79,NULL,0,NULL,NULL,0
+688,Please take a photo of the serial plate of the hot water system if possible?,5/7/2021 8:16,0,1,23/7/2021 5:34,257325,file,0,,6,Upload Image (Max 40MB),72,"types:*.jpeg,*.jpg,*.png;size:40960",79,NULL,0,NULL,NULL,0
+966,Technician Name,17/5/2022 5:25,0,1,16/8/2024 6:25,16437,textarea,1,,1,,73,,0,NULL,0,NULL,NULL,0
+900,How many smoke alarms are in the property?,29/3/2022 9:30,0,1,16/8/2024 6:25,16437,dropdown,1,,2,,73,,0,NULL,0,NULL,NULL,0
+899,Smoke Alarm 1 Expiry Date,29/3/2022 9:29,0,1,16/8/2024 6:25,16437,datepicker,1,,3,,73,,0,NULL,0,NULL,NULL,0
+901,Smoke Alarm 2 Expiry Date,29/3/2022 9:32,0,1,16/8/2024 6:25,16437,datepicker,0,,4,,73,,0,NULL,0,NULL,NULL,0
+908,Smoke Alarm 3 Expiry Date,29/3/2022 9:35,0,1,16/8/2024 6:25,16437,datepicker,0,,5,,73,,0,NULL,0,NULL,NULL,0
+909,Smoke Alarm 4 Expiry Date,29/3/2022 9:35,0,1,16/8/2024 6:25,16437,datepicker,0,,6,,73,,0,NULL,0,NULL,NULL,0
+907,Smoke Alarm 5 Expiry Date,29/3/2022 9:35,0,1,16/8/2024 6:25,16437,datepicker,0,,7,,73,,0,NULL,0,NULL,NULL,0
+906,Smoke Alarm 6 Expiry Date,29/3/2022 9:34,0,1,16/8/2024 6:25,16437,datepicker,0,,8,,73,,0,NULL,0,NULL,NULL,0
+905,Smoke Alarm 7 Expiry Date,29/3/2022 9:34,0,1,16/8/2024 6:25,16437,datepicker,0,,9,,73,,0,NULL,0,NULL,NULL,0
+904,Smoke Alarm 8 Expiry Date,29/3/2022 9:33,0,1,16/8/2024 6:25,16437,datepicker,0,,10,,73,,0,NULL,0,NULL,NULL,0
+903,Smoke Alarm 9 Expiry Date,29/3/2022 9:33,0,1,16/8/2024 6:25,16437,datepicker,0,,11,,73,,0,NULL,0,NULL,NULL,0
+902,Smoke Alarm 10 Expiry Date,29/3/2022 9:33,0,1,16/8/2024 6:25,16437,datepicker,0,,12,,73,,0,NULL,0,NULL,NULL,0
+916,How many smoke alarms are hard wired?,30/3/2022 2:25,0,1,16/8/2024 6:25,16437,dropdown,0,,13,,73,,0,NULL,0,NULL,NULL,0
+917,Are smoke alarms in working condition been tested and batteries changed?,30/3/2022 2:28,0,1,16/8/2024 6:25,16437,dropdown,0,,14,,73,,0,NULL,0,NULL,NULL,0
+911,How many smoke alarms have you replaced?,29/3/2022 9:39,0,1,16/8/2024 6:25,16437,dropdown,1,,15,,73,,0,NULL,0,NULL,NULL,0
+913,Do any other smoke alarms need replacement?,29/3/2022 10:11,0,1,16/8/2024 6:25,16437,dropdown,0,,16,,73,,0,NULL,0,NULL,NULL,0
+918,How many other smoke alarms require replacement?,30/3/2022 2:37,0,1,16/8/2024 6:25,16437,dropdown,0,,17,,73,,0,NULL,0,NULL,NULL,0
+919,Add photos of all existing and newly installed smoke alarms,30/3/2022 2:39,0,1,16/8/2024 6:25,16437,file,0,,18,Upload Image (Max40Mb),73,"types:*.jpeg,*.jpg,*.png;size:40960",0,NULL,0,NULL,NULL,0
+912,Add photos of any expired smoke alarms,29/3/2022 9:41,0,1,16/8/2024 6:25,16437,file,0,,19,Upload Image (Max40Mb),73,"types:*.jpeg,*.jpg,*.png;size:40960",0,NULL,0,NULL,NULL,0
+915,Please give details of any further works required?,29/3/2022 10:14,0,1,16/8/2024 6:25,16437,textarea,0,,20,,73,,0,NULL,0,NULL,NULL,0
+2857,Are the smoke alarms compliant?,16/8/2024 6:25,0,1,16/8/2024 6:25,16437,iscompliant,1,,21,,73,,0,NULL,0,NULL,NULL,0
+1111,Search users,21/2/2022 21:17,58,1,21/2/2022 21:18,58,,0,,1,,74,,82,Fullname,0,NULL,NULL,0
+1099,Firstname,5/2/2022 21:20,58,1,5/2/2022 21:20,58,,0,,2,,74,,82,Firstname,6,NULL,NULL,0
+1100,Lastname,5/2/2022 21:20,58,1,13/2/2022 20:01,58,,0,,3,,74,,82,Lastname,6,NULL,NULL,0
+1101,Mobile,13/2/2022 20:00,58,1,13/2/2022 20:00,58,,0,,4,,74,,82,Mobile,0,NULL,NULL,0
+1102,Email,13/2/2022 20:01,58,0,13/2/2022 20:01,58,,0,,5,,74,,82,Email,12,NULL,NULL,0
+1107,Address1,19/2/2022 23:08,58,1,19/2/2022 23:08,58,,0,,6,,74,,82,Address1,0,NULL,NULL,0
+1108,Address2,19/2/2022 23:09,58,1,19/2/2022 23:19,58,,0,,7,,74,,82,Address2,0,NULL,NULL,0
+1112,JobTypeName,21/2/2022 21:20,58,1,21/2/2022 21:20,58,,0,,8,,74,,82,JobTypeName,0,NULL,NULL,0
+1104,Location,13/2/2022 20:06,58,1,13/2/2022 20:07,58,,0,,9,,74,,82,Location,8,NULL,NULL,0
+1192,Purchase Date,5/4/2023 4:32,6808,1,5/4/2023 4:34,6808,datepicker,0,,10,,74,,82,PurchaseDate,0,,NULL,0
+1190,ProductCode,5/4/2023 4:26,158095,1,5/4/2023 4:26,158095,,0,,11,,74,,82,ProductCode,0,,NULL,0
+1193,Quantity,5/4/2023 4:34,6808,1,5/4/2023 4:34,6808,textbox,0,,12,,74,,82,Quantity,0,,NULL,0
+1191,Place Of Purchase,5/4/2023 4:31,6808,1,5/4/2023 4:43,6808,textbox,0,,13,,74,,82,PlaceOfPurchase,0,,NULL,0
+1195,Product Description,5/4/2023 4:38,6808,1,5/4/2023 4:40,6808,textarea,0,,14,,74,,82,ProductDescription,0,,NULL,0
+1103,Description,13/2/2022 20:01,58,1,5/4/2023 4:39,6808,,0,,15,,74,,82,Description,12,,NULL,0
+1196,ProviderDetails,5/4/2023 4:39,6808,1,5/4/2023 4:39,6808,textarea,0,,16,,74,,82,ProviderDetails,0,,NULL,0
+1114,JobSourceId,26/3/2022 20:51,58,1,26/3/2022 20:51,58,,0,,17,,74,,82,JobSourceId,0,NULL,NULL,0
+1109,HasReview,20/2/2022 2:34,58,1,20/2/2022 2:34,58,,0,,18,,74,,82,HasReview,0,NULL,NULL,0
+1113,Files,19/3/2022 20:32,58,1,19/3/2022 20:32,58,,0,,19,,74,,82,Files,0,NULL,NULL,0
+1116,JobDate,4/8/2022 23:16,58,1,4/8/2022 23:16,58,,0,,20,,74,,82,JobDate,0,NULL,NULL,0
+1117,Upload Report,29/9/2022 7:18,0,1,29/9/2022 7:18,6808,file,0,,1,Upload Image (Max 40MB),75,"types:*.pdf,*.jpg,*.png;size:40960",89,NULL,0,NULL,NULL,0
+1126,Notes,5/10/2022 23:08,0,1,5/10/2022 23:10,0,textarea,1,,1,,76,,90,NULL,0,NULL,NULL,0
+1118,Upload photos of your completed work,5/10/2022 19:19,0,1,5/10/2022 23:09,6808,file,1,,2,Upload Image (Max 40MB),76,"types:*.jpeg,*.jpg,*.png;size:40960",90,NULL,0,NULL,NULL,0
+1125,Minutes over 1 Hour,5/10/2022 20:49,0,1,5/10/2022 23:09,6808,textbox,1,0,3,,76,,90,NULL,0,NULL,NULL,0
+1123,Other Cost,5/10/2022 20:29,0,1,5/10/2022 23:09,6808,costinterface,0,,4,,76,,90,NULL,0,NULL,NULL,0
+1128,Add Photos of Completed Works,20/10/2022 1:25,0,1,20/10/2022 1:43,158095,file,0,,1,Upload Image (Max 40MB),77,"types:*.jpeg,*.jpg,*.png;size:40960",91,NULL,0,NULL,NULL,0
+1130,Notes,20/10/2022 1:39,0,1,20/10/2022 1:43,158095,textarea,0,,2,,77,,92,NULL,0,NULL,NULL,0
+1132,Search users,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,1,,78,,93,Fullname,0,NULL,NULL,0
+1135,Mobile,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,2,,78,,93,Mobile,0,NULL,NULL,0
+1136,Email,3/11/2022 19:42,58,0,3/11/2022 19:42,58,,0,,3,,78,,93,Email,12,NULL,NULL,0
+1137,Description,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,4,,78,,93,Description,12,NULL,NULL,0
+1138,Address1,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,5,,78,,93,Address1,0,NULL,NULL,0
+1139,Address2,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,6,,78,,93,Address2,0,NULL,NULL,0
+1140,Location,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,7,,78,,93,Location,8,NULL,NULL,0
+1141,CountryCode,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,8,,78,value::au,93,CountryCode,4,NULL,NULL,0
+1142,JobTypeName,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,9,,78,,93,JobTypeName,0,NULL,NULL,0
+1143,SiteId,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,10,,78,,93,SiteId,0,NULL,NULL,0
+1144,JobSourceId,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,11,,78,,93,JobSourceId,0,NULL,NULL,0
+1145,HasReview,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,12,,78,,93,HasReview,0,NULL,NULL,0
+1146,LotName,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,13,,78,,93,LotName,0,NULL,NULL,0
+1147,Files,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,14,,78,,93,Files,0,NULL,NULL,0
+1148,StatusId,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,15,,78,,93,StatusId,0,NULL,NULL,0
+1149,JobDate,3/11/2022 19:42,58,1,3/11/2022 19:42,58,,0,,16,,78,,93,JobDate,0,NULL,NULL,0
+1167,Has the issue reported by the tenant been resolved to their satisfaction?,31/1/2023 11:01,0,1,13/11/2023 1:21,16437,radioboxlist,1,,1,,79,,0,NULL,0,NULL,NULL,0
+1168,If the job could not be completed satisfactorily please explain in further detail?,31/1/2023 11:03,0,1,13/11/2023 1:21,16437,textarea,0,,2,,79,,0,NULL,0,NULL,NULL,0
+1171,Please add a photo of the item before repair?,31/1/2023 11:05,0,1,13/11/2023 1:21,16437,file,1,,3,Upload Image (Max 40MB),79,"types:*.jpeg,*.jpg,*.png;size:40960",0,NULL,0,NULL,NULL,0
+1169,Please add a photo of the repaired item?,31/1/2023 11:04,0,1,13/11/2023 1:21,16437,file,1,,4,Upload Image (Max 40MB),79,"types:*.jpeg,*.jpg,*.png;size:40960",0,NULL,0,NULL,NULL,0
+2656,Please add Job Completion Notes,13/11/2023 1:21,0,1,13/11/2023 1:21,16437,textarea,1,,5,,79,,0,NULL,0,NULL,NULL,0
+1172,Cost,31/1/2023 11:06,0,1,13/11/2023 1:21,16437,costinterface,0,,6,,79,,0,NULL,0,NULL,NULL,0
+2269,Gas Plumber Name,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,1,,1,,80,,133,NULL,0,NULL,NULL,0
+2537,Email address,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,1,,2,,80,,133,NULL,0,NULL,NULL,0
+2477,How many electrical circuits in the household?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,dropdown,0,,3,,80,,135,NULL,0,NULL,NULL,0
+2478,"Did each circuit pass its continuity test? (Eg switchboards enclosure, cooking equipment, dishwasher etc)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,4,,80,,135,NULL,0,NULL,NULL,0
+2479,"Is answer is ""No"" which circuit and what was the reading recorded on the failed circuit?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,5,,80,,135,NULL,0,NULL,NULL,0
+2480,Please upload photos of the test results,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,6,Upload Image (Max40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",135,NULL,0,NULL,NULL,0
+2474,"Is polarity correct throughout household (eg. Consumer mains, circuit breaker / fuses / RCD's / Cooking Equipment / Dishwashers etc)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,7,,80,,134,NULL,0,NULL,NULL,0
+2475,In no please give details of what has failed?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,8,,80,,134,NULL,0,NULL,NULL,0
+2476,Please add photos if possible?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,9,Upload Image (Max 40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",134,NULL,0,NULL,NULL,0
+2644,Is this section compliant?,20/9/2023 3:22,0,1,10/2/2025 23:05,158095,radioboxlist,0,,10,,80,,134,NULL,0,NULL,NULL,0
+2651,Is this section compliant? (System generated),20/9/2023 3:52,0,1,10/2/2025 23:05,158095,iscompliant,0,,11,,80,,134,NULL,0,NULL,NULL,0
+2470,Is there any visible damage / charring / or loose connections on switchboard?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,12,,80,,117,NULL,0,NULL,NULL,0
+2471,Is answer is yes please provide more information?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,13,,80,,117,NULL,0,NULL,NULL,0
+2268,Licence Number,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,1,,14,,80,,133,NULL,0,NULL,NULL,0
+2267,Plumbing / Gas Licence Photo,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,15,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",133,NULL,0,NULL,NULL,0
+2242,Does the property have a gas hot water system?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,16,,80,,118,NULL,0,NULL,NULL,0
+2302,Does the property have a gas oven?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,17,,80,,123,NULL,0,NULL,NULL,0
+2866,Please enter the make and model of the appliance,13/1/2025 5:23,0,1,10/2/2025 23:05,158095,textbox,0,,18,,80,,118,NULL,0,NULL,NULL,0
+2888,Does a tempering valve exist,14/1/2025 3:08,0,1,10/2/2025 23:05,158095,radioboxlist,0,,19,,80,,118,NULL,0,NULL,NULL,0
+2326,Does the property have a gas cooktop?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,20,,80,,124,NULL,0,NULL,NULL,0
+2889,"If yes, where is the tempering valve installed",14/1/2025 3:08,0,1,10/2/2025 23:05,158095,textbox,0,,21,,80,,118,NULL,0,NULL,NULL,0
+2859,Where is the appliance located?,13/1/2025 5:18,0,1,10/2/2025 23:05,158095,textbox,1,,22,,80,,118,NULL,0,NULL,NULL,0
+2868,Please enter the make and model of the appliance,13/1/2025 5:23,0,1,10/2/2025 23:05,158095,textbox,0,,23,,80,,123,NULL,0,NULL,NULL,0
+2875,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,24,,80,,118,NULL,0,NULL,NULL,0
+2350,Does the property have a gas heating system?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,25,,80,,125,NULL,0,NULL,NULL,0
+2882,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,26,,80,,118,NULL,0,NULL,NULL,0
+2867,Please enter the make and model of the appliance,13/1/2025 5:23,0,1,10/2/2025 23:05,158095,textbox,0,,27,,80,,124,NULL,0,NULL,NULL,0
+2874,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,28,,80,,123,NULL,0,NULL,NULL,0
+2374,What other gas appliance required testing?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,29,,80,,126,NULL,0,NULL,NULL,0
+2873,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,30,,80,,124,NULL,0,NULL,NULL,0
+2881,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,31,,80,,123,NULL,0,NULL,NULL,0
+2869,Please enter the make and model of the appliance,13/1/2025 5:24,0,1,10/2/2025 23:05,158095,textbox,0,,32,,80,,125,NULL,0,NULL,NULL,0
+2880,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,33,,80,,124,NULL,0,NULL,NULL,0
+2886,What is the fuel source of the appliance,14/1/2025 3:07,0,1,10/2/2025 23:05,158095,textbox,0,,34,,80,,123,NULL,0,NULL,NULL,0
+2398,What other gas appliance required testing?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,35,,80,,127,NULL,0,NULL,NULL,0
+2887,What is the fuel source of the appliance,14/1/2025 3:07,0,1,10/2/2025 23:05,158095,textbox,0,,36,,80,,124,NULL,0,NULL,NULL,0
+2860,Where is the appliance located?,13/1/2025 5:19,0,1,10/2/2025 23:05,158095,textbox,1,,37,,80,,125,NULL,0,NULL,NULL,0
+2871,Please enter the make and model of the appliance,13/1/2025 5:24,0,1,10/2/2025 23:05,158095,textbox,0,,38,,80,,126,NULL,0,NULL,NULL,0
+2876,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,39,,80,,125,NULL,0,NULL,NULL,0
+2486,What other gas appliance required testing?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,40,,80,,136,NULL,0,NULL,NULL,0
+2883,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,41,,80,,125,NULL,0,NULL,NULL,0
+2861,Where is the appliance located?,13/1/2025 5:19,0,1,10/2/2025 23:05,158095,textbox,1,,42,,80,,126,NULL,0,NULL,NULL,0
+2512,What other gas appliance required testing?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,43,,80,,137,NULL,0,NULL,NULL,0
+2878,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,44,,80,,126,NULL,0,NULL,NULL,0
+2258,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,45,,80,,118,NULL,0,NULL,NULL,0
+2885,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,46,,80,,126,NULL,0,NULL,NULL,0
+2304,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,47,,80,,123,NULL,0,NULL,NULL,0
+2328,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,48,,80,,124,NULL,0,NULL,NULL,0
+2352,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,49,,80,,125,NULL,0,NULL,NULL,0
+2376,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,50,,80,,126,NULL,0,NULL,NULL,0
+2400,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,51,,80,,127,NULL,0,NULL,NULL,0
+2488,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,52,,80,,136,NULL,0,NULL,NULL,0
+2514,Is the installation gastight in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,53,,80,,137,NULL,0,NULL,NULL,0
+2273,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,54,,80,,118,NULL,0,NULL,NULL,0
+2307,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,55,,80,,123,NULL,0,NULL,NULL,0
+2331,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,56,,80,,124,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-30-location-appliance-isolating-valves-and,NULL,0
+2355,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,57,,80,,125,NULL,0,https://www.vba.vic.gov.au/__data/assets/pdf_file/0009/136548/Plumbing-GF-03-Gas-Heating-Appliances-Installed-in-a-Roof-Space-UNDER-REVIEW-5-Feb-2024.pdf,NULL,0
+2379,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,58,,80,,126,NULL,0,NULL,NULL,0
+2403,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,59,,80,,127,NULL,0,NULL,NULL,0
+2491,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,60,,80,,136,NULL,0,NULL,NULL,0
+2517,Is the appliance and its components accessible for servicing and adjustment?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,61,,80,,137,NULL,0,NULL,NULL,0
+2259,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,62,,80,,118,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-30-location-appliance-isolating-valves-and,NULL,0
+2305,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,63,,80,,123,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-30-location-appliance-isolating-valves-and,NULL,0
+2329,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,64,,80,,124,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-30-location-appliance-isolating-valves-and,NULL,0
+2353,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,65,,80,,125,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-30-location-appliance-isolating-valves-and,NULL,0
+2377,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,66,,80,,126,NULL,0,NULL,NULL,0
+2401,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,67,,80,,127,NULL,0,NULL,NULL,0
+2489,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,68,,80,,136,NULL,0,NULL,NULL,0
+2515,Where applicable. Is an isolation valve provided at the inlet connection of the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,69,,80,,137,NULL,0,NULL,NULL,0
+2260,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,70,,80,,118,NULL,0,NULL,NULL,0
+2306,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,71,,80,,123,NULL,0,NULL,NULL,0
+2330,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,72,,80,,124,NULL,0,NULL,NULL,0
+2354,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,73,,80,,125,NULL,0,NULL,NULL,0
+2378,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,74,,80,,126,NULL,0,NULL,NULL,0
+2402,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,75,,80,,127,NULL,0,NULL,NULL,0
+2490,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,76,,80,,136,NULL,0,NULL,NULL,0
+2516,"Is the appliance subject to any safety recall, prohibitions or notices?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,77,,80,,137,NULL,0,NULL,NULL,0
+2285,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,78,,80,,118,NULL,0,NULL,NULL,0
+2309,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,79,,80,,123,NULL,0,NULL,NULL,0
+2333,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,80,,80,,124,NULL,0,NULL,NULL,0
+2357,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,81,,80,,125,NULL,0,NULL,NULL,0
+2381,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,82,,80,,126,NULL,0,NULL,NULL,0
+2405,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,83,,80,,127,NULL,0,NULL,NULL,0
+2493,Is there evidence of certification?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,84,,80,,136,NULL,0,NULL,NULL,0
+2519,Is there evidence of certification?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,85,,80,,137,NULL,0,NULL,NULL,0
+2286,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,86,,80,,118,NULL,0,NULL,NULL,0
+2310,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,87,,80,,123,NULL,0,NULL,NULL,0
+2334,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,88,,80,,124,NULL,0,NULL,NULL,0
+2358,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,89,,80,,125,NULL,0,NULL,NULL,0
+2382,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,90,,80,,126,NULL,0,NULL,NULL,0
+2406,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,91,,80,,127,NULL,0,NULL,NULL,0
+2494,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,92,,80,,136,NULL,0,NULL,NULL,0
+2520,"Is the main burner and pilot flame normal? (e.g. no flame lifting, floating, yellow tipping or sooting)",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,93,,80,,137,NULL,0,NULL,NULL,0
+2287,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,94,,80,,118,NULL,0,NULL,NULL,0
+2311,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,95,,80,,123,NULL,0,NULL,NULL,0
+2335,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,96,,80,,124,NULL,0,NULL,NULL,0
+2359,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,97,,80,,125,NULL,0,NULL,NULL,0
+2383,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,98,,80,,126,NULL,0,NULL,NULL,0
+2407,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,99,,80,,127,NULL,0,NULL,NULL,0
+2495,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,100,,80,,136,NULL,0,NULL,NULL,0
+2521,Is the nominal burner pressure correct? (All appliances must be operating to carry out this test),16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,101,,80,,137,NULL,0,NULL,NULL,0
+2288,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,102,,80,,118,NULL,0,NULL,NULL,0
+2312,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,103,,80,,123,NULL,0,NULL,NULL,0
+2336,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,104,,80,,124,NULL,0,NULL,NULL,0
+2360,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,105,,80,,125,NULL,0,NULL,NULL,0
+2384,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,106,,80,,126,NULL,0,NULL,NULL,0
+2408,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,107,,80,,127,NULL,0,NULL,NULL,0
+2496,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,108,,80,,136,NULL,0,NULL,NULL,0
+2522,"Where applicable, does the appliance have an accessible means of electrical isolation?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,109,,80,,137,NULL,0,NULL,NULL,0
+2289,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,110,,80,,118,NULL,0,NULL,NULL,0
+2313,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,111,,80,,123,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-25-domestic-gas-cooking-appliance-overhead,NULL,0
+2337,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,112,,80,,124,NULL,0,https://www.esv.vic.gov.au/industry-guidance/gas/gas-information-sheets/gis-25-domestic-gas-cooking-appliance-overhead,NULL,0
+2361,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,113,,80,,125,NULL,0,NULL,NULL,0
+2385,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,114,,80,,126,NULL,0,NULL,NULL,0
+2409,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,115,,80,,127,NULL,0,NULL,NULL,0
+2497,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,116,,80,,136,NULL,0,NULL,NULL,0
+2523,Are clearances from combustable surfaces appropriate for the installation in accordance with AS/NZS5601.1?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,117,,80,,137,NULL,0,NULL,NULL,0
+2290,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,118,,80,,118,NULL,0,NULL,NULL,0
+2314,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,119,,80,,123,NULL,0,NULL,NULL,0
+2338,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,120,,80,,124,NULL,0,NULL,NULL,0
+2362,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,121,,80,,125,NULL,0,NULL,NULL,0
+2386,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,122,,80,,126,NULL,0,NULL,NULL,0
+2410,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,123,,80,,127,NULL,0,NULL,NULL,0
+2498,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,124,,80,,136,NULL,0,NULL,NULL,0
+2524,"Is the room ventilation adequate for the installed appliances? (correct size, location and number of openings)",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,125,,80,,137,NULL,0,NULL,NULL,0
+2291,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,126,,80,,118,NULL,0,NULL,NULL,0
+2315,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,127,,80,,123,NULL,0,NULL,NULL,0
+2339,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,128,,80,,124,NULL,0,NULL,NULL,0
+2363,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,129,,80,,125,NULL,0,NULL,NULL,0
+2387,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,130,,80,,126,NULL,0,NULL,NULL,0
+2411,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,131,,80,,127,NULL,0,NULL,NULL,0
+2499,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,132,,80,,136,NULL,0,NULL,NULL,0
+2525,Where applicable are gas appliances including cookers adequately restrained from tipping over?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,133,,80,,137,NULL,0,NULL,NULL,0
+2292,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,134,,80,,118,NULL,0,NULL,NULL,0
+2316,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,135,,80,,123,NULL,0,NULL,NULL,0
+2340,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,136,,80,,124,NULL,0,NULL,NULL,0
+2364,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,137,,80,,125,NULL,0,NULL,NULL,0
+2388,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,138,,80,,126,NULL,0,NULL,NULL,0
+2412,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,139,,80,,127,NULL,0,NULL,NULL,0
+2500,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,140,,80,,136,NULL,0,NULL,NULL,0
+2526,Where applicable. Is the free standing cooker or the under bench oven secured to prevent tilting when force is applied to the open oven door?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,141,,80,,137,NULL,0,NULL,NULL,0
+2293,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,142,,80,,118,NULL,0,NULL,NULL,0
+2317,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,143,,80,,123,NULL,0,NULL,NULL,0
+2341,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,144,,80,,124,NULL,0,NULL,NULL,0
+2365,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,145,,80,,125,NULL,0,NULL,NULL,0
+2389,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,146,,80,,126,NULL,0,NULL,NULL,0
+2413,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,147,,80,,127,NULL,0,NULL,NULL,0
+2501,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,148,,80,,136,NULL,0,NULL,NULL,0
+2527,Where applicable. Is the pressure and temperature relief valve functioning correctly?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,149,,80,,137,NULL,0,NULL,NULL,0
+2294,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,150,,80,,118,NULL,0,NULL,NULL,0
+2318,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,151,,80,,123,NULL,0,NULL,NULL,0
+2342,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,152,,80,,124,NULL,0,NULL,NULL,0
+2366,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,153,,80,,125,NULL,0,NULL,NULL,0
+2390,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,154,,80,,126,NULL,0,NULL,NULL,0
+2414,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,155,,80,,127,NULL,0,NULL,NULL,0
+2502,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,156,,80,,136,NULL,0,NULL,NULL,0
+2528,"Is the cowl, chimney plate and flue terminal in good condition and clear of obstruction?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,157,,80,,137,NULL,0,NULL,NULL,0
+2295,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,158,,80,,118,NULL,0,NULL,NULL,0
+2319,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,159,,80,,123,NULL,0,NULL,NULL,0
+2343,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,160,,80,,124,NULL,0,NULL,NULL,0
+2367,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,161,,80,,125,NULL,0,NULL,NULL,0
+2391,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,162,,80,,126,NULL,0,NULL,NULL,0
+2415,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,163,,80,,127,NULL,0,NULL,NULL,0
+2503,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,164,,80,,136,NULL,0,NULL,NULL,0
+2529,Is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at roof penetration?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,165,,80,,137,NULL,0,NULL,NULL,0
+2296,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,166,,80,,118,NULL,0,NULL,NULL,0
+2320,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,167,,80,,123,NULL,0,NULL,NULL,0
+2344,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,168,,80,,124,NULL,0,NULL,NULL,0
+2368,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,169,,80,,125,NULL,0,NULL,NULL,0
+2392,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,170,,80,,126,NULL,0,NULL,NULL,0
+2416,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,171,,80,,127,NULL,0,NULL,NULL,0
+2504,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,172,,80,,136,NULL,0,NULL,NULL,0
+2530,"Is the flue, or its surroundings, clear of signs of scorching or overheating?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,173,,80,,137,NULL,0,NULL,NULL,0
+2456,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,174,,80,,118,NULL,0,NULL,NULL,0
+2457,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,175,,80,,123,NULL,0,NULL,NULL,0
+2458,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,176,,80,,124,NULL,0,NULL,NULL,0
+2459,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,177,,80,,125,NULL,0,NULL,NULL,0
+2460,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,178,,80,,126,NULL,0,NULL,NULL,0
+2461,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,179,,80,,127,NULL,0,NULL,NULL,0
+2509,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,180,,80,,136,NULL,0,NULL,NULL,0
+2535,Has the appliance been cleaned of dust and debris?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,181,,80,,137,NULL,0,NULL,NULL,0
+2482,Where applicable is the heat exchanger in good condition? (test for spillage of combustion products),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,182,,80,,125,NULL,0,NULL,NULL,0
+2483,Where applicable is the heat exchanger in good condition? (test for spillage of combustion products),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,183,,80,,126,NULL,0,NULL,NULL,0
+2484,Where applicable is the heat exchanger in good condition? (test for spillage of combustion products),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,184,,80,,127,NULL,0,NULL,NULL,0
+2510,Where applicable is the heat exchanger in good condition? (test for spillage of combustion products),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,185,,80,,136,NULL,0,NULL,NULL,0
+2536,Where applicable is the heat exchanger in good condition? (test for spillage of combustion products),16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,186,,80,,137,NULL,0,NULL,NULL,0
+2297,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,187,,80,,118,NULL,0,NULL,NULL,0
+2321,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,188,,80,,123,NULL,0,NULL,NULL,0
+2345,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,189,,80,,124,NULL,0,NULL,NULL,0
+2369,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,190,,80,,125,NULL,0,NULL,NULL,0
+2393,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,191,,80,,126,NULL,0,NULL,NULL,0
+2417,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,192,,80,,127,NULL,0,NULL,NULL,0
+2505,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,193,,80,,136,NULL,0,NULL,NULL,0
+2531,Has the appliance been altered since manufacture in a manner which may render it unsafe?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,194,,80,,137,NULL,0,NULL,NULL,0
+2298,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,195,,80,,118,NULL,0,NULL,NULL,0
+2322,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,196,,80,,123,NULL,0,NULL,NULL,0
+2346,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,197,,80,,124,NULL,0,NULL,NULL,0
+2370,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,198,,80,,125,NULL,0,NULL,NULL,0
+2394,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,199,,80,,126,NULL,0,NULL,NULL,0
+2418,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,200,,80,,127,NULL,0,NULL,NULL,0
+2506,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,201,,80,,136,NULL,0,NULL,NULL,0
+2532,Is there any evidence of worn or damaged components?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,202,,80,,137,NULL,0,NULL,NULL,0
+2299,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,203,,80,,118,NULL,0,NULL,NULL,0
+2323,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,204,,80,,123,NULL,0,NULL,NULL,0
+2347,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,205,,80,,124,NULL,0,NULL,NULL,0
+2371,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,206,,80,,125,NULL,0,NULL,NULL,0
+2395,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,207,,80,,126,NULL,0,NULL,NULL,0
+2419,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,208,,80,,127,NULL,0,NULL,NULL,0
+2507,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,209,,80,,136,NULL,0,NULL,NULL,0
+2533,Is the ignition and re-ignition reliable and complete?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,210,,80,,137,NULL,0,NULL,NULL,0
+2300,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,211,,80,,118,NULL,0,NULL,NULL,0
+2324,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,212,,80,,123,NULL,0,NULL,NULL,0
+2348,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,213,,80,,124,NULL,0,NULL,NULL,0
+2372,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,214,,80,,125,NULL,0,NULL,NULL,0
+2396,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,215,,80,,126,NULL,0,NULL,NULL,0
+2420,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,216,,80,,127,NULL,0,NULL,NULL,0
+2508,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,217,,80,,136,NULL,0,NULL,NULL,0
+2534,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,218,,80,,137,NULL,0,NULL,NULL,0
+2551,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,219,,80,,137,NULL,0,NULL,NULL,0
+2550,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,220,,80,,136,NULL,0,NULL,NULL,0
+2549,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,221,,80,,127,NULL,0,NULL,NULL,0
+2548,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,222,,80,,126,NULL,0,NULL,NULL,0
+2547,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,223,,80,,125,NULL,0,NULL,NULL,0
+2546,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,224,,80,,124,NULL,0,NULL,NULL,0
+2545,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,225,,80,,124,NULL,0,NULL,NULL,0
+2544,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,226,,80,,123,NULL,0,NULL,NULL,0
+2243,Attach photos of the hot water system and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,227,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",118,NULL,0,NULL,NULL,0
+2303,Attach photos of the oven and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,228,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",123,NULL,0,NULL,NULL,0
+2327,Attach photos of the cooktop and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,229,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",124,NULL,0,NULL,NULL,0
+2351,Attach photos of the heating system and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,230,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",125,NULL,0,NULL,NULL,0
+2375,Attach photos of the other gas appliance and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,231,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",126,NULL,0,NULL,NULL,0
+2399,Attach photos of the other gas appliance and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,232,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",127,NULL,0,NULL,NULL,0
+2487,Attach photos of the other gas appliance and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,233,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",136,NULL,0,NULL,NULL,0
+2513,Attach photos of the other gas appliance and compliance plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,234,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",137,NULL,0,NULL,NULL,0
+2240,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,235,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",118,NULL,0,NULL,NULL,0
+2301,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,236,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",123,NULL,0,NULL,NULL,0
+2325,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,237,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",124,NULL,0,NULL,NULL,0
+2349,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,238,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",125,NULL,0,NULL,NULL,0
+2373,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,239,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",126,NULL,0,NULL,NULL,0
+2397,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,240,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",127,NULL,0,NULL,NULL,0
+2485,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,241,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",136,NULL,0,NULL,NULL,0
+2511,Please take a photo of the gas reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,242,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",137,NULL,0,NULL,NULL,0
+2275,Hot water system notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,243,,80,,118,NULL,0,NULL,NULL,0
+2308,Oven notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,244,,80,,123,NULL,0,NULL,NULL,0
+2332,Cooktop notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,245,,80,,124,NULL,0,NULL,NULL,0
+2356,Heating system notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,246,,80,,125,NULL,0,NULL,NULL,0
+2380,Other gas appliance notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,247,,80,,126,NULL,0,NULL,NULL,0
+2404,Other gas appliance notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,248,,80,,127,NULL,0,NULL,NULL,0
+2492,Other gas appliance notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,249,,80,,136,NULL,0,NULL,NULL,0
+2518,Other gas appliance notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,Add any notes regarding the hot water system that might be a concern,250,,80,,137,NULL,0,NULL,NULL,0
+2241,How many smoke alarms are installed in property?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,dropdown,0,,251,,80,,119,NULL,0,NULL,NULL,0
+2890,Smoke Alarm 1 Expiry Date,10/2/2025 4:40,0,1,10/2/2025 23:05,158095,datepicker,1,,252,,80,,119,NULL,0,NULL,NULL,0
+2891,Smoke Alarm 2 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,253,,80,,119,NULL,0,NULL,NULL,0
+2262,Are the smoke alarms photo electric?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,254,,80,,119,NULL,0,NULL,NULL,0
+2892,Smoke Alarm 3 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,255,,80,,119,NULL,0,NULL,NULL,0
+2469,Please select the expiry date of the smoke alarm,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,datetimepicker,1,,256,,80,,119,NULL,0,NULL,NULL,0
+2893,Smoke Alarm 4 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,257,,80,,119,NULL,0,NULL,NULL,0
+2894,Smoke Alarm 5 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,258,,80,,119,NULL,0,NULL,NULL,0
+2895,Smoke Alarm 6 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,259,,80,,119,NULL,0,NULL,NULL,0
+2896,Smoke Alarm 7 Expiry Date,10/2/2025 4:41,0,1,10/2/2025 23:05,158095,datepicker,0,,260,,80,,119,NULL,0,NULL,NULL,0
+2261,Are the smoke alarms hard wired?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,261,,80,,119,NULL,0,NULL,NULL,0
+2264,Are all curtain cords fixed to window or door frames?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,checkboxlist,0,,262,,80,,121,NULL,0,NULL,NULL,0
+2897,Smoke Alarm 8 Expiry Date,10/2/2025 4:42,0,1,10/2/2025 23:05,158095,datepicker,0,,263,,80,,119,NULL,0,NULL,NULL,0
+2237,How many required fixing to window or door frame?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,dropdown,0,,264,,80,,121,NULL,0,NULL,NULL,0
+2898,Smoke Alarm 9 Expiry Date,10/2/2025 4:42,0,1,10/2/2025 23:05,158095,datepicker,0,,265,,80,,119,NULL,0,NULL,NULL,0
+2899,Smoke Alarm 10 Expiry Date,10/2/2025 4:42,0,1,10/2/2025 23:05,158095,datepicker,0,,266,,80,,119,NULL,0,NULL,NULL,0
+2862,Where are the smoke alarms located?,13/1/2025 5:19,0,1,10/2/2025 23:05,158095,textbox,1,,267,,80,,119,NULL,0,NULL,NULL,0
+2901,How many smoke alarms are hard wired?,10/2/2025 5:04,0,1,10/2/2025 23:05,158095,dropdown,0,,268,,80,,119,NULL,0,NULL,NULL,0
+2263,"Are smoke alarms in working condition, been tested and batteries changed",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,269,,80,,119,NULL,0,NULL,NULL,0
+2274,Attach photos of all curtain cords,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,270,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",121,NULL,0,NULL,NULL,0
+2900,How many smoke alarms have you replaced?,10/2/2025 4:58,0,1,10/2/2025 23:05,158095,dropdown,0,,271,,80,,119,NULL,0,NULL,NULL,0
+2238,Does the living area have a heater?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,272,,80,,122,NULL,0,NULL,NULL,0
+2905,Do any other smoke alarms need replacement?,10/2/2025 5:33,0,1,10/2/2025 23:05,158095,dropdown,0,,273,,80,,119,NULL,0,NULL,NULL,0
+2906,How many other smoke alarms require replacement?,10/2/2025 5:34,0,1,10/2/2025 23:05,158095,dropdown,0,,274,,80,,119,NULL,0,NULL,NULL,0
+2454,Please attach photos of smoke alarms,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,275,Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",119,NULL,0,NULL,NULL,0
+2902,Add photos of all existing and newly installed smoke alarms,10/2/2025 5:06,0,1,10/2/2025 23:05,158095,file,0,,276,Upload Image (Max40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",119,NULL,0,NULL,NULL,0
+2903,Add photos of any expired smoke alarms,10/2/2025 5:07,0,1,10/2/2025 23:05,158095,file,0,,277,Upload Image (Max40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",119,NULL,0,NULL,NULL,0
+2239,Does the property have a pool?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,278,,80,,122,NULL,0,NULL,NULL,0
+2265,Does the property have an outdoor spa?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,279,,80,,122,NULL,0,NULL,NULL,0
+2266,Attach photos of the outdoor pool or spa and fence including child proof locks,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,280,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",122,NULL,0,NULL,NULL,0
+2236,Are there any further notes you would like to add regarding this property's compliance?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,textarea,0,,281,,80,,120,NULL,0,NULL,NULL,0
+2270,Electrician Name,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,1,,282,,80,,132,NULL,0,NULL,NULL,0
+2271,Licence Number,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,283,,80,,132,NULL,0,NULL,NULL,0
+2863,Are there any carbon monoxide alarms?,13/1/2025 5:20,0,1,10/2/2025 23:05,158095,radioboxlist,1,,284,,80,,119,NULL,0,NULL,NULL,0
+2272,Electrician Licence Photo,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,285,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",132,NULL,0,NULL,NULL,0
+2908,"If yes, please enter the expiry date of CO alarms.",10/2/2025 22:57,0,1,10/2/2025 23:26,0,datepicker,0,,285,,80,,119,NULL,0,NULL,NULL,0
+2864,Please enter the location of CO Alarm.,13/1/2025 5:21,0,1,10/2/2025 23:05,158095,textbox,0,,286,,80,,119,NULL,0,NULL,NULL,0
+2246,Attach a photo of the switchboard,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,287,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2909,Add photos of CO alarms,10/2/2025 23:05,0,1,10/2/2025 23:27,0,file,0,,287,Upload Image (Max40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",119,NULL,0,NULL,NULL,0
+2481,Where applicable attach a photo of the switchboard without the cover?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,288,Upload Image (40Mb),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2235,Smoke alarm notes,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,textarea,0,,289,,80,,119,NULL,0,NULL,NULL,0
+2244,Does the switch board type circuit breaker comply with AS/NZS 3000?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,292,,80,,117,NULL,0,NULL,NULL,0
+2245,If either answer is no please provide information?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,294,,80,,117,NULL,0,NULL,NULL,0
+2455,Attach a photo of the RCD results,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,295,Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2472,Is the polarity of switchboard / circuit breakers acceptable?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,296,,80,,117,NULL,0,NULL,NULL,0
+2473,If answer is no please provide information?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,297,,80,,117,NULL,0,NULL,NULL,0
+2276,Is the oven electric?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,298,,80,,141,NULL,0,NULL,NULL,0
+2277,Is the oven operational and operating in a safe electrical state?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,299,,80,,141,NULL,0,NULL,NULL,0
+2865,Please enter the make and model of the appliance,13/1/2025 5:23,0,1,10/2/2025 23:05,158095,textbox,0,,300,,80,,141,NULL,0,NULL,NULL,0
+2872,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,301,,80,,141,NULL,0,NULL,NULL,0
+2879,What is the manufacturer date,14/1/2025 3:05,0,1,10/2/2025 23:05,158095,textbox,0,,302,,80,,141,NULL,0,NULL,NULL,0
+2278,Oven notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,303,,80,,141,NULL,0,NULL,NULL,0
+2279,Photos of oven and serial plate,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,304,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",141,NULL,0,NULL,NULL,0
+2280,Does the property have a dishwasher?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,305,,80,,141,NULL,0,NULL,NULL,0
+2281,Confirm that the dishwasher has passed electrical tests?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,306,,80,,141,NULL,0,NULL,NULL,0
+2282,Dishwasher notes,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,307,,80,,141,NULL,0,NULL,NULL,0
+2436,Please select other items that required testing,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,checkboxlist,0,,308,,80,,117,NULL,0,NULL,NULL,0
+2811,Please take photo of dishwasher,26/6/2024 4:46,0,1,10/2/2025 23:05,158095,file,0,,309,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",141,NULL,0,NULL,NULL,0
+2247,Does the property have an air conditioner?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,310,,80,,141,NULL,0,NULL,NULL,0
+2248,Enter brand and model number of air conditioner,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,311,,80,,141,NULL,0,NULL,NULL,0
+2253,If yes how many air conditioners does the property have?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,dropdown,0,,312,,80,,141,NULL,0,NULL,NULL,0
+2731,Is the Air Conditioner operating?,3/12/2023 1:17,0,1,10/2/2025 23:05,158095,radioboxlist,0,,313,,80,,141,NULL,0,NULL,NULL,0
+2812,Please take a photo of the Air-Conditioner and the serial plate,3/7/2024 2:04,0,1,10/2/2025 23:05,158095,file,0,,314,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",141,NULL,0,NULL,NULL,0
+2256,Does the property have a electric or gas hot water system?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,315,,80,,141,NULL,0,NULL,NULL,0
+2283,If electric confirm it passed the required test,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,316,,80,,141,NULL,0,NULL,NULL,0
+2257,"If the hot water system is electric please take a photo of the serial plate, hot water system and access?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,317,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",141,NULL,0,NULL,NULL,0
+2250,How many accessible PowerPoints does the residence have?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,318,,80,,141,NULL,0,NULL,NULL,0
+2251,Confirm that all PowerPoints have been tested and any faults rectified?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,319,,80,,141,NULL,0,NULL,NULL,0
+2252,"If answer is not all faults were rectified, please explain why?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,320,,80,,141,NULL,0,NULL,NULL,0
+2630,Are there any power-points or switches that need to be replaced?,14/9/2023 5:35,0,1,10/2/2025 23:05,158095,radioboxlist,0,,321,,80,,141,NULL,0,NULL,NULL,0
+2254,Are there any other electrical products that required testing?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,322,,80,,141,NULL,0,NULL,NULL,0
+2421,Appliance Tested,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,323,,80,,128,NULL,0,NULL,NULL,0
+2255,Please enter details of the other items?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,324,,80,,141,NULL,0,NULL,NULL,0
+2441,Appliance Tested,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,325,,80,,129,NULL,0,NULL,NULL,0
+2284,Please add photos of other electrical items tested with faults showing where applicable,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,326,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",141,NULL,0,NULL,NULL,0
+2422,Smoke Match (Exhaust fans off),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,327,,80,,128,NULL,0,NULL,NULL,0
+2442,Smoke Match (Exhaust fans off),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,328,,80,,129,NULL,0,NULL,NULL,0
+2423,Smoke Match (Exhaust fans on),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,329,,80,,128,NULL,0,NULL,NULL,0
+2443,Smoke Match (Exhaust fans on),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,330,,80,,129,NULL,0,NULL,NULL,0
+2424,CO detector / analyser instrument details,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,331,,80,,128,NULL,0,NULL,NULL,0
+2444,CO detector / analyser instrument details,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,332,,80,,129,NULL,0,NULL,NULL,0
+2425,CO Analyser calibration date,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,333,,80,,128,NULL,0,NULL,NULL,0
+2445,CO Analyser calibration date,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,334,,80,,129,NULL,0,NULL,NULL,0
+2426,Background check - initial CO level - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,335,,80,,128,NULL,0,NULL,NULL,0
+2446,Background check - initial CO level - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,336,,80,,129,NULL,0,NULL,NULL,0
+2427,5 Minute check - CO reading (metal flue) - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,337,,80,,128,NULL,0,NULL,NULL,0
+2447,5 Minute check - CO reading (metal flue) - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,338,,80,,129,NULL,0,NULL,NULL,0
+2428,10 Minute check - CO reading (brick or masonry) - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,339,,80,,128,NULL,0,NULL,NULL,0
+2448,10 Minute check - CO reading (brick or masonry) - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,340,,80,,129,NULL,0,NULL,NULL,0
+2429,Background check - final CO level - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,341,,80,,128,NULL,0,NULL,NULL,0
+2449,Background check - final CO level - Exhaust Fans Off,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,342,,80,,129,NULL,0,NULL,NULL,0
+2430,Background Check - Initial CO level Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,343,,80,,128,NULL,0,NULL,NULL,0
+2450,Background Check - Initial CO level Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,344,,80,,129,NULL,0,NULL,NULL,0
+2431,5 Minute Check - CO reading - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,345,,80,,128,NULL,0,NULL,NULL,0
+2451,5 Minute Check - CO reading - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,346,,80,,129,NULL,0,NULL,NULL,0
+2432,10 Minute Check - CO reading - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,347,,80,,128,NULL,0,NULL,NULL,0
+2452,10 Minute Check - CO reading - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,348,,80,,129,NULL,0,NULL,NULL,0
+2433,Background check - final CO level - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,349,,80,,128,NULL,0,NULL,NULL,0
+2453,Background check - final CO level - Exhaust Fans On,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,350,,80,,129,NULL,0,NULL,NULL,0
+2462,Please take a photo of the CO reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,351,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",128,NULL,0,NULL,NULL,0
+2463,Please take a photo of the CO reading,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,file,0,,352,Upload Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",129,NULL,0,NULL,NULL,0
+2653,"I declare that in my judgement on the day of testing, the said gas appliances or installations are",22/9/2023 4:58,0,1,10/2/2025 23:05,158095,radioboxlist,0,,353,,80,,131,NULL,0,NULL,NULL,0
+2655,Is this section compliant? (System generated),22/9/2023 5:46,0,1,10/2/2025 23:05,158095,iscompliant,0,,354,,80,,131,NULL,0,NULL,NULL,0
+2435,Gas Identified fault,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,355,,80,,131,NULL,0,NULL,NULL,0
+2631,Actions Suggested,19/9/2023 5:24,0,1,10/2/2025 23:05,158095,recommendations,0,,356,,80,,131,NULL,0,NULL,NULL,0
+2437,Actions Required,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,requirements,0,,357,,80,,131,NULL,0,NULL,NULL,0
+2652,I declare in my judgement on the day of testing the said electrical aspect of this property is,22/9/2023 4:55,0,1,10/2/2025 23:05,158095,radioboxlist,0,,358,,80,,130,NULL,0,NULL,NULL,0
+2654,Is this section compliant? (System Generated),22/9/2023 5:44,0,1,10/2/2025 23:05,158095,iscompliant,0,,359,,80,,130,NULL,0,NULL,NULL,0
+2438,Electrical Identified Fault,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,360,,80,,130,NULL,0,NULL,NULL,0
+2633,Actions Suggested,19/9/2023 5:31,0,1,10/2/2025 23:05,158095,recommendations,0,,361,,80,,130,NULL,0,NULL,NULL,0
+2439,Actions Required,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,362,,80,,130,NULL,0,NULL,NULL,0
+2464,Please take a photo of the common lights in the house,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,363,Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2465,Please take a photo of the common lights in the house (ideally with light off),16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,364,Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2466,Approximately how many of these lights are in the house?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,textbox,0,,365,,80,,117,NULL,0,NULL,NULL,0
+2467,Is the Hot Water System Electric?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,366,,80,,117,NULL,0,NULL,NULL,0
+2538,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,367,,80,,125,NULL,0,NULL,NULL,0
+2540,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,368,,80,,127,NULL,0,NULL,NULL,0
+2877,What is the Serial Number,14/1/2025 2:58,0,1,10/2/2025 23:05,158095,textbox,0,,369,,80,,138,NULL,0,NULL,NULL,0
+2539,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,370,,80,,126,NULL,0,NULL,NULL,0
+2542,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,371,,80,,137,NULL,0,NULL,NULL,0
+2541,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,372,,80,,136,NULL,0,NULL,NULL,0
+2543,Was a negative pressure identified at the appliance?,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,373,,80,,138,NULL,0,NULL,NULL,0
+2557,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,374,,80,,137,NULL,0,NULL,NULL,0
+2556,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,375,,80,,136,NULL,0,NULL,NULL,0
+2555,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,376,,80,,127,NULL,0,NULL,NULL,0
+2554,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,radioboxlist,0,,377,,80,,127,NULL,0,NULL,NULL,0
+2553,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,378,,80,,126,NULL,0,NULL,NULL,0
+2552,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,radioboxlist,0,,379,,80,,125,NULL,0,NULL,NULL,0
+2558,Rectification Job Details,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,380,,80,,87,NULL,0,NULL,NULL,0
+2884,What is the Manufacturer Date,14/1/2025 3:06,0,1,10/2/2025 23:05,158095,textbox,0,,381,,80,,138,NULL,0,NULL,NULL,0
+2870,Please enter the make and model of the appliance,13/1/2025 5:24,0,1,10/2/2025 23:05,158095,textbox,0,,382,,80,,138,NULL,0,NULL,NULL,0
+2559,Job Price ex GST,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,383,,80,,87,NULL,0,NULL,NULL,0
+2560,Rectification Job Details,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textarea,0,,384,,80,,88,NULL,0,NULL,NULL,0
+2561,Job Price ex GST,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,textbox,0,,385,,80,,88,NULL,0,NULL,NULL,0
+2562,Please Enter Rectification Costs,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,costinterface,0,,386,,80,,131,NULL,0,NULL,NULL,0
+2563,Please Enter Rectification Costs,16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,costinterface,0,,387,,80,,130,NULL,0,NULL,NULL,0
+2468,"If the hot water system is electric please take a photo of the serial plate, hot water system and access",16/8/2023 11:34,158095,0,10/2/2025 23:05,158095,file,0,,388,Image (Max 40MB),80,"types:*.jpeg,*.jpg,*.png;size:40960",117,NULL,0,NULL,NULL,0
+2565,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,389,,80,,141,NULL,0,NULL,NULL,0
+2648,Is this section compliant?,20/9/2023 3:29,0,1,10/2/2025 23:05,158095,radioboxlist,0,,390,,80,,141,NULL,0,NULL,NULL,0
+2566,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,391,,80,,135,NULL,0,NULL,NULL,0
+2645,Is this section compliant?,20/9/2023 3:23,0,1,10/2/2025 23:05,158095,radioboxlist,0,,392,,80,,135,NULL,0,NULL,NULL,0
+2567,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,393,,80,,118,NULL,0,NULL,NULL,0
+2636,Is this section compliant?,20/9/2023 3:12,0,1,10/2/2025 23:05,158095,radioboxlist,0,,394,,80,,118,NULL,0,NULL,NULL,0
+2568,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,395,,80,,123,NULL,0,NULL,NULL,0
+2639,Is this section compliant?,20/9/2023 3:15,0,1,10/2/2025 23:05,158095,radioboxlist,0,,396,,80,,123,NULL,0,NULL,NULL,0
+2640,Is this section compliant?,20/9/2023 3:17,0,1,10/2/2025 23:05,158095,radioboxlist,0,,397,,80,,124,NULL,0,NULL,NULL,0
+2569,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,398,,80,,124,NULL,0,NULL,NULL,0
+2570,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,399,,80,,125,NULL,0,NULL,NULL,0
+2641,Is this section compliant?,20/9/2023 3:18,0,1,10/2/2025 23:05,158095,radioboxlist,0,,400,,80,,125,NULL,0,NULL,NULL,0
+2571,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,401,,80,,137,NULL,0,NULL,NULL,0
+2647,Is this section compliant?,20/9/2023 3:28,0,1,10/2/2025 23:05,158095,radioboxlist,0,,402,,80,,137,NULL,0,NULL,NULL,0
+2572,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,403,,80,,138,NULL,0,NULL,NULL,0
+2573,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,404,,80,,126,NULL,0,NULL,NULL,0
+2642,Is this section compliant?,20/9/2023 3:19,0,1,10/2/2025 23:05,158095,radioboxlist,0,,405,,80,,126,NULL,0,NULL,NULL,0
+2574,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,406,,80,,127,NULL,0,NULL,NULL,0
+2643,Is this section compliant?,20/9/2023 3:20,0,1,10/2/2025 23:05,158095,radioboxlist,0,,407,,80,,127,NULL,0,NULL,NULL,0
+2575,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,408,,80,,136,NULL,0,NULL,NULL,0
+2646,Is this section compliant?,20/9/2023 3:27,0,1,10/2/2025 23:05,158095,radioboxlist,0,,409,,80,,136,NULL,0,NULL,NULL,0
+2576,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,410,,80,,122,NULL,0,NULL,NULL,0
+2577,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,0,,411,,80,,119,NULL,0,NULL,NULL,0
+2904,Please give details of any further works required?,10/2/2025 5:13,0,1,10/2/2025 23:05,158095,textarea,0,,412,,80,,119,NULL,0,NULL,NULL,0
+2637,Is this section compliant?,20/9/2023 3:15,0,1,26/2/2025 23:39,0,radioboxlist,0,,413,,80,,119,NULL,0,NULL,NULL,0
+2578,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,414,,80,,128,NULL,0,NULL,NULL,0
+2649,Is this section compliant?,20/9/2023 3:34,0,1,10/2/2025 23:05,158095,radioboxlist,0,,415,,80,,128,NULL,0,NULL,NULL,0
+2579,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,416,,80,,129,NULL,0,NULL,NULL,0
+2650,Is this section compliant?,20/9/2023 3:35,0,1,10/2/2025 23:05,158095,radioboxlist,0,,417,,80,,129,NULL,0,NULL,NULL,0
+2580,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,418,,80,,139,NULL,0,NULL,NULL,0
+2635,Is this section compliant?,20/9/2023 2:26,0,1,10/2/2025 23:05,158095,radioboxlist,0,,419,,80,,117,NULL,0,NULL,NULL,0
+2564,Is this section compliant? (System generated),16/8/2023 11:34,158095,1,10/2/2025 23:05,158095,iscompliant,1,,420,,80,,117,NULL,0,NULL,NULL,0
+2581,Is the premises waterproof? Such that it would stop water entering when it rains.,1/9/2023 5:49,0,1,4/9/2023 5:16,6808,radioboxlist,1,,1,,81,,142,NULL,0,NULL,NULL,0
+2582,If property is deemed not weatherproof add notes below,1/9/2023 5:51,0,1,4/9/2023 5:16,6808,textarea,0,,2,,81,,142,NULL,0,NULL,NULL,0
+2586,Add Images,2/9/2023 0:56,0,1,4/9/2023 5:16,6808,file,0,Upload Image (Max 40MB),3,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",142,NULL,0,NULL,NULL,0
+2583,In your opinion at the time of viewing the premises structurally sound?,2/9/2023 0:53,0,1,4/9/2023 5:16,6808,radioboxlist,1,,4,,81,,142,NULL,0,NULL,NULL,0
+2584,Is the premises does not appear structurally sounds please add notes,2/9/2023 0:55,0,1,4/9/2023 5:16,6808,textarea,0,,5,,81,,142,NULL,0,NULL,NULL,0
+2587,Are the fixtures and fittings of the premises in good repair?,2/9/2023 1:00,0,1,4/9/2023 5:16,6808,radioboxlist,1,,6,,81,,143,NULL,0,NULL,NULL,0
+2589,Are any of the fixtures and fittings safe and not likely to cause injury through ordinary use?,2/9/2023 1:01,0,1,4/9/2023 5:16,6808,radioboxlist,1,,7,,81,,143,NULL,0,NULL,NULL,0
+2590,Upload any photos of fixtures and fittings that are not in good repair,2/9/2023 1:03,0,1,4/9/2023 5:16,6808,file,0,,8,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",143,NULL,0,NULL,NULL,0
+2592,If any of the fixtures and fittings are not in good repair or could cause damage please add notes below,2/9/2023 1:07,0,1,4/9/2023 5:16,6808,textarea,0,,9,,81,,143,NULL,0,NULL,NULL,0
+2621,Is this section compliant?,4/9/2023 4:26,0,1,4/9/2023 5:16,6808,iscompliant,0,,10,,81,,143,NULL,0,NULL,NULL,0
+2593,Do all of the external windows and doors that can be accessed without a ladder have a lock or latch that can prevent unauthorised access?,2/9/2023 1:10,0,1,4/9/2023 5:16,6808,radioboxlist,1,,11,,81,,144,NULL,0,NULL,NULL,0
+2594,List any windows or doors the do not have required locks or latches,2/9/2023 1:11,0,1,4/9/2023 5:16,6808,textarea,0,,12,,81,,144,NULL,0,NULL,NULL,0
+2595,Add images of windows or doors without latches,2/9/2023 1:12,0,1,4/9/2023 5:16,6808,file,0,,13,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",144,NULL,0,NULL,NULL,0
+2622,Is this section compliant?,4/9/2023 4:28,0,1,4/9/2023 5:16,6808,iscompliant,0,,14,,81,,144,NULL,0,NULL,NULL,0
+2596,"Does the premises have privacy coverings including fences and hedges the prevent visibility into rooms that someone would expect privacy such as bedrooms, toilets and bathrooms.",2/9/2023 1:17,0,1,4/9/2023 5:16,6808,radioboxlist,1,,15,,81,,145,NULL,0,NULL,NULL,0
+2597,Please add notes about any privacy issues including locations in property,4/9/2023 3:34,0,1,4/9/2023 5:16,6808,textarea,0,,16,,81,,145,NULL,0,NULL,NULL,0
+2599,Does the property have adequate plumbing and drainage for the number of persons that occupy the premises?,4/9/2023 3:48,0,1,4/9/2023 5:16,6808,radioboxlist,1,,17,,81,,146,NULL,0,NULL,NULL,0
+2598,Please add photos of any privacy issues,4/9/2023 3:46,0,1,4/9/2023 5:16,6808,file,0,,18,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",145,NULL,0,NULL,NULL,0
+2623,Is this section compliant?,4/9/2023 4:28,0,1,4/9/2023 5:16,6808,iscompliant,0,,19,,81,,145,NULL,0,NULL,NULL,0
+2600,Is the property connected to water services that supply hot and cold water?,4/9/2023 3:49,0,1,4/9/2023 5:16,6808,radioboxlist,1,,20,,81,,146,NULL,0,NULL,NULL,0
+2601,Does the property have a water supply that is suitable for drinking?,4/9/2023 3:51,0,1,4/9/2023 5:16,6808,radioboxlist,1,,21,,81,,146,NULL,0,NULL,NULL,0
+2585,Add Images,2/9/2023 0:55,0,1,4/9/2023 5:16,6808,file,0,,22,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",142,NULL,0,NULL,NULL,0
+2620,Is this section compliant?,4/9/2023 4:25,0,1,4/9/2023 5:16,6808,iscompliant,0,,23,,81,,142,NULL,0,NULL,NULL,0
+2602,Please add any notes if there is any issue with the plumbing and drainage on the property?,4/9/2023 3:52,0,1,4/9/2023 5:16,6808,textarea,0,,24,,81,,146,NULL,0,NULL,NULL,0
+2604,Do bathrooms and toilet facilities have adequate privacy?,4/9/2023 3:55,0,1,4/9/2023 5:16,6808,radioboxlist,1,,25,,81,,147,NULL,0,NULL,NULL,0
+2605,Does each toilet function as designed including flushing and refilling?,4/9/2023 3:57,0,1,4/9/2023 5:16,6808,radioboxlist,1,,26,,81,,147,NULL,0,NULL,NULL,0
+2606,"Are all toilets connected to a sewer, septic system or other waste disposal system?",4/9/2023 3:59,0,1,4/9/2023 5:16,6808,radioboxlist,1,,27,,81,,147,NULL,0,NULL,NULL,0
+2607,Please add any notes regarding any issue with the toilet functionality questions?,4/9/2023 4:00,0,1,4/9/2023 5:16,6808,textarea,0,,28,,81,,147,NULL,0,NULL,NULL,0
+2608,Please add any photos to provide evidence of any toilet functionality issues,4/9/2023 4:01,0,1,4/9/2023 5:16,6808,file,0,,29,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",147,NULL,0,NULL,NULL,0
+2625,Is this section compliant?,4/9/2023 4:29,0,1,4/9/2023 5:16,6808,iscompliant,0,,30,,81,,147,NULL,0,NULL,NULL,0
+2609,Is there a kitchen at the property?,4/9/2023 4:02,0,1,4/9/2023 5:16,6808,radioboxlist,1,,31,,81,,149,NULL,0,NULL,NULL,0
+2610,Is there is a kitchen at the property does it have a functioning cooktop?,4/9/2023 4:03,0,1,4/9/2023 5:16,6808,radioboxlist,1,,32,,81,,149,NULL,0,NULL,NULL,0
+2612,Add notes of any issues with the cooktop,4/9/2023 4:05,0,1,4/9/2023 5:16,6808,textarea,0,,33,,81,,149,NULL,0,NULL,NULL,0
+2613,Add photos of any issues with the cooktop,4/9/2023 4:06,0,1,4/9/2023 5:16,6808,file,0,,34,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",149,NULL,0,NULL,NULL,0
+2627,Is this section compliant?,4/9/2023 4:29,0,1,4/9/2023 5:16,6808,iscompliant,0,,35,,81,,149,NULL,0,NULL,NULL,0
+2611,Does the property have a laundry?,4/9/2023 4:04,0,1,4/9/2023 5:16,6808,radioboxlist,1,,36,,81,,150,NULL,0,NULL,NULL,0
+2614,Add any notes about any issues relating to the laundry,4/9/2023 4:07,0,1,4/9/2023 5:16,6808,textarea,0,,37,,81,,150,NULL,0,NULL,NULL,0
+2615,Add any photos to support issues with the laundry,4/9/2023 4:07,0,1,4/9/2023 5:16,6808,file,0,,38,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",150,NULL,0,NULL,NULL,0
+2628,Is this section compliant?,4/9/2023 4:30,0,1,4/9/2023 5:16,6808,iscompliant,0,,39,,81,,150,NULL,0,NULL,NULL,0
+2616,Is the property free from vermin?,4/9/2023 4:16,0,1,4/9/2023 5:16,6808,checkboxlist,1,,40,,81,,148,NULL,0,NULL,NULL,0
+2617,Is the property free from dampness?,4/9/2023 4:18,0,1,4/9/2023 5:16,6808,radioboxlist,1,,41,,81,,148,NULL,0,NULL,NULL,0
+2618,Is the property free of mould?,4/9/2023 4:19,0,1,4/9/2023 5:16,6808,radioboxlist,1,,42,,81,,148,NULL,0,NULL,NULL,0
+2619,"Please add photos that support any mould, vermin or dampness issues?",4/9/2023 4:20,0,1,4/9/2023 5:16,6808,file,0,,43,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",148,NULL,0,NULL,NULL,0
+2626,Is this section compliant?,4/9/2023 4:29,0,1,4/9/2023 5:16,6808,iscompliant,0,,44,,81,,148,NULL,0,NULL,NULL,0
+2603,Add supporting photos of plumbing and drainage issues,4/9/2023 3:54,0,1,4/9/2023 5:16,6808,file,0,,45,Upload Image (Max 40MB),81,"types:*.jpeg,*.jpg,*.png;size:40960",146,NULL,0,NULL,NULL,0
+2624,Is this section compliant?,4/9/2023 4:28,0,1,4/9/2023 5:16,6808,iscompliant,0,,46,,81,,146,NULL,0,NULL,NULL,0
+2666,Search users,27/11/2023 6:16,387526,0,22/10/2024 5:27,6808,,0,,1,,83,,152,Fullname,0,,,0
+2657,Firstname,27/11/2023 6:16,387526,1,27/11/2023 6:16,387526,,0,,2,,83,,152,Firstname,6,NULL,NULL,1
+2658,Lastname,27/11/2023 6:16,387526,1,22/10/2024 5:26,6808,,0,,3,,83,,152,Lastname,6,,,1
+2659,Mobile,27/11/2023 6:16,387526,1,22/10/2024 5:26,6808,,0,,4,,83,,152,Mobile,0,,,1
+2660,Email,27/11/2023 6:16,387526,1,5/12/2024 3:05,6808,,0,,5,,83,,152,Email,12,,,1
+2663,Address1,27/11/2023 6:16,387526,1,18/4/2024 5:51,158095,,0,,6,,83,,152,Address1,0,,NULL,2
+2664,Address2,27/11/2023 6:16,387526,1,22/10/2024 5:28,6808,,0,,7,,83,,152,Address2,0,,,2
+2667,JobTypeName,27/11/2023 6:16,387526,1,22/10/2024 5:29,6808,,0,,8,,83,,152,JobTypeName,0,,,2
+2671,ProductCode,27/11/2023 6:16,387526,1,13/2/2025 2:37,387525,,0,,9,,83,,152,ProductCode,0,,,0
+2673,Purchase Date,27/11/2023 6:16,387526,1,12/1/2025 22:06,158095,datepicker,0,,10,,83,,152,PurchaseDate,0,,,0
+2674,Quantity,27/11/2023 6:16,387526,1,12/1/2025 22:07,158095,textbox,0,,11,,83,,152,Quantity,0,,,0
+2813,Approx Hours,15/7/2024 23:17,158095,1,29/10/2024 6:51,158095,textbox,0,Enter hours,12,Enter hours,83,,152,ApproxHours,12,,,2
+2672,Place Of Purchase,27/11/2023 6:16,387526,1,12/1/2025 22:08,158095,textbox,0,,13,,83,,152,PlaceOfPurchase,0,,,0
+2675,Product Description,27/11/2023 6:16,387526,1,12/1/2025 22:07,158095,textarea,0,,14,,83,,152,ProductDescription,0,,,0
+2677,Ref,27/11/2023 6:16,387526,1,22/10/2024 5:31,6808,textbox,0,,15,,83,,152,Ref,12,,,2
+2661,Description,27/11/2023 6:16,387526,1,22/10/2024 5:32,6808,,0,,16,,83,,152,Description,12,,,2
+2676,ProviderDetails,27/11/2023 6:16,387526,1,22/10/2024 5:32,6808,textarea,0,,17,,83,,152,ProviderDetails,0,,,2
+2750,ManualAssign,18/4/2024 5:41,6808,1,22/10/2024 5:32,6808,dropdown,0,,18,,83,,152,ManualAssign,0,,,2
+2752,Job Admin,23/5/2024 10:45,387526,1,22/10/2024 5:32,6808,dropdown,0,,19,,83,,152,ContactUserId,0,,,2
+2668,Files,27/11/2023 6:16,387526,1,22/10/2024 5:33,6808,,0,,20,,83,,152,Files,0,,,2
+2679,JobProductInterface,27/11/2023 6:16,387526,1,27/11/2023 6:16,387526,jobproductinterface,0,,21,,83,,152,JobProductInterface,12,NULL,NULL,8
+2910,Mains Pressure Reading,13/2/2025 0:57,387525,1,13/2/2025 2:29,387525,textbox,0,,22,,83,,152,MainsPressureReading,4,,,9
+2911,Fault Type,13/2/2025 0:57,387525,1,13/2/2025 2:29,387525,textbox,0,,24,,83,,152,FaultType,4,,,9
+2912,Service Duration,13/2/2025 1:01,387525,1,13/2/2025 2:32,387525,textbox,0,,25,,83,,152,ServiceDuration,4,,,9
+2913,Completion Notes,13/2/2025 1:02,387525,1,13/2/2025 2:31,387525,textarea,0,,26,,83,,152,CompletionNotes,0,,,9
+2914,Rating,13/2/2025 1:03,387525,1,13/2/2025 2:37,387525,textbox,0,,27,,83,,152,Rating,6,,,10
+2915,Completion Notes,13/2/2025 1:03,387525,1,13/2/2025 2:32,387525,textarea,0,,28,,83,,152,CompletionNotes,0,,,10
+2680,Full Name,28/11/2023 1:09,0,1,28/11/2023 1:47,16437,textbox,1,,1,,84,,153,NULL,0,NULL,NULL,0
+2681,Registration/Licence number,28/11/2023 1:09,0,1,28/11/2023 1:47,16437,textbox,0,,2,,84,,153,NULL,0,NULL,NULL,0
+2682,Make,28/11/2023 1:10,0,1,28/11/2023 1:47,16437,textbox,0,,3,,84,,153,NULL,0,NULL,NULL,0
+2683,Model,28/11/2023 1:10,0,1,28/11/2023 1:47,16437,textbox,0,,4,,84,,153,NULL,0,NULL,NULL,0
+2684,Gas Type,28/11/2023 1:10,0,1,28/11/2023 1:47,16437,textbox,0,,5,,84,,153,NULL,0,NULL,NULL,0
+2685,Serial number or date of manufacture,28/11/2023 1:11,0,1,28/11/2023 1:47,16437,textbox,0,,6,,84,,153,NULL,0,NULL,NULL,0
+2686,Certification body,28/11/2023 1:11,0,1,28/11/2023 1:47,16437,textbox,0,,7,,84,,153,NULL,0,NULL,NULL,0
+2687,Certification number,28/11/2023 1:12,0,1,28/11/2023 1:47,16437,textbox,0,,8,,84,,153,NULL,0,NULL,NULL,0
+2688,Has the appliance been cleaned?,28/11/2023 1:12,0,1,28/11/2023 1:47,16437,radioboxlist,1,,9,,84,,153,NULL,0,NULL,NULL,0
+2689,Is there evidence of gas product certification?,28/11/2023 1:17,0,1,28/11/2023 1:47,16437,radioboxlist,0,,10,,84,,153,NULL,0,NULL,NULL,0
+2690,"Is the appliance subject to any safety recall, prohibitions or notices?",28/11/2023 1:18,0,1,28/11/2023 1:47,16437,radioboxlist,0,,11,,84,,153,NULL,0,NULL,NULL,0
+2691,Has the appliance been altered since manufacture in a manner which may render it unsafe?,28/11/2023 1:19,0,1,28/11/2023 1:47,16437,radioboxlist,0,,12,,84,,153,NULL,0,NULL,NULL,0
+2692,Is the appliance certified for use in the location where it is installed and is it suitable for the connected gas supply?,28/11/2023 1:19,0,1,28/11/2023 1:47,16437,checkboxlist,0,,13,,84,,153,NULL,0,NULL,NULL,0
+2693,Is the appliance installed in accordance with the relevant edition of AS/NZS 5601?,28/11/2023 1:20,0,1,28/11/2023 1:47,16437,radioboxlist,0,,14,,84,,153,NULL,0,NULL,NULL,0
+2694,Is the appliance appropriately secured?,28/11/2023 1:20,0,1,28/11/2023 1:47,16437,radioboxlist,0,,15,,84,,153,NULL,0,NULL,NULL,0
+2695,Is the appliance gastight? (Visual inspection and leakage test),28/11/2023 1:21,0,1,28/11/2023 1:47,16437,radioboxlist,0,,16,,84,,153,NULL,0,NULL,NULL,0
+2696,"Is the flue cowl, chimney plate, flue terminal and flue (where accessible) in good condition and clear of obstruction?",28/11/2023 1:22,0,1,28/11/2023 1:47,16437,radioboxlist,0,,17,,84,,153,NULL,0,NULL,NULL,0
+2697,"Where applicable, does the appliance have an accessible means of electrical isolation?",28/11/2023 1:22,0,1,28/11/2023 1:47,16437,radioboxlist,0,,18,,84,,153,NULL,0,NULL,NULL,0
+2698,Is the appliance regulator accessible for servicing and adjustment?,28/11/2023 1:23,0,1,28/11/2023 1:47,16437,radioboxlist,0,,19,,84,,153,NULL,0,NULL,NULL,0
+2699,"Where applicable, is the flue, or its surroundings, clear of signs of scorching or overheating?",28/11/2023 1:24,0,1,28/11/2023 1:47,16437,radioboxlist,0,,20,,84,,153,NULL,0,NULL,NULL,0
+2700,"Where applicable, is the flue adequately supported and correctly installed (i.e. terminal has correct clearance distance) and sealed at the roof penetration?",28/11/2023 1:24,0,1,28/11/2023 1:47,16437,radioboxlist,0,,21,,84,,153,NULL,0,NULL,NULL,0
+2701,Is there any evidence of worn or damaged components?,28/11/2023 1:25,0,1,28/11/2023 1:47,16437,radioboxlist,0,,22,,84,,153,NULL,0,NULL,NULL,0
+2702,Was there any build-up of dust or other foreign matter in or on the appliance that may affect correct operation?,28/11/2023 1:25,0,1,28/11/2023 1:47,16437,radioboxlist,0,,23,,84,,153,NULL,0,NULL,NULL,0
+2703,"Are flame sensor rods, ignition electrodes and thermocouples free of carbon deposits (i.e. soot)?",28/11/2023 1:26,0,1,28/11/2023 1:47,16437,radioboxlist,0,,24,,84,,153,NULL,0,NULL,NULL,0
+2704,"For appliances connected with a hose assembly, is the condition of the hose satisfactory?",28/11/2023 1:27,0,1,28/11/2023 1:47,16437,radioboxlist,0,,25,,84,,153,NULL,0,NULL,NULL,0
+2705,Is the gas supply pressure to the appliance inlet adequate (1.13 or 2.75 kPa LPG) when all gas appliances are in operation?,28/11/2023 1:27,0,1,28/11/2023 1:47,16437,radioboxlist,0,,26,,84,,153,NULL,0,NULL,NULL,0
+2706,Is the nominal burner pressure correct?,28/11/2023 1:28,0,1,28/11/2023 1:47,16437,radioboxlist,0,,27,,84,,153,NULL,0,NULL,NULL,0
+2707,Is the ignition and re-ignition reliable and complete?,28/11/2023 1:28,0,1,28/11/2023 1:47,16437,radioboxlist,0,,28,,84,,153,NULL,0,NULL,NULL,0
+2708,"Where applicable, does the flame safeguard allow for flame establishment within the period specified in the appliance manufacturer's instructions?",28/11/2023 1:29,0,1,28/11/2023 1:47,16437,radioboxlist,0,,29,,84,,153,NULL,0,NULL,NULL,0
+2709,"Where applicable, does the flame safeguard isolate the gas supply when there has been an interruption to the gas supply?",28/11/2023 1:29,0,1,28/11/2023 1:47,16437,radioboxlist,0,,30,,84,,153,NULL,0,NULL,NULL,0
+2710,Does the appliance burner flame exhibit any flame abnormality?,28/11/2023 1:30,0,1,28/11/2023 1:47,16437,radioboxlist,0,,31,,84,,153,NULL,0,NULL,NULL,0
+2711,"For appliances with a turndown setting, does the burner flame remain stable when operated from the high to the low setting?",28/11/2023 1:31,0,1,28/11/2023 1:47,16437,radioboxlist,0,,32,,84,,153,NULL,0,NULL,NULL,0
+2712,Is there any abnormal noise and/or vibration during the operation of the appliance?,28/11/2023 1:31,0,1,28/11/2023 1:47,16437,radioboxlist,0,,33,,84,,153,NULL,0,NULL,NULL,0
+2713,"Where applicable, are burner flames stable when opening and closing doors associated with the appliance or the installation?",28/11/2023 1:32,0,1,28/11/2023 1:47,16437,radioboxlist,0,,34,,84,,153,NULL,0,NULL,NULL,0
+2714,Do control knobs and door handles become too hot to touch while the appliance is in operation?,28/11/2023 1:32,0,1,28/11/2023 1:47,16437,radioboxlist,0,,35,,84,,153,NULL,0,NULL,NULL,0
+2715,"Where applicable, are integral guards for space heaters adequately secured to the appliance and are they in good condition?",28/11/2023 1:33,0,1,28/11/2023 1:47,16437,radioboxlist,0,,36,,84,,153,NULL,0,NULL,NULL,0
+2716,"For heated water, has the PTR (pressure and temperature relief) valve been checked for correct operation?",28/11/2023 1:33,0,1,28/11/2023 1:47,16437,radioboxlist,0,,37,,84,,153,NULL,0,NULL,NULL,0
+2717,"Where applicable, is there any evidence of a cracked heat exchanger?",28/11/2023 1:34,0,1,28/11/2023 1:47,16437,radioboxlist,0,,38,,84,,153,NULL,0,NULL,NULL,0
+2718,"For open-flued appliances, does the appliance operate so that there is no spillage of combustion products in accordance with Appendix F?",28/11/2023 1:34,0,1,28/11/2023 1:47,16437,radioboxlist,0,,39,,84,,153,NULL,0,NULL,NULL,0
+2719,Was a negative pressure identified at the appliance?,28/11/2023 1:35,0,1,28/11/2023 1:47,16437,radioboxlist,0,,40,,84,,153,NULL,0,NULL,NULL,0
+2720,Combustion products detection equipment: Instrument details,28/11/2023 1:36,0,1,28/11/2023 1:47,16437,textbox,0,,41,,84,,153,NULL,0,NULL,NULL,0
+2721,Instrument calibration date,28/11/2023 1:36,0,1,28/11/2023 1:47,16437,textbox,0,,42,,84,,153,NULL,0,NULL,NULL,0
+2722,Installation details: Number and location of exhaust fans,28/11/2023 1:37,0,1,28/11/2023 1:47,16437,textbox,0,,43,,84,,153,NULL,0,NULL,NULL,0
+2723,Combustion products spillage (CO Concentration (ppm) and/or CO2 (%)) if applicable,28/11/2023 1:37,0,1,28/11/2023 1:47,16437,textbox,0,,44,,84,,153,NULL,0,NULL,NULL,0
+2724,Background check (appliance off),28/11/2023 1:37,0,1,28/11/2023 1:47,16437,textbox,0,,45,,84,,153,NULL,0,NULL,NULL,0
+2725,Background check after 5 min of appliance operation on high (appliances other than Type 1 decorative log fires) Note: Allow an additional 5 mins of operation if there is no chimney liner,28/11/2023 1:38,0,1,28/11/2023 1:47,16437,textbox,0,,46,,84,,153,NULL,0,NULL,NULL,0
+2727,Final reading at the appliance on high,28/11/2023 1:39,0,1,28/11/2023 1:47,16437,textbox,0,,48,,84,,153,NULL,0,NULL,NULL,0
+2728,Observations and identified faults (Gasfitter to note any observations and faults identified during service). Remedial action taken in relation to identified faults,28/11/2023 1:39,0,1,28/11/2023 1:47,16437,textarea,0,,49,,84,,153,NULL,0,NULL,NULL,0
+2730,Please add any other notes if required,28/11/2023 1:47,0,1,28/11/2023 1:47,16437,textarea,0,,50,,84,,157,NULL,0,NULL,NULL,0
+2729,Please add photos of appliance serviced,28/11/2023 1:43,0,1,28/11/2023 1:47,16437,file,1,,51,Upload Image (Max 40MB),84,"types:*.jpeg,*.jpg,*.png;size:40960",153,NULL,0,NULL,NULL,0
+2753,Do all external windows that can be opened have latches that secure them against outside entry?,7/6/2024 0:11,0,1,9/6/2024 4:11,6808,radioboxlist,1,,1,,85,,171,NULL,0,NULL,NULL,0
+2759,Are there curtain and blind safety kits installed for added safety? These cleats are installed 1600mm from ground level that hold/affix curtain cords to the wall,7/6/2024 0:16,0,1,9/6/2024 4:11,6808,radioboxlist,1,,2,,85,,170,NULL,0,NULL,NULL,0
+2761,Is the property supplied with and does it currently have rubbish and recycling bins that are vermin-proof and meet council collection standards?,7/6/2024 0:18,0,1,9/6/2024 4:11,6808,radioboxlist,1,,3,,85,,163,NULL,0,NULL,NULL,0
+2763,"In your opinion do all rooms within the property have adequate ventilation, including the bathroom, shower, toilet, and laundry?",7/6/2024 0:19,0,1,9/6/2024 4:11,6808,radioboxlist,1,,4,,85,,173,NULL,0,NULL,NULL,0
+2765,"Is the toilet located in a separate room, either by itself or in an appropriate room like a bathroom or a combined bathroom–laundry?",7/6/2024 0:20,0,1,9/6/2024 4:11,6808,radioboxlist,1,,5,,85,,164,NULL,0,NULL,NULL,0
+2770,Does the floor move/flex when you walk on it anywhere in the property?,7/6/2024 0:30,0,1,9/6/2024 4:11,6808,radioboxlist,1,,6,,85,,168,NULL,0,NULL,NULL,0
+2773,Are all rooms free from any visual mould and damp stains that may be related to the building structure?,7/6/2024 0:33,0,1,9/6/2024 4:11,6808,radioboxlist,1,,7,,85,,169,NULL,0,NULL,NULL,0
+2775,Do all external entry doors (other than screen doors) have functional dead locks or locks that can be unlocked with a key from the outside and opened without a key from the inside?,7/6/2024 0:34,0,1,9/6/2024 4:11,6808,radioboxlist,1,,8,,85,,162,NULL,0,NULL,NULL,0
+2778,"Do interior rooms, corridors, and hallways all have working lights?",7/6/2024 0:35,0,1,9/6/2024 4:11,6808,radioboxlist,1,,9,,85,,172,NULL,0,NULL,NULL,0
+2780,"If there is a laundry on the property, is it connected to hot and cold water?",7/6/2024 0:36,0,1,9/6/2024 4:11,6808,radioboxlist,0,,10,,85,,167,NULL,0,NULL,NULL,0
+2785,Does the kitchen have a dedicated cooking and food preparation area?,7/6/2024 0:38,0,1,9/6/2024 4:11,6808,radioboxlist,1,,11,,85,,166,NULL,0,NULL,NULL,0
+2787,"Is there a fixed heater in the main living area, and if yes, in your opinion does it appear to be in good working order?",7/6/2024 0:40,0,1,9/6/2024 4:11,6808,radioboxlist,1,,12,,85,,174,NULL,0,NULL,NULL,0
+2789,Has this property had an electrical safety inspection completed that you are aware of since you have lived in it?,7/6/2024 0:41,0,1,9/6/2024 4:11,6808,radioboxlist,1,,13,,85,,175,NULL,0,NULL,NULL,0
+2794,"Does each bathroom have a working sink, a shower or bath?",7/6/2024 0:44,0,1,9/6/2024 4:11,6808,radioboxlist,1,,14,,85,,165,NULL,0,NULL,NULL,0
+2757,"In your opinion does the property have curtains or blinds in rooms used for living or sleeping that can open and close, block light, and maintain privacy?",7/6/2024 0:15,0,1,9/6/2024 4:11,6808,radioboxlist,1,,15,,85,,170,NULL,0,NULL,NULL,0
+2760,Please take/upload a photo example of any blind safety kits installed.,7/6/2024 0:17,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),16,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",170,NULL,0,NULL,NULL,0
+2764,Is the toilet in good working order and connected to a sewerage or septic system?,7/6/2024 0:19,0,1,9/6/2024 4:11,6808,radioboxlist,1,,17,,85,,164,NULL,0,NULL,NULL,0
+2766,Has/Is the property in your opinion structurally sound and weatherproof during your tenancy?,7/6/2024 0:22,0,1,9/6/2024 4:11,6808,radioboxlist,1,,18,,85,,168,NULL,0,NULL,NULL,0
+2771,Has the property been free from water leaks during your tenancy?,7/6/2024 0:31,0,1,9/6/2024 4:11,6808,radioboxlist,1,,19,,85,,169,NULL,0,NULL,NULL,0
+2776,Is there access to artificial light at night?,7/6/2024 0:35,0,1,9/6/2024 4:11,6808,radioboxlist,1,,20,,85,,172,NULL,0,NULL,NULL,0
+2783,Is the sink in the kitchen in good working order and connected to a hot and cold water supply?,7/6/2024 0:38,0,1,9/6/2024 4:11,6808,radioboxlist,1,,21,,85,,166,NULL,0,NULL,NULL,0
+2793,Please take/upload a photo from the door of each bathroom,7/6/2024 0:44,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),23,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",165,NULL,0,NULL,NULL,0
+2762,Please take/upload a photo of all rubbish bins supplied with the property.,7/6/2024 0:18,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),24,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",163,NULL,0,NULL,NULL,0
+2791,In your opinion do the showers appear to have energy efficient shower heads?,7/6/2024 0:42,0,1,9/6/2024 4:11,6808,radioboxlist,1,,25,,85,,165,NULL,0,NULL,NULL,0
+2774,Please take/upload a photo of the locks from the inside.,7/6/2024 0:33,0,1,9/6/2024 5:49,0,file,0,,26,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",162,NULL,0,NULL,NULL,0
+2786,"Please take/upload a photo of the heater, Please take close ups of any model number / standards that are externally visible.",7/6/2024 0:39,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),27,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",174,NULL,0,NULL,NULL,0
+2788,Can you please open the switchboard and take/upload a clear front view of the switchboard.,7/6/2024 0:41,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),28,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",175,NULL,0,NULL,NULL,0
+2790,Please take/upload a photo of each shower head,7/6/2024 0:42,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),29,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",165,NULL,0,NULL,NULL,0
+2809,Open the switchboard cover and take close ups of any model number / standards and installation dates that are visible.,9/6/2024 4:02,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),30,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",175,NULL,0,NULL,NULL,0
+2810,Please add any additional notes and press Submit.,9/6/2024 4:11,0,1,9/6/2024 4:11,6808,textbox,0,,31,,85,,176,NULL,0,NULL,NULL,0
+2784,Please take/upload a photo of the kitchen area,7/6/2024 0:38,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),32,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",166,NULL,0,NULL,NULL,0
+2782,Please take/upload a photo of the stovetop.,7/6/2024 0:37,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),33,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",166,NULL,0,NULL,NULL,0
+2781,Please take/upload a photo of the oven.,7/6/2024 0:37,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),34,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",166,NULL,0,NULL,NULL,0
+2779,Please take/upload a photo of the laundry area?,7/6/2024 0:36,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),35,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",167,NULL,0,NULL,NULL,0
+2772,"Please take/upload a photo of any and all areas of mould, water stains",7/6/2024 0:32,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),37,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",169,NULL,0,NULL,NULL,0
+2768,"Please take/upload a photo of any areas internally and/or externally where there are gaps between floors, walls and ceiling visible",7/6/2024 0:27,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),38,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",168,NULL,0,NULL,NULL,0
+2769,Please take/upload a photo of any areas internally and/or externally where there are cracks or structural rotting visible,7/6/2024 0:28,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),39,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",168,NULL,0,NULL,NULL,0
+2758,"If not, Please take/upload a photo of the curtains or blinds you feel are not fit for purpose.",7/6/2024 0:16,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),40,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",170,NULL,0,NULL,NULL,0
+2754,Please take/upload a photo example of latches present,7/6/2024 0:12,0,1,9/6/2024 4:11,6808,file,1,Upload Image (Max 40MB),41,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",171,NULL,0,NULL,NULL,0
+2755,Please take/upload a photo example of windows without locks or without keys present.,7/6/2024 0:13,0,1,9/6/2024 4:11,6808,file,0,Upload Image (Max 40MB),42,Upload Image (Max 40MB),85,"types:*.jpeg,*.jpg,*.png;size:40960",171,NULL,0,NULL,NULL,0
+2756,Please add any relevant notes,7/6/2024 0:14,0,1,9/6/2024 4:11,6808,textarea,0,,43,,85,,171,NULL,0,NULL,NULL,0
+2795,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,44,,85,,162,NULL,0,NULL,NULL,0
+2796,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,45,,85,,163,NULL,0,NULL,NULL,0
+2797,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,46,,85,,164,NULL,0,NULL,NULL,0
+2798,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,47,,85,,165,NULL,0,NULL,NULL,0
+2799,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,48,,85,,166,NULL,0,NULL,NULL,0
+2800,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,49,,85,,167,NULL,0,NULL,NULL,0
+2801,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,50,,85,,168,NULL,0,NULL,NULL,0
+2802,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,51,,85,,169,NULL,0,NULL,NULL,0
+2803,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,52,,85,,175,NULL,0,NULL,NULL,0
+2804,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,53,,85,,170,NULL,0,NULL,NULL,0
+2805,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,54,,85,,172,NULL,0,NULL,NULL,0
+2806,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,55,,85,,173,NULL,0,NULL,NULL,0
+2807,Please add any relevant notes,7/6/2024 0:46,0,1,9/6/2024 4:11,6808,textarea,0,,56,,85,,174,NULL,0,NULL,NULL,0
+2808,Name,9/6/2024 2:47,0,1,9/6/2024 4:11,6808,textbox,0,,57,,85,,161,NULL,0,NULL,NULL,0
+2853,Technician Name,17/5/2022 5:25,0,1,12/8/2024 6:26,158095,textarea,1,,1,,88,,180,NULL,0,NULL,NULL,0
+2835,How many smoke alarms are in the property?,29/3/2022 9:30,0,1,12/8/2024 6:26,158095,dropdown,1,,2,,88,,180,NULL,0,NULL,NULL,0
+2834,Smoke Alarm 1 Expiry Date,29/3/2022 9:29,0,1,12/8/2024 6:26,158095,datepicker,1,,3,,88,,180,NULL,0,NULL,NULL,0
+2836,Smoke Alarm 2 Expiry Date,29/3/2022 9:32,0,1,12/8/2024 6:26,158095,datepicker,0,,4,,88,,180,NULL,0,NULL,NULL,0
+2843,Smoke Alarm 3 Expiry Date,29/3/2022 9:35,0,1,12/8/2024 6:26,158095,datepicker,0,,5,,88,,180,NULL,0,NULL,NULL,0
+2844,Smoke Alarm 4 Expiry Date,29/3/2022 9:35,0,1,12/8/2024 6:26,158095,datepicker,0,,6,,88,,180,NULL,0,NULL,NULL,0
+2842,Smoke Alarm 5 Expiry Date,29/3/2022 9:35,0,1,12/8/2024 6:26,158095,datepicker,0,,7,,88,,180,NULL,0,NULL,NULL,0
+2841,Smoke Alarm 6 Expiry Date,29/3/2022 9:34,0,1,12/8/2024 6:26,158095,datepicker,0,,8,,88,,180,NULL,0,NULL,NULL,0
+2840,Smoke Alarm 7 Expiry Date,29/3/2022 9:34,0,1,12/8/2024 6:26,158095,datepicker,0,,9,,88,,180,NULL,0,NULL,NULL,0
+2839,Smoke Alarm 8 Expiry Date,29/3/2022 9:33,0,1,12/8/2024 6:26,158095,datepicker,0,,10,,88,,180,NULL,0,NULL,NULL,0
+2838,Smoke Alarm 9 Expiry Date,29/3/2022 9:33,0,1,12/8/2024 6:26,158095,datepicker,0,,11,,88,,180,NULL,0,NULL,NULL,0
+2837,Smoke Alarm 10 Expiry Date,29/3/2022 9:33,0,1,12/8/2024 6:26,158095,datepicker,0,,12,,88,,180,NULL,0,NULL,NULL,0
+2849,How many smoke alarms are hard wired?,30/3/2022 2:25,0,1,12/8/2024 6:26,158095,dropdown,0,,13,,88,,180,NULL,0,NULL,NULL,0
+2850,Are smoke alarms in working condition been tested and batteries changed?,30/3/2022 2:28,0,1,12/8/2024 6:26,158095,dropdown,0,,14,,88,,180,NULL,0,NULL,NULL,0
+2845,How many smoke alarms have you replaced?,29/3/2022 9:39,0,1,12/8/2024 6:26,158095,dropdown,1,,15,,88,,180,NULL,0,NULL,NULL,0
+2847,Do any other smoke alarms need replacement?,29/3/2022 10:11,0,1,12/8/2024 6:26,158095,dropdown,0,,16,,88,,180,NULL,0,NULL,NULL,0
+2851,How many other smoke alarms require replacement?,30/3/2022 2:37,0,1,12/8/2024 6:26,158095,dropdown,0,,17,,88,,180,NULL,0,NULL,NULL,0
+2852,Add photos of all existing and newly installed smoke alarms,30/3/2022 2:39,0,1,12/8/2024 6:26,158095,file,0,,18,Upload Image (Max40Mb),88,"types:*.jpeg,*.jpg,*.png;size:40960",180,NULL,0,NULL,NULL,0
+2846,Add photos of any expired smoke alarms,29/3/2022 9:41,0,1,12/8/2024 6:26,158095,file,0,,19,Upload Image (Max40Mb),88,"types:*.jpeg,*.jpg,*.png;size:40960",180,NULL,0,NULL,NULL,0
+2854,Have the Air-Conditioner filters been cleaned?,12/8/2024 6:12,0,1,12/8/2024 6:26,158095,dropdown,1,,20,,88,,178,NULL,0,NULL,NULL,0
+2848,Please give details of any further works required?,29/3/2022 10:14,0,1,12/8/2024 6:26,158095,textarea,0,,21,,88,,180,NULL,0,NULL,NULL,0
+2855,Please take photo of the Air Conditioner and Cleaned Filter,12/8/2024 6:13,0,1,12/8/2024 6:26,158095,file,1,,22,Upload Image (Max40Mb),88,"types:*.jpeg,*.jpg,*.png;size:40960",178,NULL,0,NULL,NULL,0
+2856,Additional Comments,12/8/2024 6:14,0,1,12/8/2024 6:26,158095,textarea,0,,23,,88,,178,NULL,0,NULL,NULL,0
+2916,Photo of the location of the cooler where the unit has been installed?,11/3/2025 5:31,0,1,31/3/2025 23:11,158095,file,1,,1,Image (Max 40MB),89,"types:*.jpeg,*.jpg,*.png,*.gif,*.heic;size:40960",0,NULL,0,NULL,NULL,0
+2963,Where is the unit installed?,31/3/2025 23:09,0,1,31/3/2025 23:11,158095,textbox,1,,2,,89,,0,NULL,0,NULL,NULL,0
+2917,Photo showing the installed earthing wire connecting the fan bracket to the casing,11/3/2025 5:32,0,1,31/3/2025 23:11,158095,file,1,,3,Image (Max 40MB),89,"types:*.jpeg,*.jpg,*.png,*.gif,*.heic;size:40960",0,NULL,0,NULL,NULL,0
+2919,Any photos of other unusual observations (leave comment below),11/3/2025 5:34,0,1,31/3/2025 23:11,158095,file,1,,4,Image (Max 40MB),89,"types:*.jpeg,*.jpg,*.png,*.gif,*.heic;size:40960",0,NULL,0,NULL,NULL,0
+2918,Ohm readings (if possible) otherwise record readings on job sheet – must be < 1 Ohm,11/3/2025 5:32,0,1,31/3/2025 23:11,158095,file,1,,5,Image (Max 40MB),89,"types:*.jpeg,*.jpg,*.png,*.gif,*.heic;size:40960",0,NULL,0,NULL,NULL,0
+2964,What is the Ohm reading?,31/3/2025 23:09,0,1,31/3/2025 23:11,158095,textbox,0,,6,,89,,0,NULL,0,NULL,NULL,0
+2965,Any other comments / completion notes,31/3/2025 23:10,0,1,31/3/2025 23:11,0,textarea,0,,7,,89,,0,NULL,0,NULL,NULL,0
+2922,Electrician Name,21/3/2025 3:57,0,1,24/3/2025 2:35,158095,textbox,1,,1,,90,,181,NULL,0,NULL,NULL,0
+2921,License Number,21/3/2025 3:57,0,1,24/3/2025 2:35,158095,textbox,1,,2,,90,,181,NULL,0,NULL,NULL,0
+2924,Does the switchboard need upgrading?,21/3/2025 4:00,0,1,24/3/2025 2:35,158095,radioboxlist,1,,3,,90,,184,NULL,0,NULL,NULL,0
+2925,Attach a photo of the switchboard,21/3/2025 4:01,0,1,24/3/2025 2:35,158095,file,0,,4,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",184,NULL,0,NULL,NULL,0
+2926,Enter any notes,21/3/2025 4:02,0,1,24/3/2025 2:35,158095,textarea,0,,5,,90,,184,NULL,0,NULL,NULL,0
+2928,Does the property have a heater?,21/3/2025 4:04,0,1,24/3/2025 2:35,158095,radioboxlist,0,,6,,90,,185,NULL,0,NULL,NULL,0
+2929,Is the appliance electrical or gas?,21/3/2025 4:04,0,1,24/3/2025 2:35,158095,radioboxlist,0,,7,,90,,185,NULL,0,NULL,NULL,0
+2952,Roughly how old is the appliance?,21/3/2025 4:38,0,1,24/3/2025 2:35,158095,textbox,0,,8,,90,,185,NULL,0,NULL,NULL,0
+2927,Is the appliance operational?,21/3/2025 4:03,0,1,24/3/2025 2:35,158095,radioboxlist,0,,9,,90,,185,NULL,0,NULL,NULL,0
+2923,Electrician License Photo,21/3/2025 3:58,0,1,24/3/2025 2:35,158095,file,0,,10,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",181,NULL,0,NULL,NULL,0
+2930,Please take a photo of the appliance and serial plate,21/3/2025 4:08,0,1,24/3/2025 2:35,158095,file,0,,11,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",185,NULL,0,NULL,NULL,0
+2953,Please add any relevant notes,21/3/2025 4:53,0,1,24/3/2025 2:35,158095,textarea,0,,12,,90,,185,NULL,0,NULL,NULL,0
+2933,Does the property have oven / cooktop ?,21/3/2025 4:09,0,1,24/3/2025 2:35,158095,radioboxlist,0,,13,,90,,185,NULL,0,NULL,NULL,0
+2936,Is the appliance electrical or gas?,21/3/2025 4:13,0,1,24/3/2025 2:35,158095,radioboxlist,0,,14,,90,,185,NULL,0,NULL,NULL,0
+2937,Roughly how old is the appliance?,21/3/2025 4:14,0,1,24/3/2025 2:35,158095,textbox,0,,15,,90,,185,NULL,0,NULL,NULL,0
+2938,Is the appliance operational?,21/3/2025 4:14,0,1,24/3/2025 2:35,158095,radioboxlist,0,,16,,90,,185,NULL,0,NULL,NULL,0
+2935,Please take a photo of the appliance and the serial plate,21/3/2025 4:09,0,1,24/3/2025 2:35,158095,file,0,,17,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",185,NULL,0,NULL,NULL,0
+2954,Please add any relevant notes,21/3/2025 4:54,0,1,24/3/2025 2:35,158095,textarea,0,,18,,90,,185,NULL,0,NULL,NULL,0
+2932,Does the property have an Air Conditioner?,21/3/2025 4:09,0,1,24/3/2025 2:35,158095,radioboxlist,0,,19,,90,,185,NULL,0,NULL,NULL,0
+2931,Roughly how old is the appliance?,21/3/2025 4:09,0,1,24/3/2025 2:35,158095,textbox,0,,20,,90,,185,NULL,0,NULL,NULL,0
+2939,Is the appliance operational?,21/3/2025 4:17,0,1,24/3/2025 2:35,158095,radioboxlist,0,,21,,90,,185,NULL,0,NULL,NULL,0
+2934,Please take a photo of the appliance and the serial plate,21/3/2025 4:09,0,1,24/3/2025 2:35,158095,file,0,,22,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",185,NULL,0,NULL,NULL,0
+2955,Please add any relevant notes,21/3/2025 4:54,0,1,24/3/2025 2:35,158095,textarea,0,,23,,90,,185,NULL,0,NULL,NULL,0
+2940,How many power points and switches are in the property?,21/3/2025 4:19,0,1,24/3/2025 2:35,158095,textbox,0,,24,,90,,185,NULL,0,NULL,NULL,0
+2941,Do any powerpoints/switches need to be replaced?,21/3/2025 4:20,0,1,24/3/2025 2:35,158095,radioboxlist,0,,25,,90,,185,NULL,0,NULL,NULL,0
+2942,"If yes, please note how many and where.",21/3/2025 4:20,0,1,24/3/2025 2:35,158095,textarea,0,,26,,90,,185,NULL,0,NULL,NULL,0
+2943,Please take photos of damaged power-points and switches,21/3/2025 4:21,0,1,24/3/2025 2:35,158095,file,0,,27,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",185,NULL,0,NULL,NULL,0
+2956,Please add any relevant notes,21/3/2025 4:55,0,1,24/3/2025 2:35,158095,textarea,0,,28,,90,,185,NULL,0,NULL,NULL,0
+2944,Does the property have any other electrical appliances / fixtures?,21/3/2025 4:22,0,1,24/3/2025 2:35,158095,radioboxlist,0,,29,,90,,185,NULL,0,NULL,NULL,0
+2945,"If yes, please list here",21/3/2025 4:23,0,1,24/3/2025 2:35,158095,textarea,0,,30,,90,,185,NULL,0,NULL,NULL,0
+2946,Please take photos if applicable,21/3/2025 4:24,0,1,24/3/2025 2:35,158095,file,0,,31,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",185,NULL,0,NULL,NULL,0
+2957,Please add any relevant notes,21/3/2025 4:55,0,1,24/3/2025 2:35,158095,textarea,0,,32,,90,,185,NULL,0,NULL,NULL,0
+2947,Does the property need any other maintenance work?,21/3/2025 4:24,0,1,24/3/2025 2:35,158095,radioboxlist,0,,33,,90,,186,NULL,0,NULL,NULL,0
+2948,"If yes, please list below",21/3/2025 4:25,0,1,24/3/2025 2:35,158095,textarea,0,,34,,90,,186,NULL,0,NULL,NULL,0
+2958,I declare in my judgement on the day of testing the said electrical aspect of this property is,24/3/2025 2:21,0,1,24/3/2025 2:35,158095,radioboxlist,1,,35,,90,,188,NULL,0,NULL,NULL,0
+2960,Actions Suggested,24/3/2025 2:34,0,1,24/3/2025 2:35,158095,textarea,0,,37,,90,,188,NULL,0,NULL,NULL,0
+2961,Actions Required,24/3/2025 2:34,0,1,24/3/2025 2:35,158095,textarea,0,,39,,90,,188,NULL,0,NULL,NULL,0
+2949,Please take any relevant photos,21/3/2025 4:26,0,1,24/3/2025 2:35,158095,file,0,,40,Upload Image (Max 40MB),90,"types:*.jpeg,*.jpg,*.png;size:40960",186,NULL,0,NULL,NULL,0
+2950,Completion Notes,21/3/2025 4:27,0,1,24/3/2025 2:35,158095,textarea,0,,41,,90,,187,NULL,0,NULL,NULL,0

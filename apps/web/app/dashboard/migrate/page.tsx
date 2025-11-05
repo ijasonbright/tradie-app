@@ -56,6 +56,7 @@ export default function MigratePage() {
           <li>✓ <strong className="text-green-600">NEW: Calendar & Appointments</strong> - Schedule jobs, meetings, and site visits</li>
           <li>✓ <strong className="text-green-600">NEW: Expense Management</strong> - Submit, track, and approve business expenses</li>
           <li>✓ <strong className="text-blue-600">NEW: Automated Reminders</strong> - Invoice reminders and monthly statements with email/SMS</li>
+          <li>✓ <strong className="text-purple-600">NEW: Completion Forms</strong> - Dynamic job completion forms with photos, signatures, and PDF generation</li>
         </ul>
 
         <div className="mb-6 rounded-lg bg-yellow-50 p-4">

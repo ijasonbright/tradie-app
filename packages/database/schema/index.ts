@@ -17,5 +17,6 @@ export * from './tallbob-webhooks'
 export * from './payment-requests'
 export * from './team-locations'
 export * from './reminder-settings'
+export * from './completion-forms'
 // Temporarily disable relations to fix build
 // export * from './relations'

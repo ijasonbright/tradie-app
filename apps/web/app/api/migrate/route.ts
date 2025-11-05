@@ -744,6 +744,119 @@ export async function POST() {
       // ========== PUSH NOTIFICATIONS ==========
       // Add expo_push_token to users table for push notification support
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS expo_push_token TEXT`,
+
+      // ========== COMPLETION FORMS SYSTEM ==========
+      // Create completion form templates table
+      `CREATE TABLE IF NOT EXISTS completion_form_templates (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID REFERENCES organizations(id),
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        code VARCHAR(100),
+        job_type VARCHAR(50),
+        is_global BOOLEAN DEFAULT false,
+        is_active BOOLEAN DEFAULT true,
+        navigation_type VARCHAR(50) DEFAULT 'tabs',
+        include_photos BOOLEAN DEFAULT true,
+        include_before_after_photos BOOLEAN DEFAULT true,
+        include_signature BOOLEAN DEFAULT true,
+        include_technician_signature BOOLEAN DEFAULT true,
+        site_id INTEGER,
+        csv_job_type_id INTEGER,
+        csv_form_type_id INTEGER,
+        site_group_id INTEGER,
+        created_by_user_id UUID REFERENCES users(id),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create completion form template groups (sections)
+      `CREATE TABLE IF NOT EXISTS completion_form_template_groups (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        template_id UUID NOT NULL REFERENCES completion_form_templates(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        sort_order INTEGER NOT NULL,
+        is_collapsible BOOLEAN DEFAULT true,
+        is_completion_group BOOLEAN DEFAULT false,
+        conditional_logic JSONB,
+        csv_group_id INTEGER,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create completion form template questions
+      `CREATE TABLE IF NOT EXISTS completion_form_template_questions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        template_id UUID NOT NULL REFERENCES completion_form_templates(id) ON DELETE CASCADE,
+        group_id UUID NOT NULL REFERENCES completion_form_template_groups(id) ON DELETE CASCADE,
+        question_text TEXT NOT NULL,
+        placeholder VARCHAR(255),
+        help_text TEXT,
+        help_url VARCHAR(500),
+        default_value TEXT,
+        field_type VARCHAR(50) NOT NULL,
+        config JSONB,
+        is_required BOOLEAN DEFAULT false,
+        validation_message TEXT,
+        validation_rules JSONB,
+        sort_order INTEGER NOT NULL,
+        column_span INTEGER DEFAULT 1,
+        conditional_logic JSONB,
+        answer_options JSONB,
+        csv_question_id INTEGER,
+        csv_group_no INTEGER,
+        csv_field VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create job completion forms (submitted instances)
+      `CREATE TABLE IF NOT EXISTS job_completion_forms (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        template_id UUID NOT NULL REFERENCES completion_form_templates(id),
+        completed_by_user_id UUID NOT NULL REFERENCES users(id),
+        completion_date TIMESTAMP,
+        form_data JSONB NOT NULL,
+        client_signature_url VARCHAR(500),
+        technician_signature_url VARCHAR(500),
+        client_name VARCHAR(255),
+        technician_name VARCHAR(255),
+        pdf_url VARCHAR(500),
+        pdf_generated_at TIMESTAMP,
+        status VARCHAR(50) DEFAULT 'draft' NOT NULL,
+        sent_to_client BOOLEAN DEFAULT false,
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create job completion form photos
+      `CREATE TABLE IF NOT EXISTS job_completion_form_photos (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        completion_form_id UUID NOT NULL REFERENCES job_completion_forms(id) ON DELETE CASCADE,
+        question_id UUID REFERENCES completion_form_template_questions(id),
+        photo_url VARCHAR(500) NOT NULL,
+        thumbnail_url VARCHAR(500),
+        caption TEXT,
+        photo_type VARCHAR(50),
+        sort_order INTEGER DEFAULT 0,
+        uploaded_by_user_id UUID NOT NULL REFERENCES users(id),
+        uploaded_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for completion forms
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_organization_id ON completion_form_templates(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_is_global ON completion_form_templates(is_global) WHERE is_global = true`,
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_template_groups_template_id ON completion_form_template_groups(template_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_template_questions_template_id ON completion_form_template_questions(template_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_template_questions_group_id ON completion_form_template_questions(group_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_forms_organization_id ON job_completion_forms(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_forms_job_id ON job_completion_forms(job_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_forms_status ON job_completion_forms(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_form_photos_completion_form_id ON job_completion_form_photos(completion_form_id)`,
     ]
 
     const results = []
