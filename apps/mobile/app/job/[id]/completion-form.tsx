@@ -20,7 +20,7 @@ export default function CompletionFormScreen() {
   const checkExistingForm = async () => {
     try {
       setError(null)
-      const response = await apiClient.get(`/jobs/${id}/completion-form`)
+      const response = await apiClient.getJobCompletionForm(id as string)
 
       if (response.form) {
         // Existing form found
@@ -44,20 +44,14 @@ export default function CompletionFormScreen() {
 
   const handleSaveDraft = async (formData: any) => {
     try {
-      if (existingFormId) {
-        // Update existing draft
-        await apiClient.post(`/jobs/${id}/completion-form`, {
-          template_id: templateId,
-          form_data: formData,
-          status: 'draft',
-        })
-      } else {
-        // Create new draft
-        const response = await apiClient.post(`/jobs/${id}/completion-form`, {
-          template_id: templateId,
-          form_data: formData,
-          status: 'draft',
-        })
+      // Save or update draft
+      const response = await apiClient.saveJobCompletionForm(id as string, {
+        template_id: templateId!,
+        form_data: formData,
+        status: 'draft',
+      })
+
+      if (!existingFormId) {
         setExistingFormId(response.form.id)
       }
 
@@ -72,14 +66,14 @@ export default function CompletionFormScreen() {
   const handleSubmit = async (formData: any) => {
     try {
       // First save the form data
-      await apiClient.post(`/jobs/${id}/completion-form`, {
-        template_id: templateId,
+      await apiClient.saveJobCompletionForm(id as string, {
+        template_id: templateId!,
         form_data: formData,
         status: 'draft',
       })
 
       // Then submit it
-      await apiClient.put(`/jobs/${id}/completion-form/submit`, {})
+      await apiClient.submitJobCompletionForm(id as string)
 
       Alert.alert(
         'Success',

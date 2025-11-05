@@ -46,7 +46,7 @@ export default function CompletionFormPreviewScreen() {
   const fetchForm = async () => {
     try {
       setError(null)
-      const response = await apiClient.get(`/jobs/${id}/completion-form`)
+      const response = await apiClient.getJobCompletionForm(id as string)
 
       if (!response.form) {
         setError('No completion form found for this job')

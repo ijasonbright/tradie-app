@@ -27,7 +27,7 @@ export default function CompletionFormTemplatesScreen() {
   const fetchTemplates = async () => {
     try {
       setError(null)
-      const response = await apiClient.get('/completion-forms/templates')
+      const response = await apiClient.getCompletionFormTemplates()
       console.log('Fetched templates:', response)
       setTemplates(response.templates || [])
     } catch (err: any) {

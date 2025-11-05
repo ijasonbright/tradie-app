@@ -42,7 +42,7 @@ export function useCompletionForm(templateId: string, jobId: string) {
   const loadTemplate = async () => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get(`/completion-forms/templates/${templateId}`)
+      const response = await apiClient.getCompletionFormTemplate(templateId)
       setTemplate(response)
     } catch (error) {
       console.error('Failed to load template:', error)
@@ -53,7 +53,7 @@ export function useCompletionForm(templateId: string, jobId: string) {
 
   const loadFormData = async () => {
     try {
-      const response = await apiClient.get(`/jobs/${jobId}/completion-form`)
+      const response = await apiClient.getJobCompletionForm(jobId)
       if (response.form && response.form.form_data) {
         setFormData(response.form.form_data)
       }
@@ -126,7 +126,7 @@ export function useCompletionForm(templateId: string, jobId: string) {
   const saveForm = async () => {
     try {
       setIsSaving(true)
-      await apiClient.post(`/jobs/${jobId}/completion-form`, {
+      await apiClient.saveJobCompletionForm(jobId, {
         template_id: templateId,
         form_data: formData,
         status: 'draft',
@@ -144,14 +144,14 @@ export function useCompletionForm(templateId: string, jobId: string) {
       setIsSubmitting(true)
 
       // First save the form
-      await apiClient.post(`/jobs/${jobId}/completion-form`, {
+      await apiClient.saveJobCompletionForm(jobId, {
         template_id: templateId,
         form_data: formData,
         status: 'draft',
       })
 
       // Then submit it
-      await apiClient.put(`/jobs/${jobId}/completion-form/submit`, {})
+      await apiClient.submitJobCompletionForm(jobId)
     } catch (error) {
       console.error('Failed to submit form:', error)
       throw error

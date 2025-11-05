@@ -900,6 +900,97 @@ class ApiClient {
       }
     )
   }
+
+  // ==================== COMPLETION FORMS ====================
+
+  /**
+   * Get all completion form templates
+   */
+  async getCompletionFormTemplates() {
+    return this.request<{ templates: any[] }>('/completion-forms/templates')
+  }
+
+  /**
+   * Get specific completion form template with groups and questions
+   */
+  async getCompletionFormTemplate(templateId: string) {
+    return this.request<any>(`/completion-forms/templates/${templateId}`)
+  }
+
+  /**
+   * Get completion form for a specific job
+   */
+  async getJobCompletionForm(jobId: string) {
+    return this.request<{ form: any | null; templates?: any[] }>(`/jobs/${jobId}/completion-form`)
+  }
+
+  /**
+   * Save completion form draft or update existing
+   */
+  async saveJobCompletionForm(jobId: string, data: { template_id: string; form_data: any; status: string }) {
+    return this.request<{ success: boolean; form: any }>(
+      `/jobs/${jobId}/completion-form`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Submit completion form (finalize)
+   */
+  async submitJobCompletionForm(jobId: string) {
+    return this.request<{ success: boolean; form: any }>(
+      `/jobs/${jobId}/completion-form/submit`,
+      {
+        method: 'PUT',
+      }
+    )
+  }
+
+  /**
+   * Upload photo to completion form
+   */
+  async uploadCompletionFormPhoto(jobId: string, imageUri: string, caption: string, photoType: string, questionId?: string) {
+    const formData = new FormData()
+
+    // Create file from URI
+    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('file', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('caption', caption || '')
+    formData.append('photo_type', photoType)
+    if (questionId) formData.append('question_id', questionId)
+
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/jobs/${jobId}/completion-form/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let the browser set it with boundary
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
 }
 
 export const apiClient = new ApiClient()
