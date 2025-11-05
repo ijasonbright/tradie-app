@@ -1,11 +1,11 @@
 import { auth } from '@clerk/nextjs/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(
-  request: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   return NextResponse.json(
@@ -15,7 +15,7 @@ export async function GET(
 }
 
 export async function PUT(
-  request: NextRequest,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -26,7 +26,7 @@ export async function PUT(
     }
 
     const { id: questionId } = await params
-    const body = await request.json()
+    const body = await req.json()
     const { answer_options } = body
 
     if (!Array.isArray(answer_options)) {
