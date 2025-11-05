@@ -33,8 +33,10 @@ export async function POST(request: NextRequest) {
     if (!userId) {
       const token = extractTokenFromHeader(request.headers.get('authorization') || '')
       if (token) {
-        const decoded = verifyMobileToken(token)
-        userId = decoded.userId
+        const decoded = await verifyMobileToken(token)
+        if (decoded) {
+          userId = decoded.clerkUserId
+        }
       }
     }
 
@@ -121,8 +123,10 @@ export async function DELETE(request: NextRequest) {
     if (!userId) {
       const token = extractTokenFromHeader(request.headers.get('authorization') || '')
       if (token) {
-        const decoded = verifyMobileToken(token)
-        userId = decoded.userId
+        const decoded = await verifyMobileToken(token)
+        if (decoded) {
+          userId = decoded.clerkUserId
+        }
       }
     }
 
