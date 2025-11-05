@@ -39,52 +39,48 @@ export async function PUT(
       )
     }
 
-    // Build update query dynamically based on provided fields
-    const updates: string[] = []
-    const values: any[] = []
-    let paramCount = 1
+    // Build update fields
+    const updateFields: any = {}
 
     if (body.question_text !== undefined) {
-      updates.push(`question_text = $${paramCount}`)
-      values.push(body.question_text)
-      paramCount++
+      updateFields.question_text = body.question_text
     }
 
     if (body.field_type !== undefined) {
-      updates.push(`field_type = $${paramCount}`)
-      values.push(body.field_type)
-      paramCount++
+      updateFields.field_type = body.field_type
     }
 
     if (body.is_required !== undefined) {
-      updates.push(`is_required = $${paramCount}`)
-      values.push(body.is_required)
-      paramCount++
+      updateFields.is_required = body.is_required
     }
 
     if (body.help_text !== undefined) {
-      updates.push(`help_text = $${paramCount}`)
-      values.push(body.help_text)
-      paramCount++
+      updateFields.help_text = body.help_text
     }
 
-    if (updates.length === 0) {
+    if (Object.keys(updateFields).length === 0) {
       return NextResponse.json(
         { error: 'No valid fields to update' },
         { status: 400 }
       )
     }
 
-    // Add updated_at
-    updates.push(`updated_at = NOW()`)
+    // Build the SET clause dynamically
+    const setClauses = Object.keys(updateFields).map((key, index) => {
+      return `${key} = $${index + 1}`
+    })
 
-    // Add question ID as last parameter
-    values.push(id)
+    // Add updated_at
+    setClauses.push(`updated_at = NOW()`)
+
+    // Get values in the same order as the SET clauses
+    const values = Object.values(updateFields)
+    values.push(id) // Add ID as the last parameter
 
     const updateQuery = `
       UPDATE completion_form_questions
-      SET ${updates.join(', ')}
-      WHERE id = $${paramCount}
+      SET ${setClauses.join(', ')}
+      WHERE id = $${values.length}
       RETURNING *
     `
 
