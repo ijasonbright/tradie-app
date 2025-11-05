@@ -7,9 +7,10 @@ interface FileFieldProps {
   question: any
   value: string
   onChange: (value: string) => void
+  jobId: string
 }
 
-export function FileField({ question, value, onChange }: FileFieldProps) {
+export function FileField({ question, value, onChange, jobId }: FileFieldProps) {
   const [isUploading, setIsUploading] = useState(false)
 
   const pickImage = async () => {
@@ -51,26 +52,13 @@ export function FileField({ question, value, onChange }: FileFieldProps) {
     try {
       setIsUploading(true)
 
-      const formData = new FormData()
-      const filename = uri.split('/').pop() || 'photo.jpg'
-      const match = /\.(\w+)$/.exec(filename)
-      const type = match ? `image/${match[1]}` : 'image/jpeg'
-
-      formData.append('file', {
+      const response = await apiClient.uploadCompletionFormPhoto(
+        jobId,
         uri,
-        name: filename,
-        type,
-      } as any)
-
-      formData.append('question_id', question.id)
-
-      // Note: This will need the jobId - you may need to pass it through context
-      // For now, this is a placeholder
-      const response = await apiClient.post(`/jobs/{jobId}/completion-form/photos`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
+        '', // caption
+        'completion_form', // photo_type
+        question.id // question_id
+      )
 
       onChange(response.photo.photo_url)
       Alert.alert('Success', 'Photo uploaded successfully')

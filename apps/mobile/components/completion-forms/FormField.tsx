@@ -15,9 +15,10 @@ interface FormFieldProps {
   value: any
   error?: string
   onChange: (value: any) => void
+  jobId: string
 }
 
-export function FormField({ question, value, error, onChange }: FormFieldProps) {
+export function FormField({ question, value, error, onChange, jobId }: FormFieldProps) {
   const renderField = () => {
     switch (question.field_type) {
       case 'text':
@@ -49,7 +50,7 @@ export function FormField({ question, value, error, onChange }: FormFieldProps) 
         return <DateField question={question} value={value} onChange={onChange} />
 
       case 'file':
-        return <FileField question={question} value={value} onChange={onChange} />
+        return <FileField question={question} value={value} onChange={onChange} jobId={jobId} />
 
       default:
         return (

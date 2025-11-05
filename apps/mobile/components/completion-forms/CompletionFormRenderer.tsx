@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native'
 import { useCompletionForm } from './useCompletionForm'
 import { FormField } from './FormField'
@@ -111,7 +113,11 @@ export function CompletionFormRenderer({
   }
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={100}
+    >
       {/* Progress Bar */}
       <View style={styles.progressContainer}>
         <View style={styles.progressBarBackground}>
@@ -123,7 +129,11 @@ export function CompletionFormRenderer({
       </View>
 
       {/* Current Group */}
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.groupHeader}>
           <Text style={styles.groupName}>{currentGroup.name}</Text>
           {currentGroup.description && (
@@ -140,6 +150,7 @@ export function CompletionFormRenderer({
               value={formData[question.id]}
               error={errors[question.id]}
               onChange={(value) => updateField(question.id, value)}
+              jobId={jobId}
             />
           ))}
         </View>
@@ -183,7 +194,7 @@ export function CompletionFormRenderer({
           )}
         </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   )
 }
 
