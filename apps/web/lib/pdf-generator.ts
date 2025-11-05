@@ -1,4 +1,5 @@
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { compressImageBuffer, shouldCompressImage } from './image-compression'
 
 interface CompletionFormData {
   form: {
@@ -467,33 +468,53 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
           }
 
           let photoBytes = await photoResponse.arrayBuffer()
-          const photoExt = photo.photo_url.toLowerCase()
+          const originalSize = photoBytes.byteLength
 
           // Compress large images to reduce PDF size (SES has 10MB limit)
-          const originalSize = photoBytes.byteLength
-          if (originalSize > 500000) { // If larger than 500KB
-            console.log(`[PDF Generator] Photo is ${(originalSize / 1024 / 1024).toFixed(2)}MB, compressing...`)
+          let finalPhotoBuffer: Buffer
+          let photoFormat: 'jpeg' | 'png'
 
-            // For large images, fetch the thumbnail_url if available or use lower quality
-            // Since we don't have thumbnail_url in the data, we'll just skip embedding very large images
-            // and show a placeholder instead
-            if (originalSize > 2000000) { // Skip images larger than 2MB
-              console.warn(`[PDF Generator] Skipping very large photo (${(originalSize / 1024 / 1024).toFixed(2)}MB) to prevent PDF size issues`)
-              skippedPhotosCount++
-              continue
+          if (shouldCompressImage(originalSize)) {
+            console.log(`[PDF Generator] Compressing group photo (${(originalSize / 1024 / 1024).toFixed(2)}MB)...`)
+            try {
+              const compressed = await compressImageBuffer(photoBytes, photo.photo_url)
+              finalPhotoBuffer = compressed.buffer
+              photoFormat = compressed.format
+            } catch (error) {
+              console.error('[PDF Generator] Compression failed, using original:', error)
+              finalPhotoBuffer = Buffer.from(photoBytes)
+              // Detect format from URL
+              const photoExt = photo.photo_url.toLowerCase()
+              photoFormat = photoExt.includes('.png') ? 'png' : 'jpeg'
             }
+          } else {
+            // Small image, use as-is
+            finalPhotoBuffer = Buffer.from(photoBytes)
+            const photoExt = photo.photo_url.toLowerCase()
+            photoFormat = photoExt.includes('.png') ? 'png' : 'jpeg'
           }
 
+          // Embed the photo
           let photoImage
-          if (photoExt.includes('.png')) {
-            photoImage = await pdfDoc.embedPng(photoBytes)
-          } else if (photoExt.includes('.jpg') || photoExt.includes('.jpeg')) {
-            photoImage = await pdfDoc.embedJpg(photoBytes)
-          } else {
+          try {
+            if (photoFormat === 'png') {
+              photoImage = await pdfDoc.embedPng(finalPhotoBuffer)
+            } else {
+              photoImage = await pdfDoc.embedJpg(finalPhotoBuffer)
+            }
+          } catch (error) {
+            console.error('[PDF Generator] Failed to embed photo, trying alternate format:', error)
+            // Fallback: try the other format
             try {
-              photoImage = await pdfDoc.embedJpg(photoBytes)
-            } catch {
-              photoImage = await pdfDoc.embedPng(photoBytes)
+              if (photoFormat === 'png') {
+                photoImage = await pdfDoc.embedJpg(finalPhotoBuffer)
+              } else {
+                photoImage = await pdfDoc.embedPng(finalPhotoBuffer)
+              }
+            } catch (fallbackError) {
+              console.error('[PDF Generator] Both formats failed, skipping photo:', fallbackError)
+              skippedPhotosCount++
+              continue
             }
           }
 
@@ -621,36 +642,53 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
         }
 
         let photoBytes = await photoResponse.arrayBuffer()
-        const photoExt = photo.photo_url.toLowerCase()
+        const originalSize = photoBytes.byteLength
 
         // Compress large images to reduce PDF size (SES has 10MB limit)
-        const originalSize = photoBytes.byteLength
-        if (originalSize > 500000) {
-          // If larger than 500KB
-          console.log(
-            `[PDF Generator] Job photo is ${(originalSize / 1024 / 1024).toFixed(2)}MB, checking size...`
-          )
+        let finalPhotoBuffer: Buffer
+        let photoFormat: 'jpeg' | 'png'
 
-          // Skip images larger than 2MB to prevent PDF size issues
-          if (originalSize > 2000000) {
-            console.warn(
-              `[PDF Generator] Skipping very large job photo (${(originalSize / 1024 / 1024).toFixed(2)}MB) to prevent PDF size issues`
-            )
-            skippedPhotosCount++
-            continue
+        if (shouldCompressImage(originalSize)) {
+          console.log(`[PDF Generator] Compressing job photo (${(originalSize / 1024 / 1024).toFixed(2)}MB)...`)
+          try {
+            const compressed = await compressImageBuffer(photoBytes, photo.photo_url)
+            finalPhotoBuffer = compressed.buffer
+            photoFormat = compressed.format
+          } catch (error) {
+            console.error('[PDF Generator] Compression failed, using original:', error)
+            finalPhotoBuffer = Buffer.from(photoBytes)
+            // Detect format from URL
+            const photoExt = photo.photo_url.toLowerCase()
+            photoFormat = photoExt.includes('.png') ? 'png' : 'jpeg'
           }
+        } else {
+          // Small image, use as-is
+          finalPhotoBuffer = Buffer.from(photoBytes)
+          const photoExt = photo.photo_url.toLowerCase()
+          photoFormat = photoExt.includes('.png') ? 'png' : 'jpeg'
         }
 
+        // Embed the photo
         let photoImage
-        if (photoExt.includes('.png')) {
-          photoImage = await pdfDoc.embedPng(photoBytes)
-        } else if (photoExt.includes('.jpg') || photoExt.includes('.jpeg')) {
-          photoImage = await pdfDoc.embedJpg(photoBytes)
-        } else {
+        try {
+          if (photoFormat === 'png') {
+            photoImage = await pdfDoc.embedPng(finalPhotoBuffer)
+          } else {
+            photoImage = await pdfDoc.embedJpg(finalPhotoBuffer)
+          }
+        } catch (error) {
+          console.error('[PDF Generator] Failed to embed photo, trying alternate format:', error)
+          // Fallback: try the other format
           try {
-            photoImage = await pdfDoc.embedJpg(photoBytes)
-          } catch {
-            photoImage = await pdfDoc.embedPng(photoBytes)
+            if (photoFormat === 'png') {
+              photoImage = await pdfDoc.embedJpg(finalPhotoBuffer)
+            } else {
+              photoImage = await pdfDoc.embedPng(finalPhotoBuffer)
+            }
+          } catch (fallbackError) {
+            console.error('[PDF Generator] Both formats failed, skipping photo:', fallbackError)
+            skippedPhotosCount++
+            continue
           }
         }
 
@@ -808,7 +846,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
 
   yPosition -= 30
 
-  // Add note if photos were skipped
+  // Add note if photos were skipped (only happens if compression fails)
   if (skippedPhotosCount > 0) {
     // Check if we need a new page
     if (yPosition < 100) {
@@ -816,7 +854,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
       yPosition = height - 50
     }
 
-    const noteText = `Note: ${skippedPhotosCount} large photo${skippedPhotosCount > 1 ? 's were' : ' was'} omitted to reduce file size. Please contact us for full-resolution photos if needed.`
+    const noteText = `Note: ${skippedPhotosCount} photo${skippedPhotosCount > 1 ? 's could' : ' could'} not be included due to technical issues. Please contact us if you need ${skippedPhotosCount > 1 ? 'these photos' : 'this photo'}.`
     const noteLines = wrapText(noteText, 495, 8, regularFont)
 
     page.drawText('Important:', {
