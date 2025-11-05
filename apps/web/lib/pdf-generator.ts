@@ -75,28 +75,28 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   let browser = null
   try {
     // Dynamically load packages based on environment
-    const isVercel = !!process.env.VERCEL
+    const isProduction = process.env.VERCEL_ENV === 'production'
     let puppeteer: any
-    let launchOptions: any = {
-      headless: true,
-      defaultViewport: {
-        width: 1920,
-        height: 1080,
-      },
-    }
+    let launchOptions: any
 
-    if (isVercel) {
+    if (isProduction) {
       // Production (Vercel) - use @sparticuz/chromium
       const chromium = (await import('@sparticuz/chromium')).default
       puppeteer = await import('puppeteer-core')
+      const executablePath = await chromium.executablePath()
+
       launchOptions = {
-        ...launchOptions,
         args: chromium.args,
-        executablePath: await chromium.executablePath(),
+        defaultViewport: chromium.defaultViewport,
+        executablePath,
+        headless: chromium.headless,
       }
     } else {
       // Local development - use full puppeteer
       puppeteer = await import('puppeteer')
+      launchOptions = {
+        headless: true,
+      }
     }
 
     browser = await puppeteer.launch(launchOptions)
