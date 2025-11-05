@@ -53,6 +53,7 @@ export default function FormEditorPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null)
+  const [answerOptions, setAnswerOptions] = useState<Record<string, Array<{ id: string; text: string; value: string; option_order: number }>>>({})
 
   useEffect(() => {
     if (params.id) {
@@ -76,12 +77,13 @@ export default function FormEditorPage() {
     }
   }
 
-  const updateQuestion = async (groupId: string, questionId: string, updates: Partial<Question>) => {
+  const updateQuestion = async (groupId: string, questionId: string, updates: Partial<Question>, newAnswerOptions?: Array<{ id: string; text: string; value: string; option_order: number }>) => {
     if (!template) return
 
     try {
       setSaving(true)
 
+      // Update question details
       const response = await fetch(`/api/completion-forms/questions/${questionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -89,6 +91,20 @@ export default function FormEditorPage() {
       })
 
       if (!response.ok) throw new Error('Failed to update question')
+
+      // If answer options were provided, save them
+      if (newAnswerOptions !== undefined) {
+        const optionsResponse = await fetch(`/api/completion-forms/questions/${questionId}/answer-options`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer_options: newAnswerOptions }),
+        })
+
+        if (!optionsResponse.ok) throw new Error('Failed to update answer options')
+
+        const optionsData = await optionsResponse.json()
+        updates.answer_options = optionsData.answer_options
+      }
 
       // Update local state
       setTemplate({
@@ -106,6 +122,7 @@ export default function FormEditorPage() {
       })
 
       setEditingQuestion(null)
+      setAnswerOptions({}) // Clear answer options state
     } catch (err: any) {
       console.error('Failed to update question:', err)
       alert('Failed to save changes: ' + err.message)
@@ -206,9 +223,32 @@ export default function FormEditorPage() {
                           </button>
                         </div>
 
-                        {needsAnswers && question.answer_options && question.answer_options.length > 0 && (
-                          <div className="mt-2 text-sm text-gray-600">
-                            {question.answer_options.length} answer options
+                        {needsAnswers && (
+                          <div className="mt-3">
+                            {question.answer_options && question.answer_options.length > 0 ? (
+                              <div className="bg-gray-50 rounded p-3">
+                                <p className="text-xs font-medium text-gray-700 mb-2">Answer Options ({question.answer_options.length}):</p>
+                                <ul className="space-y-1">
+                                  {question.answer_options.slice(0, 3).map((option, idx) => (
+                                    <li key={option.id} className="text-sm text-gray-600 flex items-center gap-2">
+                                      <span className="text-gray-400">{idx + 1}.</span>
+                                      <span>{option.text}</span>
+                                    </li>
+                                  ))}
+                                  {question.answer_options.length > 3 && (
+                                    <li className="text-xs text-gray-500 italic">
+                                      ...and {question.answer_options.length - 3} more
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            ) : (
+                              <div className="bg-red-50 border border-red-200 rounded p-2">
+                                <p className="text-xs text-red-700">
+                                  ⚠️ No answer options defined. Click Edit to add them.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
@@ -286,6 +326,78 @@ export default function FormEditorPage() {
                           />
                         </div>
 
+                        {/* Answer Options - Show for radio, dropdown, multi_checkbox, checkboxlist */}
+                        {needsAnswers && (
+                          <div className="border-t pt-4 mt-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <label className="block text-sm font-medium text-gray-700">
+                                Answer Options
+                              </label>
+                              <button
+                                onClick={() => {
+                                  const currentOptions = answerOptions[question.id] || question.answer_options || []
+                                  const newOption = {
+                                    id: `temp-${Date.now()}`,
+                                    text: '',
+                                    value: '',
+                                    option_order: currentOptions.length + 1,
+                                  }
+                                  setAnswerOptions({
+                                    ...answerOptions,
+                                    [question.id]: [...currentOptions, newOption],
+                                  })
+                                }}
+                                className="text-sm text-blue-600 hover:text-blue-700"
+                              >
+                                + Add Option
+                              </button>
+                            </div>
+
+                            <div className="space-y-2">
+                              {(answerOptions[question.id] || question.answer_options || []).map((option, index) => (
+                                <div key={option.id} className="flex items-center gap-2">
+                                  <span className="text-sm text-gray-500 w-6">{index + 1}.</span>
+                                  <input
+                                    type="text"
+                                    defaultValue={option.text}
+                                    placeholder="Option text"
+                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                    onChange={(e) => {
+                                      const currentOptions = answerOptions[question.id] || question.answer_options || []
+                                      const updatedOptions = currentOptions.map((opt, idx) =>
+                                        idx === index ? { ...opt, text: e.target.value, value: e.target.value } : opt
+                                      )
+                                      setAnswerOptions({
+                                        ...answerOptions,
+                                        [question.id]: updatedOptions,
+                                      })
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const currentOptions = answerOptions[question.id] || question.answer_options || []
+                                      const updatedOptions = currentOptions.filter((_, idx) => idx !== index)
+                                      setAnswerOptions({
+                                        ...answerOptions,
+                                        [question.id]: updatedOptions,
+                                      })
+                                    }}
+                                    className="px-2 py-1 text-red-600 hover:text-red-700 text-sm"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+
+                              {(answerOptions[question.id]?.length === 0 && (!question.answer_options || question.answer_options.length === 0)) && (
+                                <p className="text-sm text-gray-500 italic">
+                                  No answer options yet. Click "Add Option" to create one.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Save Button */}
                         <div className="flex gap-2 pt-2">
                           <button
@@ -295,12 +407,21 @@ export default function FormEditorPage() {
                               const isRequired = (document.getElementById(`required-${question.id}`) as HTMLInputElement).checked
                               const helpText = (document.getElementById(`help-text-${question.id}`) as HTMLInputElement).value
 
-                              updateQuestion(group.id, question.id, {
-                                question_text: questionText,
-                                field_type: fieldType,
-                                is_required: isRequired,
-                                help_text: helpText || null,
-                              })
+                              // Get answer options if this field type needs them
+                              const needsAnswers = ['radio', 'dropdown', 'multi_checkbox', 'checkboxlist'].includes(fieldType)
+                              const currentAnswerOptions = needsAnswers ? (answerOptions[question.id] || question.answer_options || []) : undefined
+
+                              updateQuestion(
+                                group.id,
+                                question.id,
+                                {
+                                  question_text: questionText,
+                                  field_type: fieldType,
+                                  is_required: isRequired,
+                                  help_text: helpText || null,
+                                },
+                                currentAnswerOptions
+                              )
                             }}
                             disabled={saving}
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
