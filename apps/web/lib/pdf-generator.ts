@@ -83,9 +83,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   let browser = null
   try {
     // Get Chromium executable path - will download if needed in serverless
-    const executablePath = await chromium.executablePath({
-      useBrotli: true, // Use brotli compression for Vercel
-    })
+    const executablePath = await chromium.executablePath()
 
     browser = await puppeteer.launch({
       args: chromium.args,
