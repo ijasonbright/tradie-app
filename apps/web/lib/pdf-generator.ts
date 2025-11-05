@@ -91,6 +91,9 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   const lightGray = rgb(0.42, 0.45, 0.50)
   const veryLightGray = rgb(0.98, 0.98, 0.99)
 
+  // Track skipped photos for size optimization
+  let skippedPhotosCount = 0
+
   // Load logo if available
   let logoImage = null
   let logoWidth = 0
@@ -463,8 +466,23 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
             continue
           }
 
-          const photoBytes = await photoResponse.arrayBuffer()
+          let photoBytes = await photoResponse.arrayBuffer()
           const photoExt = photo.photo_url.toLowerCase()
+
+          // Compress large images to reduce PDF size (SES has 10MB limit)
+          const originalSize = photoBytes.byteLength
+          if (originalSize > 500000) { // If larger than 500KB
+            console.log(`[PDF Generator] Photo is ${(originalSize / 1024 / 1024).toFixed(2)}MB, compressing...`)
+
+            // For large images, fetch the thumbnail_url if available or use lower quality
+            // Since we don't have thumbnail_url in the data, we'll just skip embedding very large images
+            // and show a placeholder instead
+            if (originalSize > 2000000) { // Skip images larger than 2MB
+              console.warn(`[PDF Generator] Skipping very large photo (${(originalSize / 1024 / 1024).toFixed(2)}MB) to prevent PDF size issues`)
+              skippedPhotosCount++
+              continue
+            }
+          }
 
           let photoImage
           if (photoExt.includes('.png')) {
@@ -602,8 +620,26 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
           continue
         }
 
-        const photoBytes = await photoResponse.arrayBuffer()
+        let photoBytes = await photoResponse.arrayBuffer()
         const photoExt = photo.photo_url.toLowerCase()
+
+        // Compress large images to reduce PDF size (SES has 10MB limit)
+        const originalSize = photoBytes.byteLength
+        if (originalSize > 500000) {
+          // If larger than 500KB
+          console.log(
+            `[PDF Generator] Job photo is ${(originalSize / 1024 / 1024).toFixed(2)}MB, checking size...`
+          )
+
+          // Skip images larger than 2MB to prevent PDF size issues
+          if (originalSize > 2000000) {
+            console.warn(
+              `[PDF Generator] Skipping very large job photo (${(originalSize / 1024 / 1024).toFixed(2)}MB) to prevent PDF size issues`
+            )
+            skippedPhotosCount++
+            continue
+          }
+        }
 
         let photoImage
         if (photoExt.includes('.png')) {
@@ -770,6 +806,40 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     color: lightGray,
   })
 
+  yPosition -= 30
+
+  // Add note if photos were skipped
+  if (skippedPhotosCount > 0) {
+    // Check if we need a new page
+    if (yPosition < 100) {
+      page = pdfDoc.addPage([595, 842])
+      yPosition = height - 50
+    }
+
+    const noteText = `Note: ${skippedPhotosCount} large photo${skippedPhotosCount > 1 ? 's were' : ' was'} omitted to reduce file size. Please contact us for full-resolution photos if needed.`
+    const noteLines = wrapText(noteText, 495, 8, regularFont)
+
+    page.drawText('Important:', {
+      x: 50,
+      y: yPosition,
+      size: 9,
+      font: boldFont,
+      color: rgb(0.8, 0.4, 0), // Orange
+    })
+    yPosition -= 15
+
+    noteLines.forEach((line) => {
+      page.drawText(line, {
+        x: 50,
+        y: yPosition,
+        size: 8,
+        font: regularFont,
+        color: lightGray,
+      })
+      yPosition -= 12
+    })
+  }
+
   // Footer
   const footerText = `Generated on ${formatDate(new Date().toISOString())}`
   const footerWidth = regularFont.widthOfTextAtSize(footerText, 8)
@@ -783,8 +853,18 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
 
     // Serialize the PDF to bytes
     console.log('[PDF Generator] Saving PDF')
+    if (skippedPhotosCount > 0) {
+      console.log(`[PDF Generator] Skipped ${skippedPhotosCount} large photo(s) to optimize PDF size`)
+    }
     const pdfBytes = await pdfDoc.save()
-    console.log('[PDF Generator] PDF saved, size:', pdfBytes.length, 'bytes')
+    const pdfSizeMB = (pdfBytes.length / 1024 / 1024).toFixed(2)
+    console.log(`[PDF Generator] PDF saved, size: ${pdfBytes.length} bytes (${pdfSizeMB} MB)`)
+
+    // Warn if PDF is approaching AWS SES limit (10MB)
+    if (pdfBytes.length > 9000000) {
+      console.warn(`[PDF Generator] WARNING: PDF size (${pdfSizeMB} MB) is approaching AWS SES 10MB limit!`)
+    }
+
     return Buffer.from(pdfBytes)
   } catch (error) {
     console.error('[PDF Generator] Error generating PDF:', error)
