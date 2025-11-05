@@ -35,7 +35,8 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/organizations/members(.*)',
   '/api/docs(.*)',
   '/api/reminders(.*)',
-  '/api/completion-forms(.*)',
+  // Note: /api/completion-forms is for web dashboard (uses Clerk auth)
+  // Mobile completion forms use /api/jobs/[id]/completion-form (covered by /api/jobs)
 ])
 
 export default clerkMiddleware((auth, request) => {
