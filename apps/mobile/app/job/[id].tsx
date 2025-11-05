@@ -685,6 +685,14 @@ export default function JobDetailScreen() {
               <MaterialCommunityIcons name="note-text" size={32} color="#2563eb" />
               <Text style={styles.quickActionLabel}>Notes</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.quickActionCard}
+              onPress={() => router.push(`/job/${id}/completion-form-preview`)}
+            >
+              <MaterialCommunityIcons name="file-document-check" size={32} color="#2563eb" />
+              <Text style={styles.quickActionLabel}>Completion Form</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
