@@ -426,7 +426,22 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     try {
       const sigResponse = await fetch(form.technician_signature_url)
       const sigBytes = await sigResponse.arrayBuffer()
-      const sigImage = await pdfDoc.embedPng(sigBytes)
+      const sigExt = form.technician_signature_url.toLowerCase()
+
+      let sigImage
+      if (sigExt.includes('.png')) {
+        sigImage = await pdfDoc.embedPng(sigBytes)
+      } else if (sigExt.includes('.jpg') || sigExt.includes('.jpeg')) {
+        sigImage = await pdfDoc.embedJpg(sigBytes)
+      } else {
+        // Try PNG first, fallback to JPG
+        try {
+          sigImage = await pdfDoc.embedPng(sigBytes)
+        } catch {
+          sigImage = await pdfDoc.embedJpg(sigBytes)
+        }
+      }
+
       const sigDims = sigImage.scale(0.2)
 
       page.drawImage(sigImage, {
