@@ -29,6 +29,7 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/quotes(.*)',
   '/api/expenses(.*)',
   '/api/users/me(.*)',
+  '/api/users/push-token(.*)',
   '/api/organizations/current(.*)',
   '/api/organizations/members(.*)',
   '/api/docs(.*)',
