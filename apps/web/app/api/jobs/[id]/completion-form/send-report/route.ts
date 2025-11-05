@@ -332,8 +332,9 @@ export async function POST(
     // Update form to track that report was sent
     await sql`
       UPDATE job_completion_forms
-      SET report_sent_at = NOW(),
-          report_sent_to = ${toEmail}
+      SET sent_to_client = true,
+          sent_at = NOW(),
+          status = 'sent_to_client'
       WHERE id = ${form.id}
     `
 
