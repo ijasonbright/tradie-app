@@ -46,12 +46,12 @@ export async function GET(
       FROM job_completion_forms jcf
       JOIN completion_form_templates cft ON jcf.template_id = cft.id
       WHERE jcf.job_id = ${jobId}
-      AND jcf.status = 'submitted'
+      AND (jcf.status = 'submitted' OR jcf.status = 'sent_to_client')
       LIMIT 1
     `
 
     if (forms.length === 0) {
-      return NextResponse.json({ error: 'No submitted completion form found' }, { status: 404 })
+      return NextResponse.json({ error: 'No completion form found for this job' }, { status: 404 })
     }
 
     const form = forms[0]
