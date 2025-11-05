@@ -77,9 +77,9 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
 
   const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
+    defaultViewport: { width: 1280, height: 720 },
     executablePath: await chromium.executablePath(),
-    headless: chromium.headless,
+    headless: true,
   })
 
   const page = await browser.newPage()
@@ -616,7 +616,7 @@ function formatAnswer(question: any): string {
       if (Array.isArray(question.answer)) {
         return `
           <div>
-            ${question.answer.map((item) => `<div class="answer-checkbox checked"><span class="checkbox-icon"></span> ${item}</div>`).join('')}
+            ${question.answer.map((item: any) => `<div class="answer-checkbox checked"><span class="checkbox-icon"></span> ${item}</div>`).join('')}
           </div>
         `
       }

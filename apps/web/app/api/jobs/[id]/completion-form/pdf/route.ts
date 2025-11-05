@@ -99,7 +99,7 @@ export async function GET(
       LIMIT 1
     `
 
-    const completedBy = completedByUsers[0] || { full_name: 'Unknown', email: '' }
+    const completedBy: { full_name: string; email: string } = (completedByUsers[0] as any) || { full_name: 'Unknown', email: '' }
 
     // Fetch template structure (groups and questions)
     const groups = await sql`
@@ -137,9 +137,12 @@ export async function GET(
           const answer = form.form_data?.[q.id] || null
 
           // Get photos for this question
-          const questionPhotos = photos.filter(
-            (p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url)
-          )
+          const questionPhotos = photos
+            .filter((p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url))
+            .map((p: any) => ({
+              photo_url: p.photo_url,
+              caption: p.caption,
+            }))
 
           return {
             id: q.id,
@@ -215,7 +218,7 @@ export async function GET(
     console.log('[PDF Generation] PDF generated successfully, size:', pdfBuffer.length, 'bytes')
 
     // Return PDF
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBuffer as any, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="completion-report-${job.job_number}.pdf"`,

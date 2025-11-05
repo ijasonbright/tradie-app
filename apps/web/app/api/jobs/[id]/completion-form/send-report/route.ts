@@ -2,13 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 import { auth } from '@clerk/nextjs/server'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/ses'
 import { generateCompletionFormPDF } from '@/lib/pdf-generator'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(
   request: NextRequest,
@@ -113,7 +111,7 @@ export async function POST(
       LIMIT 1
     `
 
-    const completedBy = completedByUsers[0] || { full_name: 'Unknown', email: '' }
+    const completedBy: { full_name: string; email: string } = (completedByUsers[0] as any) || { full_name: 'Unknown', email: '' }
 
     // Fetch template structure (groups and questions)
     const groups = await sql`
@@ -148,9 +146,12 @@ export async function POST(
         description: group.description,
         questions: groupQuestions.map((q: any) => {
           const answer = form.form_data?.[q.id] || null
-          const questionPhotos = photos.filter(
-            (p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url)
-          )
+          const questionPhotos = photos
+            .filter((p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url))
+            .map((p: any) => ({
+              photo_url: p.photo_url,
+              caption: p.caption,
+            }))
 
           return {
             id: q.id,
@@ -308,21 +309,22 @@ export async function POST(
 
     console.log('[Email Report] Sending email to:', toEmail)
 
-    // Send email with PDF attachment
-    const emailResult = await resend.emails.send({
+    // Send email with PDF attachment using AWS SES
+    await sendEmail({
       from: job.org_email || `${job.org_name} <noreply@tradie-app.com>`,
       to: toEmail,
       subject: `Job Completion Report - ${job.title} (${job.job_number})`,
-      html: emailHtml,
+      htmlBody: emailHtml,
       attachments: [
         {
           filename: `completion-report-${job.job_number}.pdf`,
           content: pdfBuffer,
+          contentType: 'application/pdf',
         },
       ],
     })
 
-    console.log('[Email Report] Email sent successfully:', emailResult)
+    console.log('[Email Report] Email sent successfully via AWS SES')
 
     // Update form to track that report was sent
     await sql`
@@ -335,7 +337,6 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: `Completion report sent to ${toEmail}`,
-      email_id: emailResult.id,
     })
   } catch (error) {
     console.error('[Email Report] Error sending report:', error)
