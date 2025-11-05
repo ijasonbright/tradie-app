@@ -309,8 +309,8 @@ export async function POST(
 
     console.log('[Email Report] Sending email to:', toEmail)
 
-    // Prepare from email (same as invoices/quotes)
-    const fromEmail = process.env.AWS_SES_FROM_EMAIL || 'noreply@tradieapp.com'
+    // Prepare from email (use verified SES email)
+    const fromEmail = 'hello@taskforce.com.au'
 
     // Send email with PDF attachment using AWS SES
     await sendEmail({

@@ -76,16 +76,24 @@ export default function CompletionFormPreviewScreen() {
       // Download PDF blob
       const pdfBlob = await apiClient.downloadCompletionFormPDF(id as string)
 
-      // Convert blob to array buffer
-      const arrayBuffer = await pdfBlob.arrayBuffer()
-      const uint8Array = new Uint8Array(arrayBuffer)
+      // Convert blob to base64 using FileReader (works in React Native)
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const dataUrl = reader.result as string
+          const base64String = dataUrl.split(',')[1]
+          resolve(base64String)
+        }
+        reader.onerror = reject
+        reader.readAsDataURL(pdfBlob)
+      })
 
       // Save to file system using new File API
       const filename = `completion-report-${id}.pdf`
       const file = new FileSystem.File(FileSystem.Paths.cache, filename)
 
-      // Write the binary data directly (no need for base64)
-      file.write(uint8Array)
+      // Write the base64 data
+      file.write(base64)
 
       console.log('PDF saved to:', file.uri)
 
