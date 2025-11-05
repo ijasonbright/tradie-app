@@ -92,14 +92,14 @@ export async function POST(req: Request) {
     const user = users[0]
 
     // Validate required fields
-    if (!body.organizationId || !body.category || !body.description || !body.amount || !body.expenseDate) {
+    if (!body.organization_id || !body.category || !body.description || !body.amount || !body.expense_date) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Verify user has access to this organization
     const membership = await sql`
       SELECT * FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 
     // Calculate total amount (amount + GST)
     const amount = parseFloat(body.amount)
-    const gstAmount = body.gstAmount ? parseFloat(body.gstAmount) : 0
+    const gstAmount = body.gst_amount ? parseFloat(body.gst_amount) : 0
     const totalAmount = amount + gstAmount
 
     // Create expense
@@ -123,18 +123,18 @@ export async function POST(req: Request) {
         receipt_url, expense_date, account_code
       )
       VALUES (
-        ${body.organizationId},
+        ${body.organization_id},
         ${user.id},
-        ${body.jobId || null},
+        ${body.job_id || null},
         ${body.category},
-        ${body.supplierName || null},
+        ${body.supplier_name || null},
         ${body.description},
         ${amount},
         ${gstAmount},
         ${totalAmount},
-        ${body.receiptUrl || null},
-        ${body.expenseDate},
-        ${body.accountCode || null}
+        ${body.receipt_url || null},
+        ${body.expense_date},
+        ${body.account_code || null}
       )
       RETURNING *
     `

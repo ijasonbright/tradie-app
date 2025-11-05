@@ -84,12 +84,12 @@ export default function OrganizationSettingsScreen() {
         abn: abn.trim(),
         phone: phone.trim(),
         email: email.trim(),
-        addressLine1: addressLine1.trim(),
-        addressLine2: addressLine2.trim(),
+        address_line1: addressLine1.trim(),
+        address_line2: addressLine2.trim(),
         city: city.trim(),
         state: state.trim(),
         postcode: postcode.trim(),
-        logoUrl,
+        logo_url: logoUrl,
       })
 
       Alert.alert('Success', 'Organization updated successfully')

@@ -111,14 +111,14 @@ export default function EditAppointmentScreen() {
       const appointmentData: any = {
         title: title.trim(),
         description: description.trim() || null,
-        appointmentType,
-        startTime: startDate.toISOString(),
-        endTime: endDate.toISOString(),
-        allDay: false,
-        clientId: clientId || null,
-        jobId: jobId || null,
-        assignedToUserId: currentUserId,
-        locationAddress: locationAddress.trim() || null,
+        appointment_type: appointmentType,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        all_day: false,
+        client_id: clientId || null,
+        job_id: jobId || null,
+        assigned_to_user_id: currentUserId,
+        location_address: locationAddress.trim() || null,
       }
 
       await apiClient.updateAppointment(id as string, appointmentData)

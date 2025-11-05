@@ -221,23 +221,23 @@ export default function EditQuoteScreen() {
 
       // Prepare deposit data
       const depositData = depositRequired ? {
-        depositRequired: true,
-        depositPercentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
-        depositAmount: depositType === 'amount' ? parseFloat(depositAmount) : null,
+        deposit_required: true,
+        deposit_percentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
+        deposit_amount: depositType === 'amount' ? parseFloat(depositAmount) : null,
       } : {
-        depositRequired: false,
-        depositPercentage: null,
-        depositAmount: null,
+        deposit_required: false,
+        deposit_percentage: null,
+        deposit_amount: null,
       }
 
       // Update quote details
       await apiClient.updateQuote(id as string, {
         title,
         description,
-        validUntilDate,
+        valid_until_date: validUntilDate,
         notes,
         subtotal: totals.subtotal,
-        gstAmount: totals.gst_amount,
+        gst_amount: totals.gst_amount,
         status: resetToDraft ? 'draft' : quote.status,
         ...depositData,
       })

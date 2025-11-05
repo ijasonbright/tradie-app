@@ -189,11 +189,11 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     // Validate required fields
-    if (!body.organizationId) {
+    if (!body.organization_id) {
       return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
     }
 
-    if (!body.clientId) {
+    if (!body.client_id) {
       return NextResponse.json({ error: 'Client ID is required' }, { status: 400 })
     }
 
@@ -201,14 +201,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Job title is required' }, { status: 400 })
     }
 
-    if (!body.jobType) {
+    if (!body.job_type) {
       return NextResponse.json({ error: 'Job type is required' }, { status: 400 })
     }
 
     // Verify user has access to this organization
     const membership = await sql`
       SELECT * FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -226,7 +226,7 @@ export async function POST(req: Request) {
 
     // Generate job number (simple sequential approach)
     const jobCount = await sql`
-      SELECT COUNT(*) as count FROM jobs WHERE organization_id = ${body.organizationId}
+      SELECT COUNT(*) as count FROM jobs WHERE organization_id = ${body.organization_id}
     `
     const jobNumber = `JOB-${String(Number(jobCount[0].count) + 1).padStart(5, '0')}`
 
@@ -243,29 +243,29 @@ export async function POST(req: Request) {
         trade_type_id,
         created_at, updated_at
       ) VALUES (
-        ${body.organizationId},
-        ${body.clientId},
+        ${body.organization_id},
+        ${body.client_id},
         ${user.id},
-        ${body.assignedToUserId || null},
+        ${body.assigned_to_user_id || null},
         ${jobNumber},
         ${body.title},
         ${body.description || null},
-        ${body.jobType},
+        ${body.job_type},
         ${body.status || 'quoted'},
         ${body.priority || 'medium'},
-        ${body.pricingType || 'time_and_materials'},
-        ${body.siteAddressLine1 || null},
-        ${body.siteAddressLine2 || null},
-        ${body.siteCity || null},
-        ${body.siteState || null},
-        ${body.sitePostcode || null},
-        ${body.siteAccessNotes || null},
-        ${body.quotedAmount || null},
-        ${body.quoteId || null},
-        ${body.scheduledDate || null},
-        ${body.scheduledStartTime || null},
-        ${body.scheduledEndTime || null},
-        ${body.tradeTypeId || null},
+        ${body.pricing_type || 'time_and_materials'},
+        ${body.site_address_line1 || null},
+        ${body.site_address_line2 || null},
+        ${body.site_city || null},
+        ${body.site_state || null},
+        ${body.site_postcode || null},
+        ${body.site_access_notes || null},
+        ${body.quoted_amount || null},
+        ${body.quote_id || null},
+        ${body.scheduled_date || null},
+        ${body.scheduled_start_time || null},
+        ${body.scheduled_end_time || null},
+        ${body.trade_type_id || null},
         NOW(),
         NOW()
       )

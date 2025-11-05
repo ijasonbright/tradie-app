@@ -89,7 +89,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     // Calculate total if amount or GST changed
     const amount = body.amount !== undefined ? parseFloat(body.amount) : parseFloat(expense.amount)
-    const gstAmount = body.gstAmount !== undefined ? parseFloat(body.gstAmount) : parseFloat(expense.gst_amount)
+    const gstAmount = body.gst_amount !== undefined ? parseFloat(body.gst_amount) : parseFloat(expense.gst_amount)
     const totalAmount = amount + gstAmount
 
     // Update expense
@@ -101,9 +101,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         amount = ${amount},
         gst_amount = ${gstAmount},
         total_amount = ${totalAmount},
-        receipt_url = ${body.receiptUrl !== undefined ? body.receiptUrl : expense.receipt_url},
-        expense_date = ${body.expenseDate !== undefined ? body.expenseDate : expense.expense_date},
-        job_id = ${body.jobId !== undefined ? body.jobId : expense.job_id},
+        receipt_url = ${body.receipt_url !== undefined ? body.receipt_url : expense.receipt_url},
+        expense_date = ${body.expense_date !== undefined ? body.expense_date : expense.expense_date},
+        job_id = ${body.job_id !== undefined ? body.job_id : expense.job_id},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

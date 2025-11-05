@@ -136,18 +136,18 @@ export default function EditJobScreen() {
       const updateData: any = {
         title: title.trim(),
         description: description.trim() || null,
-        jobType,
+        job_type: jobType,
         status,
         priority,
-        tradeTypeId: tradeTypeId || null,
-        assignedToUserId: assignedToUserId || null,
-        siteAddressLine1: siteAddressLine1.trim() || null,
-        siteAddressLine2: siteAddressLine2.trim() || null,
-        siteCity: siteCity.trim() || null,
-        siteState: siteState.trim() || null,
-        sitePostcode: sitePostcode.trim() || null,
-        siteAccessNotes: siteAccessNotes.trim() || null,
-        quotedAmount: quotedAmount ? parseFloat(quotedAmount) : null,
+        trade_type_id: tradeTypeId || null,
+        assigned_to_user_id: assignedToUserId || null,
+        site_address_line1: siteAddressLine1.trim() || null,
+        site_address_line2: siteAddressLine2.trim() || null,
+        site_city: siteCity.trim() || null,
+        site_state: siteState.trim() || null,
+        site_postcode: sitePostcode.trim() || null,
+        site_access_notes: siteAccessNotes.trim() || null,
+        quoted_amount: quotedAmount ? parseFloat(quotedAmount) : null,
       }
 
       await apiClient.updateJob(id as string, updateData)

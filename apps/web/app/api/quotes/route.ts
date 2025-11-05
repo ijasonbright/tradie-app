@@ -162,15 +162,15 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     // Validate required fields
-    if (!body.clientId || !body.title) {
+    if (!body.client_id || !body.title) {
       return NextResponse.json(
-        { error: 'Missing required fields: clientId, title' },
+        { error: 'Missing required fields: client_id, title' },
         { status: 400 }
       )
     }
 
-    // Get user's organization (use provided organizationId or get the first active membership)
-    let organizationId = body.organizationId
+    // Get user's organization (use provided organization_id or get the first active membership)
+    let organizationId = body.organization_id
 
     if (!organizationId) {
       const memberships = await sql`
@@ -217,13 +217,13 @@ export async function POST(req: Request) {
 
     // Calculate totals
     const subtotal = parseFloat(body.subtotal || '0')
-    const gstAmount = parseFloat(body.gstAmount || (subtotal * 0.1).toFixed(2))
+    const gstAmount = parseFloat(body.gst_amount || (subtotal * 0.1).toFixed(2))
     const totalAmount = subtotal + gstAmount
 
     // Prepare deposit fields
-    const depositRequired = body.depositRequired || false
-    const depositPercentage = body.depositPercentage || null
-    const depositAmount = body.depositAmount || null
+    const depositRequired = body.deposit_required || false
+    const depositPercentage = body.deposit_percentage || null
+    const depositAmount = body.deposit_amount || null
 
     // Generate unique public token for sharing
     const publicToken = randomBytes(16).toString('base64url')
@@ -240,7 +240,7 @@ export async function POST(req: Request) {
       ) VALUES (
         ${organizationId},
         ${quoteNumber},
-        ${body.clientId},
+        ${body.client_id},
         ${user.id},
         ${body.title},
         ${body.description || null},
@@ -248,7 +248,7 @@ export async function POST(req: Request) {
         ${subtotal},
         ${gstAmount},
         ${totalAmount},
-        ${body.validUntilDate || null},
+        ${body.valid_until_date || null},
         ${body.notes || null},
         ${depositRequired},
         ${depositPercentage},
@@ -262,14 +262,14 @@ export async function POST(req: Request) {
     const newQuote = quotes[0]
 
     // Insert line items if provided
-    if (body.lineItems && Array.isArray(body.lineItems) && body.lineItems.length > 0) {
-      for (let i = 0; i < body.lineItems.length; i++) {
-        const item = body.lineItems[i]
+    if (body.line_items && Array.isArray(body.line_items) && body.line_items.length > 0) {
+      for (let i = 0; i < body.line_items.length; i++) {
+        const item = body.line_items[i]
 
         // Calculate line_total on server side to ensure it's never null
         const quantity = parseFloat(item.quantity || '0')
-        const unitPrice = parseFloat(item.unitPrice || item.unit_price || '0')
-        const gstAmount = parseFloat(item.gstAmount || item.gst_amount || '0')
+        const unitPrice = parseFloat(item.unit_price || '0')
+        const gstAmount = parseFloat(item.gst_amount || '0')
         const lineTotal = (quantity * unitPrice) + gstAmount
 
         await sql`
@@ -277,13 +277,13 @@ export async function POST(req: Request) {
             quote_id, item_type, description, quantity, unit_price, gst_amount, line_total, line_order
           ) VALUES (
             ${newQuote.id},
-            ${item.itemType || item.item_type || 'service'},
+            ${item.item_type || 'service'},
             ${item.description},
             ${quantity},
             ${unitPrice},
             ${gstAmount},
             ${lineTotal},
-            ${item.lineOrder !== undefined ? item.lineOrder : i}
+            ${item.line_order !== undefined ? item.line_order : i}
           )
         `
       }

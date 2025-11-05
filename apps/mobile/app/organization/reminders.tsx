@@ -56,16 +56,16 @@ export default function RemindersSettingsScreen() {
       setSaving(true)
 
       await apiClient.updateReminderSettings({
-        invoiceRemindersEnabled,
-        reminderDaysBeforeDue: reminderDaysBeforeDue.join(','),
-        reminderDaysAfterDue: reminderDaysAfterDue.join(','),
-        invoiceReminderMethod,
-        enableSmsEscalation,
-        smsEscalationDaysOverdue,
-        monthlyStatementsEnabled,
-        statementDayOfMonth,
-        statementMethod,
-        includeOnlyOutstanding,
+        invoice_reminders_enabled: invoiceRemindersEnabled,
+        reminder_days_before_due: reminderDaysBeforeDue.join(','),
+        reminder_days_after_due: reminderDaysAfterDue.join(','),
+        invoice_reminder_method: invoiceReminderMethod,
+        enable_sms_escalation: enableSmsEscalation,
+        sms_escalation_days_overdue: smsEscalationDaysOverdue,
+        monthly_statements_enabled: monthlyStatementsEnabled,
+        statement_day_of_month: statementDayOfMonth,
+        statement_method: statementMethod,
+        include_only_outstanding: includeOnlyOutstanding,
       })
 
       Alert.alert('Success', 'Reminder settings updated successfully')

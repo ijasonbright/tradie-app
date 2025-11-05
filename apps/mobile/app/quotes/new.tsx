@@ -184,28 +184,28 @@ export default function NewQuoteScreen() {
 
       // Prepare deposit data
       const depositData = depositRequired ? {
-        depositRequired: true,
-        depositPercentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
-        depositAmount: depositType === 'amount' ? parseFloat(depositAmount) : null,
+        deposit_required: true,
+        deposit_percentage: depositType === 'percentage' ? parseFloat(depositPercentage) : null,
+        deposit_amount: depositType === 'amount' ? parseFloat(depositAmount) : null,
       } : {
-        depositRequired: false,
-        depositPercentage: null,
-        depositAmount: null,
+        deposit_required: false,
+        deposit_percentage: null,
+        deposit_amount: null,
       }
 
       const quoteData = {
-        clientId: selectedClient.id,
+        client_id: selectedClient.id,
         title,
         description,
-        validUntilDate,
+        valid_until_date: validUntilDate,
         subtotal: totals.subtotal,
-        gstAmount: totals.gst_amount,
-        totalAmount: totals.total_amount,
+        gst_amount: totals.gst_amount,
+        total_amount: totals.total_amount,
         status: 'draft',
         ...depositData,
-        lineItems: lineItems.map((item, index) => ({
+        line_items: lineItems.map((item, index) => ({
           ...item,
-          lineOrder: index,
+          line_order: index,
         })),
       }
 

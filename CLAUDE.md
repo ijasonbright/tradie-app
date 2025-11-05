@@ -160,11 +160,38 @@ const isMobileApiRoute = createRouteMatcher([
 - Mobile app gets "API Error: 404" even though the endpoint exists
 - Web requests with Clerk auth might work, but mobile JWT auth fails
 
-#### 4. API Response Format: Use snake_case
+#### 4. Request and Response Format: Use snake_case EVERYWHERE
 
-**WHY:** Database columns use snake_case, and mobile app expects snake_case from API responses.
+**WHY:** Database columns use snake_case. To maintain consistency and eliminate conversion overhead, the entire stack now uses snake_case.
 
-**CORRECT:**
+**STANDARD:** snake_case for ALL data:
+- Mobile app → API: snake_case
+- API → Database: snake_case (no conversion needed)
+- Database → API: snake_case
+- API → Mobile app: snake_case
+
+**Request Body (Mobile → API):**
+```typescript
+// Mobile app sends
+const data = {
+  organization_id: orgId,
+  client_id: clientId,
+  site_address_line1: address,
+  quoted_amount: amount,
+}
+await apiClient.createJob(data)
+```
+
+**API Endpoint Receives:**
+```typescript
+const body = await req.json()
+const orgId = body.organization_id        // ✓ snake_case
+const clientId = body.client_id            // ✓ snake_case
+const address = body.site_address_line1    // ✓ snake_case
+const amount = body.quoted_amount          // ✓ snake_case
+```
+
+**API Response (API → Mobile):**
 ```typescript
 return NextResponse.json({
   organization_id: orgId,
@@ -174,17 +201,16 @@ return NextResponse.json({
 })
 ```
 
-**WRONG:**
+**WRONG (DO NOT USE):**
 ```typescript
-return NextResponse.json({
-  organizationId: orgId,          // ❌ camelCase
-  invoiceRemindersEnabled: true,  // ❌ camelCase
-  reminderDaysBeforeDue: '7,3,1', // ❌ camelCase
-  createdAt: new Date().toISOString(),
-})
+// ❌ DO NOT use camelCase anywhere
+const data = {
+  organizationId: orgId,          // ❌ camelCase - API will not recognize
+  clientId: clientId,              // ❌ camelCase - API will not recognize
+  siteAddressLine1: address,       // ❌ camelCase - API will not recognize
+  quotedAmount: amount,            // ❌ camelCase - API will not recognize
+}
 ```
-
-**Note:** The mobile app sends camelCase in request bodies but expects snake_case in responses.
 
 ### Troubleshooting Checklist: "Mobile App Getting 404 Errors"
 
@@ -230,7 +256,8 @@ See `/apps/web/app/api/reminders/settings/route.ts` for a complete example that 
 | `Database connection string format for neon() should be: postgresql://...` | Drizzle ORM imported in API route | Replace with raw Neon SQL |
 | `API Error: 404` from mobile app | Endpoint not in middleware.ts | Add to `isMobileApiRoute` matcher |
 | `x-clerk-auth-status: signed-out` with 404 | Middleware blocking request | Add to `isMobileApiRoute` matcher |
-| Mobile app can't read fields | Response using camelCase | Use snake_case in API responses |
+| `API Error: 400 Missing required fields` | Mobile app sending camelCase, API expecting snake_case | Use snake_case in mobile app requests |
+| Mobile app can't read fields | Mobile app trying to read camelCase fields | API always returns snake_case - read snake_case fields |
 | Build succeeds but 404 in production | Deployment not complete or cached | Wait for deployment, check Vercel logs |
 
 

@@ -138,15 +138,15 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       SET
         title = ${body.title !== undefined ? body.title : current.title},
         description = ${body.description !== undefined ? body.description : current.description},
-        appointment_type = ${body.appointmentType !== undefined ? body.appointmentType : current.appointment_type},
-        start_time = ${body.startTime !== undefined ? body.startTime : current.start_time},
-        end_time = ${body.endTime !== undefined ? body.endTime : current.end_time},
-        all_day = ${body.allDay !== undefined ? body.allDay : current.all_day},
-        job_id = ${body.jobId !== undefined ? body.jobId : current.job_id},
-        client_id = ${body.clientId !== undefined ? body.clientId : current.client_id},
-        assigned_to_user_id = ${body.assignedToUserId !== undefined ? body.assignedToUserId : current.assigned_to_user_id},
-        location_address = ${body.locationAddress !== undefined ? body.locationAddress : current.location_address},
-        reminder_minutes_before = ${body.reminderMinutesBefore !== undefined ? body.reminderMinutesBefore : current.reminder_minutes_before},
+        appointment_type = ${body.appointment_type !== undefined ? body.appointment_type : current.appointment_type},
+        start_time = ${body.start_time !== undefined ? body.start_time : current.start_time},
+        end_time = ${body.end_time !== undefined ? body.end_time : current.end_time},
+        all_day = ${body.all_day !== undefined ? body.all_day : current.all_day},
+        job_id = ${body.job_id !== undefined ? body.job_id : current.job_id},
+        client_id = ${body.client_id !== undefined ? body.client_id : current.client_id},
+        assigned_to_user_id = ${body.assigned_to_user_id !== undefined ? body.assigned_to_user_id : current.assigned_to_user_id},
+        location_address = ${body.location_address !== undefined ? body.location_address : current.location_address},
+        reminder_minutes_before = ${body.reminder_minutes_before !== undefined ? body.reminder_minutes_before : current.reminder_minutes_before},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

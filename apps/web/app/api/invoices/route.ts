@@ -189,9 +189,9 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     // Validate required fields
-    if (!body.organizationId || !body.clientId || !body.issueDate || !body.dueDate) {
+    if (!body.organization_id || !body.client_id || !body.issue_date || !body.due_date) {
       return NextResponse.json(
-        { error: 'Missing required fields: organizationId, clientId, issueDate, dueDate' },
+        { error: 'Missing required fields: organization_id, client_id, issue_date, due_date' },
         { status: 400 }
       )
     }
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
     // Check user has permission in this organization
     const members = await sql`
       SELECT role, can_create_invoices FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -218,14 +218,14 @@ export async function POST(req: Request) {
     const year = new Date().getFullYear()
     const invoiceCount = await sql`
       SELECT COUNT(*) as count FROM invoices
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND invoice_number LIKE ${'INV-' + year + '-%'}
     `
     const invoiceNumber = `INV-${year}-${String(Number(invoiceCount[0].count) + 1).padStart(3, '0')}`
 
     // Calculate totals
     const subtotal = parseFloat(body.subtotal || '0')
-    const gstAmount = parseFloat(body.gstAmount || (subtotal * 0.1).toFixed(2))
+    const gstAmount = parseFloat(body.gst_amount || (subtotal * 0.1).toFixed(2))
     const totalAmount = subtotal + gstAmount
 
     // Generate unique public token for sharing
@@ -240,21 +240,21 @@ export async function POST(req: Request) {
         public_token,
         created_at, updated_at
       ) VALUES (
-        ${body.organizationId},
+        ${body.organization_id},
         ${invoiceNumber},
-        ${body.jobId || null},
-        ${body.clientId},
+        ${body.job_id || null},
+        ${body.client_id},
         ${user.id},
         ${body.status || 'draft'},
         ${subtotal},
         ${gstAmount},
         ${totalAmount},
         0,
-        ${body.issueDate},
-        ${body.dueDate},
-        ${body.paymentTerms || null},
+        ${body.issue_date},
+        ${body.due_date},
+        ${body.payment_terms || null},
         ${body.notes || null},
-        ${body.footerText || null},
+        ${body.footer_text || null},
         ${publicToken},
         NOW(),
         NOW()
@@ -262,11 +262,11 @@ export async function POST(req: Request) {
     `
 
     // If invoice is linked to a job, update the job's invoice_id
-    if (body.jobId) {
+    if (body.job_id) {
       await sql`
         UPDATE jobs
         SET invoice_id = ${invoices[0].id}, updated_at = NOW()
-        WHERE id = ${body.jobId}
+        WHERE id = ${body.job_id}
       `
     }
 

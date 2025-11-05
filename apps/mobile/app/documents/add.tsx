@@ -66,14 +66,14 @@ export default function AddDocumentScreen() {
 
       const documentData = {
         title: title.trim(),
-        documentType,
-        documentNumber: documentNumber.trim() || null,
-        issuingAuthority: issuingAuthority.trim() || null,
-        issueDate: issueDate.toISOString().split('T')[0],
-        expiryDate: hasExpiry ? expiryDate.toISOString().split('T')[0] : null,
-        fileUri: selectedFile.uri,
-        fileName: selectedFile.name,
-        fileType: selectedFile.mimeType,
+        document_type: documentType,
+        document_number: documentNumber.trim() || null,
+        issuing_authority: issuingAuthority.trim() || null,
+        issue_date: issueDate.toISOString().split('T')[0],
+        expiry_date: hasExpiry ? expiryDate.toISOString().split('T')[0] : null,
+        file_uri: selectedFile.uri,
+        file_name: selectedFile.name,
+        file_type: selectedFile.mimeType,
       }
 
       if (isOrganization) {

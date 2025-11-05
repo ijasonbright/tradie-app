@@ -29,7 +29,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, async ({ data, error }) => {
           heading: location.coords.heading || undefined,
           speed: location.coords.speed || undefined,
           altitude: location.coords.altitude || undefined,
-          isActive: true,
+          is_active: true,
         })
         console.log('Background location updated:', location.coords)
       } catch (error) {
@@ -168,7 +168,7 @@ export function useLocationTracking(): LocationTrackingState & LocationTrackingA
         heading: location.coords.heading || undefined,
         speed: location.coords.speed || undefined,
         altitude: location.coords.altitude || undefined,
-        isActive: true,
+        is_active: true,
       })
 
       console.log('Current location updated')

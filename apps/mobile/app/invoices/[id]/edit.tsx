@@ -184,11 +184,11 @@ export default function EditInvoiceScreen() {
 
       // Update invoice details
       await apiClient.updateInvoice(id as string, {
-        dueDate,
-        paymentTerms,
+        due_date: dueDate,
+        payment_terms: paymentTerms,
         notes,
         subtotal: totals.subtotal,
-        gstAmount: totals.gst_amount,
+        gst_amount: totals.gst_amount,
         status: resetToDraft ? 'draft' : invoice.status,
       })
 

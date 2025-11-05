@@ -147,14 +147,14 @@ export default function JobDetailScreen() {
                 } else {
                   // Create new invoice from job
                   const invoiceData = {
-                    jobId: id,
-                    clientId: job.client_id,
-                    organizationId: job.organization_id,
+                    job_id: id,
+                    client_id: job.client_id,
+                    organization_id: job.organization_id,
                     subtotal: parseFloat(job.quoted_amount || job.actual_amount || '0'),
-                    gstAmount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 0.1,
-                    totalAmount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 1.1,
-                    issueDate: new Date().toISOString().split('T')[0],
-                    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    gst_amount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 0.1,
+                    total_amount: parseFloat(job.quoted_amount || job.actual_amount || '0') * 1.1,
+                    issue_date: new Date().toISOString().split('T')[0],
+                    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     status: 'draft',
                     notes: job.description || null,
                   }
@@ -211,14 +211,14 @@ export default function JobDetailScreen() {
                 } else {
                   // Create new quote from job
                   const quoteData = {
-                    clientId: job.client_id,
-                    organizationId: job.organization_id,
+                    client_id: job.client_id,
+                    organization_id: job.organization_id,
                     title: job.title,
                     description: job.description || null,
                     subtotal: parseFloat(job.quoted_amount || '0'),
-                    gstAmount: parseFloat(job.quoted_amount || '0') * 0.1,
-                    totalAmount: parseFloat(job.quoted_amount || '0') * 1.1,
-                    validUntilDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    gst_amount: parseFloat(job.quoted_amount || '0') * 0.1,
+                    total_amount: parseFloat(job.quoted_amount || '0') * 1.1,
+                    valid_until_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     status: 'draft',
                   }
 
@@ -326,9 +326,9 @@ export default function JobDetailScreen() {
 
       // Update the job with scheduled times
       await apiClient.updateJob(id as string, {
-        scheduledDate: dateString,
-        scheduledStartTime: scheduledDateTime.toISOString(),
-        scheduledEndTime: scheduledEndDateTime.toISOString(),
+        scheduled_date: dateString,
+        scheduled_start_time: scheduledDateTime.toISOString(),
+        scheduled_end_time: scheduledEndDateTime.toISOString(),
       })
 
       // Build location address
@@ -353,11 +353,11 @@ export default function JobDetailScreen() {
       const appointmentData = {
         title: job.title,
         description: job.description,
-        appointmentType: 'job',
-        startTime: scheduledDateTime.toISOString(),
-        endTime: scheduledEndDateTime.toISOString(),
-        allDay: false,
-        locationAddress: locationAddress || null,
+        appointment_type: 'job',
+        start_time: scheduledDateTime.toISOString(),
+        end_time: scheduledEndDateTime.toISOString(),
+        all_day: false,
+        location_address: locationAddress || null,
       }
 
       if (existingAppointment) {
@@ -367,10 +367,10 @@ export default function JobDetailScreen() {
         // Create new appointment
         await apiClient.createAppointment({
           ...appointmentData,
-          organizationId: job.organization_id,
-          jobId: job.id,
-          clientId: job.client_id,
-          assignedToUserId: job.assigned_to_user_id,
+          organization_id: job.organization_id,
+          job_id: job.id,
+          client_id: job.client_id,
+          assigned_to_user_id: job.assigned_to_user_id,
         })
       }
 

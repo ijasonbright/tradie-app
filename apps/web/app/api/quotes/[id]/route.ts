@@ -172,7 +172,7 @@ export async function PUT(
 
     // Calculate totals if provided
     let subtotal = body.subtotal !== undefined ? parseFloat(body.subtotal) : parseFloat(existingQuotes[0].subtotal)
-    let gstAmount = body.gstAmount !== undefined ? parseFloat(body.gstAmount) : parseFloat(existingQuotes[0].gst_amount)
+    let gstAmount = body.gst_amount !== undefined ? parseFloat(body.gst_amount) : parseFloat(existingQuotes[0].gst_amount)
     let totalAmount = subtotal + gstAmount
 
     // Update quote
@@ -185,13 +185,13 @@ export async function PUT(
         subtotal = ${subtotal},
         gst_amount = ${gstAmount},
         total_amount = ${totalAmount},
-        valid_until_date = ${body.validUntilDate !== undefined ? body.validUntilDate : existingQuotes[0].valid_until_date},
+        valid_until_date = ${body.valid_until_date !== undefined ? body.valid_until_date : existingQuotes[0].valid_until_date},
         notes = ${body.notes !== undefined ? body.notes : existingQuotes[0].notes},
-        sent_at = ${body.sentAt !== undefined ? body.sentAt : existingQuotes[0].sent_at},
-        accepted_at = ${body.acceptedAt !== undefined ? body.acceptedAt : existingQuotes[0].accepted_at},
-        rejected_at = ${body.rejectedAt !== undefined ? body.rejectedAt : existingQuotes[0].rejected_at},
-        rejection_reason = ${body.rejectionReason !== undefined ? body.rejectionReason : existingQuotes[0].rejection_reason},
-        converted_to_job_id = ${body.convertedToJobId !== undefined ? body.convertedToJobId : existingQuotes[0].converted_to_job_id},
+        sent_at = ${body.sent_at !== undefined ? body.sent_at : existingQuotes[0].sent_at},
+        accepted_at = ${body.accepted_at !== undefined ? body.accepted_at : existingQuotes[0].accepted_at},
+        rejected_at = ${body.rejected_at !== undefined ? body.rejected_at : existingQuotes[0].rejected_at},
+        rejection_reason = ${body.rejection_reason !== undefined ? body.rejection_reason : existingQuotes[0].rejection_reason},
+        converted_to_job_id = ${body.converted_to_job_id !== undefined ? body.converted_to_job_id : existingQuotes[0].converted_to_job_id},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

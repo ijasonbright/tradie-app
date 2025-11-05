@@ -72,20 +72,20 @@ export default function AddClientScreen() {
       setSaving(true)
 
       const clientData: any = {
-        organizationId: organization.id,
-        clientType: 'residential',
-        isCompany,
-        companyName: isCompany ? companyName.trim() : null,
-        firstName: !isCompany ? firstName.trim() : null,
-        lastName: !isCompany ? lastName.trim() : null,
+        organization_id: organization.id,
+        client_type: 'residential',
+        is_company: isCompany,
+        company_name: isCompany ? companyName.trim() : null,
+        first_name: !isCompany ? firstName.trim() : null,
+        last_name: !isCompany ? lastName.trim() : null,
         email: email.trim() || null,
         phone: phone.trim() || null,
         mobile: mobile.trim() || null,
-        siteAddressLine1: siteAddressLine1.trim() || null,
-        siteAddressLine2: siteAddressLine2.trim() || null,
-        siteCity: siteCity.trim() || null,
-        siteState: siteState.trim() || null,
-        sitePostcode: sitePostcode.trim() || null,
+        site_address_line1: siteAddressLine1.trim() || null,
+        site_address_line2: siteAddressLine2.trim() || null,
+        site_city: siteCity.trim() || null,
+        site_state: siteState.trim() || null,
+        site_postcode: sitePostcode.trim() || null,
         notes: notes.trim() || null,
       }
 

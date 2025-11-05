@@ -73,9 +73,9 @@ export default function EditProfileScreen() {
 
       // Update via API
       await apiClient.updateUserProfile({
-        fullName: fullName.trim(),
+        full_name: fullName.trim(),
         phone: phone.trim(),
-        profilePhotoUrl,
+        profile_photo_url: profilePhotoUrl,
       })
 
       Alert.alert('Success', 'Profile updated successfully')

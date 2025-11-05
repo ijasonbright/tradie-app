@@ -118,18 +118,18 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     // Validate required fields
-    if (!body.organizationId) {
+    if (!body.organization_id) {
       return NextResponse.json({ error: 'Organization ID is required' }, { status: 400 })
     }
 
-    if (!body.clientType) {
+    if (!body.client_type) {
       return NextResponse.json({ error: 'Client type is required' }, { status: 400 })
     }
 
     // Verify user has access to this organization
     const membership = await sql`
       SELECT * FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -159,26 +159,26 @@ export async function POST(req: Request) {
         notes, created_by_user_id,
         created_at, updated_at
       ) VALUES (
-        ${body.organizationId},
-        ${body.clientType},
-        ${body.isCompany || false},
-        ${body.companyName || null},
-        ${body.firstName || null},
-        ${body.lastName || null},
+        ${body.organization_id},
+        ${body.client_type},
+        ${body.is_company || false},
+        ${body.company_name || null},
+        ${body.first_name || null},
+        ${body.last_name || null},
         ${body.email || null},
         ${body.phone || null},
         ${body.mobile || null},
-        ${body.siteAddressLine1 || null},
-        ${body.siteAddressLine2 || null},
-        ${body.siteCity || null},
-        ${body.siteState || null},
-        ${body.sitePostcode || null},
-        ${body.billingAddressSameAsSite !== false},
-        ${body.billingAddressLine1 || null},
-        ${body.billingAddressLine2 || null},
-        ${body.billingCity || null},
-        ${body.billingState || null},
-        ${body.billingPostcode || null},
+        ${body.site_address_line1 || null},
+        ${body.site_address_line2 || null},
+        ${body.site_city || null},
+        ${body.site_state || null},
+        ${body.site_postcode || null},
+        ${body.billing_address_same_as_site !== false},
+        ${body.billing_address_line1 || null},
+        ${body.billing_address_line2 || null},
+        ${body.billing_city || null},
+        ${body.billing_state || null},
+        ${body.billing_postcode || null},
         ${body.notes || null},
         ${user.id},
         NOW(),

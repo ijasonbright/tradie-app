@@ -184,14 +184,14 @@ export async function POST(req: Request) {
     const user = users[0]
 
     // Validate required fields
-    if (!body.organizationId || !body.title || !body.appointmentType || !body.startTime || !body.endTime || !body.assignedToUserId) {
+    if (!body.organization_id || !body.title || !body.appointment_type || !body.start_time || !body.end_time || !body.assigned_to_user_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Verify user has access to this organization
     const membership = await sql`
       SELECT * FROM organization_members
-      WHERE organization_id = ${body.organizationId}
+      WHERE organization_id = ${body.organization_id}
       AND user_id = ${user.id}
       AND status = 'active'
       LIMIT 1
@@ -210,19 +210,19 @@ export async function POST(req: Request) {
         location_address, reminder_minutes_before
       )
       VALUES (
-        ${body.organizationId},
+        ${body.organization_id},
         ${body.title},
         ${body.description || null},
-        ${body.appointmentType},
-        ${body.startTime},
-        ${body.endTime},
-        ${body.allDay || false},
-        ${body.jobId || null},
-        ${body.clientId || null},
-        ${body.assignedToUserId},
+        ${body.appointment_type},
+        ${body.start_time},
+        ${body.end_time},
+        ${body.all_day || false},
+        ${body.job_id || null},
+        ${body.client_id || null},
+        ${body.assigned_to_user_id},
         ${user.id},
-        ${body.locationAddress || null},
-        ${body.reminderMinutesBefore || null}
+        ${body.location_address || null},
+        ${body.reminder_minutes_before || null}
       )
       RETURNING *
     `

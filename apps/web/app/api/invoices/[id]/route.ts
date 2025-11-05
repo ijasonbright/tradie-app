@@ -164,7 +164,7 @@ export async function PUT(
 
     // Calculate totals if provided
     let subtotal = body.subtotal !== undefined ? parseFloat(body.subtotal) : parseFloat(existing.subtotal)
-    let gstAmount = body.gstAmount !== undefined ? parseFloat(body.gstAmount) : parseFloat(existing.gst_amount)
+    let gstAmount = body.gst_amount !== undefined ? parseFloat(body.gst_amount) : parseFloat(existing.gst_amount)
     let totalAmount = subtotal + gstAmount
 
     // Update invoice
@@ -175,14 +175,14 @@ export async function PUT(
         subtotal = ${subtotal},
         gst_amount = ${gstAmount},
         total_amount = ${totalAmount},
-        paid_amount = ${body.paidAmount !== undefined ? parseFloat(body.paidAmount) : parseFloat(existing.paid_amount)},
-        issue_date = ${body.issueDate !== undefined ? body.issueDate : existing.issue_date},
-        due_date = ${body.dueDate !== undefined ? body.dueDate : existing.due_date},
-        paid_date = ${body.paidDate !== undefined ? body.paidDate : existing.paid_date},
-        payment_terms = ${body.paymentTerms !== undefined ? body.paymentTerms : existing.payment_terms},
-        payment_method = ${body.paymentMethod !== undefined ? body.paymentMethod : existing.payment_method},
+        paid_amount = ${body.paid_amount !== undefined ? parseFloat(body.paid_amount) : parseFloat(existing.paid_amount)},
+        issue_date = ${body.issue_date !== undefined ? body.issue_date : existing.issue_date},
+        due_date = ${body.due_date !== undefined ? body.due_date : existing.due_date},
+        paid_date = ${body.paid_date !== undefined ? body.paid_date : existing.paid_date},
+        payment_terms = ${body.payment_terms !== undefined ? body.payment_terms : existing.payment_terms},
+        payment_method = ${body.payment_method !== undefined ? body.payment_method : existing.payment_method},
         notes = ${body.notes !== undefined ? body.notes : existing.notes},
-        footer_text = ${body.footerText !== undefined ? body.footerText : existing.footer_text},
+        footer_text = ${body.footer_text !== undefined ? body.footer_text : existing.footer_text},
         updated_at = NOW()
       WHERE id = ${id}
       RETURNING *

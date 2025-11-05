@@ -172,20 +172,20 @@ export default function AddJobScreen() {
       setSaving(true)
 
       const jobData: any = {
-        organizationId: organization.id,
-        clientId,
+        organization_id: organization.id,
+        client_id: clientId,
         title: title.trim(),
         description: description.trim() || null,
-        jobType,
+        job_type: jobType,
         priority,
         status: 'scheduled',
-        siteAddressLine1: siteAddressLine1.trim() || null,
-        siteAddressLine2: siteAddressLine2.trim() || null,
-        siteCity: siteCity.trim() || null,
-        siteState: siteState.trim() || null,
-        sitePostcode: sitePostcode.trim() || null,
-        siteAccessNotes: siteAccessNotes.trim() || null,
-        quotedAmount: quotedAmount ? parseFloat(quotedAmount) : null,
+        site_address_line1: siteAddressLine1.trim() || null,
+        site_address_line2: siteAddressLine2.trim() || null,
+        site_city: siteCity.trim() || null,
+        site_state: siteState.trim() || null,
+        site_postcode: sitePostcode.trim() || null,
+        site_access_notes: siteAccessNotes.trim() || null,
+        quoted_amount: quotedAmount ? parseFloat(quotedAmount) : null,
       }
 
       await apiClient.createJob(jobData)

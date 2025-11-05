@@ -140,16 +140,16 @@ export async function PUT(req: Request) {
       SET
         name = COALESCE(${body.name}, name),
         abn = ${body.abn !== undefined ? body.abn : null},
-        trade_type = ${body.tradeType !== undefined ? body.tradeType : null},
+        trade_type = ${body.trade_type !== undefined ? body.trade_type : null},
         phone = ${body.phone !== undefined ? body.phone : null},
         email = ${body.email !== undefined ? body.email : null},
-        address_line1 = ${body.addressLine1 !== undefined ? body.addressLine1 : null},
-        address_line2 = ${body.addressLine2 !== undefined ? body.addressLine2 : null},
+        address_line1 = ${body.address_line1 !== undefined ? body.address_line1 : null},
+        address_line2 = ${body.address_line2 !== undefined ? body.address_line2 : null},
         city = ${body.city !== undefined ? body.city : null},
         state = ${body.state !== undefined ? body.state : null},
         postcode = ${body.postcode !== undefined ? body.postcode : null},
-        logo_url = ${body.logoUrl !== undefined ? body.logoUrl : null},
-        primary_color = ${body.primaryColor !== undefined ? body.primaryColor : null},
+        logo_url = ${body.logo_url !== undefined ? body.logo_url : null},
+        primary_color = ${body.primary_color !== undefined ? body.primary_color : null},
         updated_at = NOW()
       WHERE id = ${org.id}
       RETURNING *
