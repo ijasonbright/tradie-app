@@ -125,8 +125,14 @@ export async function GET(
     `
 
     // Build groups with questions and answers
-    console.log('[PDF Generation] Total photos found:', photos.length)
-    console.log('[PDF Generation] Form data keys:', Object.keys(form.form_data || {}))
+    console.log('[PDF Generation] Total photos found in job_photos table:', photos.length)
+
+    // Convert photos array to format expected by PDF generator
+    const allPhotos = photos.map((p: any) => ({
+      photo_url: p.photo_url,
+      caption: p.caption || '',
+      photo_type: p.photo_type || 'general',
+    }))
 
     const groupsWithQuestions = groups.map((group: any) => {
       const groupQuestions = questions.filter((q: any) => q.group_id === group.id)
@@ -139,34 +145,18 @@ export async function GET(
           // Get answer from form_data
           const answer = form.form_data?.[q.id] || null
 
-          // Get photos for this question
-          const questionPhotos = photos
-            .filter((p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url))
-            .map((p: any) => ({
-              photo_url: p.photo_url,
-              caption: p.caption,
-            }))
-
-          if (questionPhotos.length > 0) {
-            console.log(`[PDF Generation] Question ${q.id} has ${questionPhotos.length} photos`)
-          }
-
           return {
             id: q.id,
             question_text: q.question_text,
             field_type: q.field_type,
             answer,
-            photos: questionPhotos,
+            photos: [], // Don't link photos to individual questions for now
           }
         }),
       }
     })
 
-    // Log summary of photos per group
-    groupsWithQuestions.forEach((g: any) => {
-      const totalPhotos = g.questions.reduce((sum: number, q: any) => sum + (q.photos?.length || 0), 0)
-      console.log(`[PDF Generation] Group "${g.group_name}" has ${totalPhotos} total photos`)
-    })
+    console.log(`[PDF Generation] Will include ${allPhotos.length} photos in the first group's photo section`)
 
     // Prepare data for PDF generation
     const pdfData = {
