@@ -27,8 +27,19 @@ export default function CompletionFormScreen() {
         setExistingFormId(response.form.id)
         setTemplateId(response.form.template_id)
       } else if (template_id) {
-        // New form with template selected
+        // New form with template selected - create empty draft immediately
+        // This ensures the form exists before user tries to upload photos
         setTemplateId(template_id as string)
+
+        console.log('Creating initial form draft for template:', template_id)
+        const createResponse = await apiClient.saveJobCompletionForm(id as string, {
+          template_id: template_id as string,
+          form_data: {}, // Empty form data initially
+          status: 'draft',
+        })
+
+        setExistingFormId(createResponse.form.id)
+        console.log('Initial form draft created:', createResponse.form.id)
       } else {
         // No form and no template - redirect to template selection
         router.replace(`/job/${id}/completion-form-templates`)
