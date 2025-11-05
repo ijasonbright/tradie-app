@@ -394,6 +394,8 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     const groupPhotos = group.questions
       .flatMap(q => q.photos || [])
 
+    console.log(`[PDF Generator] Group "${group.group_name}" processing ${groupPhotos.length} photos`)
+
     if (groupPhotos.length > 0) {
       // Check if we need a new page
       if (yPosition < 150) {

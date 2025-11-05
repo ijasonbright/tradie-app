@@ -125,6 +125,9 @@ export async function GET(
     `
 
     // Build groups with questions and answers
+    console.log('[PDF Generation] Total photos found:', photos.length)
+    console.log('[PDF Generation] Form data keys:', Object.keys(form.form_data || {}))
+
     const groupsWithQuestions = groups.map((group: any) => {
       const groupQuestions = questions.filter((q: any) => q.group_id === group.id)
 
@@ -144,6 +147,10 @@ export async function GET(
               caption: p.caption,
             }))
 
+          if (questionPhotos.length > 0) {
+            console.log(`[PDF Generation] Question ${q.id} has ${questionPhotos.length} photos`)
+          }
+
           return {
             id: q.id,
             question_text: q.question_text,
@@ -153,6 +160,12 @@ export async function GET(
           }
         }),
       }
+    })
+
+    // Log summary of photos per group
+    groupsWithQuestions.forEach((g: any) => {
+      const totalPhotos = g.questions.reduce((sum: number, q: any) => sum + (q.photos?.length || 0), 0)
+      console.log(`[PDF Generation] Group "${g.group_name}" has ${totalPhotos} total photos`)
     })
 
     // Prepare data for PDF generation
