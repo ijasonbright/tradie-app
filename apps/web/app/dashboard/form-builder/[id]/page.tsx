@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { updateQuestion as updateQuestionAction, updateAnswerOptions as updateAnswerOptionsAction } from '../actions'
 
 interface Question {
   id: string
@@ -83,27 +84,18 @@ export default function FormEditorPage() {
     try {
       setSaving(true)
 
-      // Update question details
-      const response = await fetch(`/api/form-builder/questions/${questionId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
+      // Update question details using server action
+      await updateQuestionAction(questionId, {
+        question_text: updates.question_text,
+        field_type: updates.field_type,
+        is_required: updates.is_required,
+        help_text: updates.help_text,
       })
 
-      if (!response.ok) throw new Error('Failed to update question')
-
-      // If answer options were provided, save them
+      // If answer options were provided, save them using server action
       if (newAnswerOptions !== undefined) {
-        const optionsResponse = await fetch(`/api/form-builder/questions/${questionId}/answer-options`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answer_options: newAnswerOptions }),
-        })
-
-        if (!optionsResponse.ok) throw new Error('Failed to update answer options')
-
-        const optionsData = await optionsResponse.json()
-        updates.answer_options = optionsData.answer_options
+        const savedOptions = await updateAnswerOptionsAction(questionId, newAnswerOptions)
+        updates.answer_options = savedOptions
       }
 
       // Update local state
