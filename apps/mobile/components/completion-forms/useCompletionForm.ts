@@ -68,13 +68,15 @@ export function useCompletionForm(templateId: string, jobId: string) {
       [questionId]: value,
     }))
 
-    // Clear error when field is updated
-    setErrors((prev) => {
-      const newErrors = { ...prev }
-      delete newErrors[questionId]
-      return newErrors
-    })
-  }, [])
+    // Clear error when field is updated (only if error was previously set)
+    if (errors[questionId]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev }
+        delete newErrors[questionId]
+        return newErrors
+      })
+    }
+  }, [errors])
 
   const validateForm = useCallback(() => {
     if (!template) return {}

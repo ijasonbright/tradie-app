@@ -40,6 +40,7 @@ export function CompletionFormRenderer({
   } = useCompletionForm(templateId, jobId)
 
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
+  const [validatedSections, setValidatedSections] = useState<Set<number>>(new Set())
 
   if (isLoading) {
     return (
@@ -84,6 +85,10 @@ export function CompletionFormRenderer({
   }
 
   const handleSubmit = async () => {
+    // Mark all sections as validated when submitting
+    const allSections = new Set(template.groups.map((_, index) => index))
+    setValidatedSections(allSections)
+
     const validationErrors = validateForm()
     if (Object.keys(validationErrors).length > 0) {
       Alert.alert('Validation Error', 'Please fill in all required fields')
@@ -148,7 +153,7 @@ export function CompletionFormRenderer({
               key={question.id}
               question={question}
               value={formData[question.id]}
-              error={errors[question.id]}
+              error={validatedSections.has(currentGroupIndex) ? errors[question.id] : undefined}
               onChange={(value) => updateField(question.id, value)}
               jobId={jobId}
             />
