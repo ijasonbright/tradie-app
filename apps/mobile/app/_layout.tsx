@@ -4,6 +4,7 @@ import { PaperProvider } from 'react-native-paper'
 import { Image, View, Text } from 'react-native'
 import { AuthProvider } from '../lib/auth'
 import { ThemeProvider } from '../context/ThemeContext'
+import { usePushNotifications } from '../hooks/usePushNotifications'
 
 const queryClient = new QueryClient()
 
@@ -13,12 +14,20 @@ export default function RootLayout() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <PaperProvider>
-            <ThemedStack />
+            <PushNotificationWrapper>
+              <ThemedStack />
+            </PushNotificationWrapper>
           </PaperProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </AuthProvider>
   )
+}
+
+// Wrapper component to initialize push notifications
+function PushNotificationWrapper({ children }: { children: React.ReactNode }) {
+  usePushNotifications()
+  return <>{children}</>
 }
 
 // Separate component to access theme context

@@ -21,6 +21,7 @@
     "@vercel/blob": "^0.23.0",
     "@vis.gl/react-google-maps": "^1.7.0",
     "drizzle-orm": "^0.33.0",
+    "expo-server-sdk": "^4.0.0",
     "jose": "^6.1.0",
     "next": "14.2.18",
     "pdf-lib": "^1.17.1",
