@@ -1,10 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, FileText, Plus, Eye, Pencil, Globe } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface Template {
   id: string
@@ -17,6 +14,7 @@ interface Template {
 }
 
 export default function CompletionFormsPage() {
+  const router = useRouter()
   const [templates, setTemplates] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,7 +42,7 @@ export default function CompletionFormsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -53,99 +51,81 @@ export default function CompletionFormsPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <p className="text-red-600">{error}</p>
-        <Button onClick={fetchTemplates}>Try Again</Button>
+        <button
+          onClick={fetchTemplates}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Try Again
+        </button>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Completion Forms</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage job completion form templates and their questions
-          </p>
-        </div>
-        <Button disabled>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Template
-        </Button>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Completion Forms</h1>
+        <p className="text-gray-600 mt-2">View and manage completion form templates</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {templates.map((template) => (
-          <Card key={template.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <FileText className="h-8 w-8 text-primary" />
+      {/* Templates Grid */}
+      {templates.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-12 text-center">
+          <p className="text-lg font-medium mb-2">No templates yet</p>
+          <p className="text-sm text-gray-500">Import or create completion form templates</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {templates.map((template) => (
+            <div
+              key={template.id}
+              className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="text-4xl">📝</div>
                 <div className="flex gap-2">
                   {template.is_global && (
-                    <Badge variant="secondary" className="gap-1">
-                      <Globe className="h-3 w-3" />
+                    <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
                       Global
-                    </Badge>
+                    </span>
                   )}
                   {template.is_active ? (
-                    <Badge variant="default">Active</Badge>
+                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                      Active
+                    </span>
                   ) : (
-                    <Badge variant="outline">Inactive</Badge>
+                    <span className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded">
+                      Inactive
+                    </span>
                   )}
                 </div>
               </div>
-              <CardTitle className="mt-4">{template.name}</CardTitle>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {template.name}
+              </h3>
+
               {template.description && (
-                <CardDescription className="line-clamp-2">
+                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                   {template.description}
-                </CardDescription>
+                </p>
               )}
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+
+              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                 <span>{template.group_count} sections</span>
                 <span>{template.question_count} questions</span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => window.location.href = `/dashboard/completion-forms/${template.id}`}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  View
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  disabled
-                >
-                  <Pencil className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
 
-      {templates.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 gap-4">
-            <FileText className="h-16 w-16 text-muted-foreground" />
-            <div className="text-center">
-              <h3 className="text-lg font-semibold">No templates found</h3>
-              <p className="text-muted-foreground">
-                Get started by creating your first completion form template
-              </p>
+              <button
+                onClick={() => router.push(`/dashboard/completion-forms/${template.id}`)}
+                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                View Details
+              </button>
             </div>
-            <Button disabled>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Template
-            </Button>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
       )}
     </div>
   )

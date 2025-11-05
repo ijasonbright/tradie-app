@@ -2,10 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Plus, FileText, Loader2, Edit, Eye } from 'lucide-react'
 
 interface Template {
   id: string
@@ -46,7 +42,7 @@ export default function FormBuilderPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     )
   }
@@ -55,7 +51,12 @@ export default function FormBuilderPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <p className="text-red-600">{error}</p>
-        <Button onClick={fetchTemplates}>Try Again</Button>
+        <button
+          onClick={fetchTemplates}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          Try Again
+        </button>
       </div>
     )
   }
@@ -65,83 +66,95 @@ export default function FormBuilderPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Form Builder</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-gray-900">Form Builder</h1>
+          <p className="text-gray-600 mt-2">
             Create and edit completion form templates
           </p>
         </div>
-        <Button onClick={() => router.push('/dashboard/form-builder/new')}>
-          <Plus className="h-4 w-4 mr-2" />
+        <button
+          onClick={() => router.push('/dashboard/form-builder/new')}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
+          <span>+</span>
           New Template
-        </Button>
+        </button>
       </div>
 
       {/* Templates Grid */}
       {templates.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium mb-2">No templates yet</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Create your first completion form template
-            </p>
-            <Button onClick={() => router.push('/dashboard/form-builder/new')}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Template
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="text-5xl mb-4">📝</div>
+          <p className="text-lg font-medium mb-2">No templates yet</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Create your first completion form template
+          </p>
+          <button
+            onClick={() => router.push('/dashboard/form-builder/new')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2"
+          >
+            <span>+</span>
+            Create Template
+          </button>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => (
-            <Card key={template.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between mb-2">
-                  <FileText className="h-8 w-8 text-primary" />
+            <div
+              key={template.id}
+              className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
+            >
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="text-4xl">📝</div>
                   <div className="flex gap-2">
                     {template.is_global && (
-                      <Badge variant="secondary">Global</Badge>
+                      <span className="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">
+                        Global
+                      </span>
                     )}
                     {template.is_active ? (
-                      <Badge variant="default">Active</Badge>
+                      <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded">
+                        Active
+                      </span>
                     ) : (
-                      <Badge variant="outline">Inactive</Badge>
+                      <span className="px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded">
+                        Inactive
+                      </span>
                     )}
                   </div>
                 </div>
-                <CardTitle className="text-lg">{template.name}</CardTitle>
+
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {template.name}
+                </h3>
+
                 {template.description && (
-                  <CardDescription className="line-clamp-2">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {template.description}
-                  </CardDescription>
+                  </p>
                 )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+
+                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                   <span>{template.group_count} sections</span>
                   <span>{template.question_count} questions</span>
                 </div>
+
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
+                  <button
                     onClick={() => router.push(`/dashboard/completion-forms/${template.id}`)}
+                    className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1"
+                    👁️ View
+                  </button>
+                  <button
                     onClick={() => router.push(`/dashboard/form-builder/${template.id}`)}
+                    className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                   >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
+                    ✏️ Edit
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
