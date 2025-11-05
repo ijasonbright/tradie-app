@@ -1,11 +1,3 @@
-import puppeteer from 'puppeteer-core'
-import chromium from '@sparticuz/chromium'
-
-// For Vercel deployment, ensure chromium binaries are available
-if (process.env.VERCEL) {
-  chromium.setGraphicsMode = false
-}
-
 interface CompletionFormData {
   form: {
     id: string
@@ -82,19 +74,32 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
 
   let browser = null
   try {
-    // Get Chromium executable path - will download if needed in serverless
-    const executablePath = await chromium.executablePath()
-
-    browser = await puppeteer.launch({
-      args: chromium.args,
+    // Dynamically load packages based on environment
+    const isVercel = !!process.env.VERCEL
+    let puppeteer: any
+    let launchOptions: any = {
+      headless: true,
       defaultViewport: {
         width: 1920,
         height: 1080,
       },
-      executablePath,
-      headless: true,
-    })
+    }
 
+    if (isVercel) {
+      // Production (Vercel) - use @sparticuz/chromium
+      const chromium = (await import('@sparticuz/chromium')).default
+      puppeteer = await import('puppeteer-core')
+      launchOptions = {
+        ...launchOptions,
+        args: chromium.args,
+        executablePath: await chromium.executablePath(),
+      }
+    } else {
+      // Local development - use full puppeteer
+      puppeteer = await import('puppeteer')
+    }
+
+    browser = await puppeteer.launch(launchOptions)
     const page = await browser.newPage()
     await page.setContent(html, { waitUntil: 'networkidle0' })
 
