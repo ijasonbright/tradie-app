@@ -5,8 +5,8 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "owner": "tradieapp",
-    "projectId": "your-project-id-here",
+    "owner": "ijasonbright",
+    "projectId": "4c31386c-3e21-455f-b7e4-02c657a5971e",
     "splash": {
       "backgroundColor": "#2563eb"
     },
@@ -17,7 +17,9 @@
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to share it with your team for better job coordination.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
         "NSLocationAlwaysUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
-        "UIBackgroundModes": ["location"]
+        "UIBackgroundModes": [
+          "location"
+        ]
       }
     },
     "android": {
@@ -27,7 +29,12 @@
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
         "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION"
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "plugins": [
@@ -57,6 +64,9 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "4c31386c-3e21-455f-b7e4-02c657a5971e"
       }
     }
   }
