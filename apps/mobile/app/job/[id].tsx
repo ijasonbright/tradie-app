@@ -1288,6 +1288,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#2563eb',
+    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,

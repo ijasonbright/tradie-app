@@ -1,19 +1,23 @@
 import React, { useState } from 'react'
-import { View, Text, TouchableOpacity, Image, Alert, ActivityIndicator, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, Image, Alert, ActivityIndicator, StyleSheet, ScrollView } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '@/lib/api-client'
 
 interface FileFieldProps {
   question: any
-  value: string
-  onChange: (value: string) => void
+  value: string | string[]
+  onChange: (value: string | string[]) => void
   jobId: string
 }
 
 export function FileField({ question, value, onChange, jobId }: FileFieldProps) {
   const [isUploading, setIsUploading] = useState(false)
 
-  const pickImage = async () => {
+  // Convert value to array for consistent handling
+  const photos = Array.isArray(value) ? value : value ? [value] : []
+
+  const pickImages = async () => {
     const result = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (!result.granted) {
       Alert.alert('Permission required', 'Please allow access to your photo library')
@@ -22,12 +26,13 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
 
     const pickerResult = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,
+      allowsMultipleSelection: true,
       quality: 0.8,
     })
 
-    if (!pickerResult.canceled && pickerResult.assets[0]) {
-      await uploadImage(pickerResult.assets[0].uri)
+    if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+      await uploadImages(pickerResult.assets.map(asset => asset.uri))
     }
   }
 
@@ -39,76 +44,106 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
     }
 
     const pickerResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
+      allowsEditing: false,
       quality: 0.8,
     })
 
     if (!pickerResult.canceled && pickerResult.assets[0]) {
-      await uploadImage(pickerResult.assets[0].uri)
+      await uploadImages([pickerResult.assets[0].uri])
     }
   }
 
-  const uploadImage = async (uri: string) => {
+  const uploadImages = async (uris: string[]) => {
     try {
       setIsUploading(true)
+      const uploadedUrls: string[] = []
 
-      const response = await apiClient.uploadCompletionFormPhoto(
-        jobId,
-        uri,
-        '', // caption
-        'completion_form', // photo_type
-        question.id // question_id
-      )
+      for (const uri of uris) {
+        const response = await apiClient.uploadCompletionFormPhoto(
+          jobId,
+          uri,
+          '', // caption
+          'completion_form', // photo_type
+          question.id // question_id
+        )
+        uploadedUrls.push(response.photo.photo_url)
+      }
 
-      onChange(response.photo.photo_url)
-      Alert.alert('Success', 'Photo uploaded successfully')
+      // Add new photos to existing ones
+      const updatedPhotos = [...photos, ...uploadedUrls]
+      onChange(updatedPhotos)
+
+      Alert.alert('Success', `${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} uploaded successfully`)
     } catch (error) {
       console.error('Upload failed:', error)
-      Alert.alert('Error', 'Failed to upload photo')
+      Alert.alert('Error', 'Failed to upload photos')
     } finally {
       setIsUploading(false)
     }
   }
 
+  const removePhoto = (indexToRemove: number) => {
+    const updatedPhotos = photos.filter((_, index) => index !== indexToRemove)
+    onChange(updatedPhotos.length > 0 ? updatedPhotos : '')
+  }
+
   const showOptions = () => {
-    Alert.alert('Add Photo', 'Choose an option', [
+    Alert.alert('Add Photos', 'Choose an option', [
       { text: 'Take Photo', onPress: takePhoto },
-      { text: 'Choose from Library', onPress: pickImage },
+      { text: 'Choose from Library', onPress: pickImages },
       { text: 'Cancel', style: 'cancel' },
     ])
   }
 
   return (
     <View style={styles.container}>
-      {value ? (
-        <View>
-          <Image source={{ uri: value }} style={styles.image} />
-          <TouchableOpacity style={styles.changeButton} onPress={showOptions}>
-            <Text style={styles.changeButtonText}>Change Photo</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={styles.uploadButton}
-          onPress={showOptions}
-          disabled={isUploading}
-        >
-          {isUploading ? (
-            <ActivityIndicator color="#007AFF" />
-          ) : (
-            <>
-              <Text style={styles.uploadIcon}>📷</Text>
-              <Text style={styles.uploadText}>Add Photo</Text>
-            </>
-          )}
-        </TouchableOpacity>
+      {photos.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosScroll}>
+          {photos.map((photoUrl, index) => (
+            <View key={index} style={styles.photoContainer}>
+              <Image source={{ uri: photoUrl }} style={styles.image} />
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => removePhoto(index)}
+              >
+                <MaterialCommunityIcons name="close-circle" size={24} color="#ff3b30" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </ScrollView>
       )}
+
+      <TouchableOpacity
+        style={styles.uploadButton}
+        onPress={showOptions}
+        disabled={isUploading}
+      >
+        {isUploading ? (
+          <ActivityIndicator color="#007AFF" />
+        ) : (
+          <>
+            <Text style={styles.uploadIcon}>📷</Text>
+            <Text style={styles.uploadText}>
+              {photos.length > 0 ? 'Add More Photos' : 'Add Photos'}
+            </Text>
+          </>
+        )}
+      </TouchableOpacity>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {
+    gap: 12,
+  },
+  photosScroll: {
+    marginBottom: 8,
+  },
+  photoContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
   uploadButton: {
     backgroundColor: '#FFFFFF',
     borderWidth: 2,
@@ -129,21 +164,21 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   image: {
-    width: '100%',
+    width: 200,
     height: 200,
     borderRadius: 8,
     backgroundColor: '#F0F0F0',
   },
-  changeButton: {
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  changeButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  removeButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
 })
