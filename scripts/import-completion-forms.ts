@@ -17,6 +17,7 @@ import { parse } from 'csv-parse/sync'
 import fs from 'fs'
 import path from 'path'
 import { neon } from '@neondatabase/serverless'
+import 'dotenv/config'
 
 // Get database URL from environment
 const DATABASE_URL = process.env.DATABASE_URL
