@@ -36,6 +36,7 @@ interface CompletionFormData {
     phone?: string
     email?: string
     abn?: string
+    primary_color?: string
     address_line1?: string
     address_line2?: string
     city?: string
@@ -86,8 +87,23 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
     console.log('[PDF Generator] Fonts loaded')
 
-  // Colors
-  const primaryColor = rgb(0.15, 0.39, 0.92) // Blue #2563eb
+  // Helper to convert hex to RGB for pdf-lib
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+      ? rgb(
+          parseInt(result[1], 16) / 255,
+          parseInt(result[2], 16) / 255,
+          parseInt(result[3], 16) / 255
+        )
+      : rgb(0.15, 0.39, 0.92) // Fallback to blue
+  }
+
+  // Colors - use organization's primary color from logo
+  const primaryColor = organization.primary_color
+    ? hexToRgb(organization.primary_color)
+    : rgb(0.15, 0.39, 0.92) // Fallback to blue #2563eb
+  const darkCharcoal = rgb(0.2, 0.2, 0.2) // Dark charcoal for group headers
   const textColor = rgb(0.12, 0.16, 0.22) // Dark gray
   const lightGray = rgb(0.42, 0.45, 0.50)
   const veryLightGray = rgb(0.98, 0.98, 0.99)
@@ -358,21 +374,21 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
       yPosition = height - 50
     }
 
-    // Group header
+    // Group header - dark charcoal band with white text
     page.drawRectangle({
-      x: 50,
+      x: 0,
       y: yPosition - 5,
-      width: 495,
-      height: 25,
-      color: veryLightGray,
+      width: width,
+      height: 30,
+      color: darkCharcoal,
     })
 
     page.drawText(group.group_name, {
       x: 55,
-      y: yPosition + 3,
-      size: 11,
+      y: yPosition + 5,
+      size: 12,
       font: boldFont,
-      color: primaryColor,
+      color: rgb(1, 1, 1), // White text
     })
     yPosition -= 30
 

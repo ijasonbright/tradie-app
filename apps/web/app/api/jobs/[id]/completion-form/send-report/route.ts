@@ -68,6 +68,7 @@ export async function POST(
         j.*,
         c.company_name, c.first_name, c.last_name, c.email as client_email, c.phone as client_phone,
         o.name as org_name, o.logo_url, o.phone as org_phone, o.email as org_email, o.abn,
+        o.primary_color,
         o.address_line1 as org_address_line1, o.address_line2 as org_address_line2,
         o.city as org_city, o.state as org_state, o.postcode as org_postcode
       FROM jobs j
@@ -218,6 +219,7 @@ export async function POST(
         phone: job.org_phone,
         email: job.org_email,
         abn: job.abn,
+        primary_color: job.primary_color,
         address_line1: job.org_address_line1,
         address_line2: job.org_address_line2,
         city: job.org_city,
