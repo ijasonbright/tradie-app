@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   fullName: varchar('full_name', { length: 255 }).notNull(),
   profilePhotoUrl: text('profile_photo_url'),
   smsPhoneNumber: varchar('sms_phone_number', { length: 50 }),
+  expoPushToken: text('expo_push_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

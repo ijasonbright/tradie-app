@@ -28,8 +28,13 @@ Database
 
 Database: Neon PostgreSQL (serverless)
 ORM: Drizzle ORM
-Migrations: Drizzle Kit
+Migrations: Drizzle Kit (apply via https://tradie-app-web.vercel.app/dashboard/migrate)
 Security: Row Level Security (RLS) for multi-tenancy
+
+**IMPORTANT - Database Migrations:**
+- Generate migration: `cd packages/database && npx drizzle-kit generate`
+- Apply migration: Navigate to https://tradie-app-web.vercel.app/dashboard/migrate
+- DO NOT use `drizzle-kit push` or local migration scripts
 
 Storage & Assets
 
@@ -2310,6 +2315,1890 @@ Job site checklist templates marketplace
 Compliance document scanning (OCR)
 Customer feedback/ratings system
 
+
+---
+
+## FEATURE ROADMAP: Next Phase Features
+
+This section outlines the next major features to be implemented after the core MVP. These features enhance automation, user experience, and business intelligence.
+
+### 1. Intelligent Notifications System
+
+A comprehensive notification system that keeps team members informed and helps catch important events before they become problems.
+
+#### Database Schema
+
+**notification_settings**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- notification_type (appointment/job_completion_pending_invoice/overdue_invoice/document_expiry/payment_received/team_workload/client_communication)
+- enabled (boolean, default true)
+- delivery_methods (jsonb: {push: true, email: true, sms: false})
+- recipients (jsonb: {roles: ['owner', 'admin'], user_ids: ['uuid1', 'uuid2']})
+- conditions (jsonb: varies by type)
+- created_at, updated_at
+```
+
+**notification_log**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- notification_type
+- recipient_user_id (FK → users)
+- delivery_method (push/email/sms)
+- status (sent/delivered/failed/read)
+- subject
+- message_body
+- related_entity_type (job/invoice/appointment/document)
+- related_entity_id (uuid)
+- sent_at, delivered_at, read_at
+- created_at
+```
+
+#### Notification Types
+
+**1. Appointment Reminders**
+- **Trigger:** 24 hours, 2 hours, 30 minutes before appointment
+- **Recipients:** Assigned team member(s)
+- **Channels:** Push notification, optional SMS
+- **Conditions:** Can customize reminder times per appointment type
+- **Message:** "Reminder: [Appointment Title] at [Location] starts in [Time]"
+
+**2. Job Completion Pending Invoice**
+- **Trigger:** Job status = "completed" AND no invoice linked AND X days passed
+- **Recipients:** Owner, Admin, or specific users
+- **Channels:** Push + Email (daily digest)
+- **Conditions:** Customizable delay (default 2 days)
+- **Message:** "Job #[Number] completed [X] days ago but no invoice created. Client: [Name]"
+
+**3. Overdue Invoice Alert (Internal)**
+- **Trigger:** Invoice.due_date < today AND status != 'paid'
+- **Recipients:** Owner, Admin
+- **Channels:** Push + Email (daily digest)
+- **Conditions:** Group by days overdue (1-7, 8-14, 15-30, 30+)
+- **Message:** "Invoice #[Number] is [X] days overdue. Client: [Name]. Amount: $[Total]"
+
+**4. Document/Compliance Expiry Warnings**
+- **Types:**
+  - Organization documents (insurance, licenses)
+  - User documents (trade licenses, certifications, driver's license)
+  - Equipment certifications (future)
+- **Triggers:**
+  - 30 days before expiry (warning)
+  - 14 days before expiry (urgent)
+  - 7 days before expiry (critical)
+  - 1 day before expiry (final warning)
+  - Day of expiry (expired)
+- **Recipients:**
+  - Organization docs → Owner + Admin
+  - User docs → User + Owner/Admin
+- **Channels:** Push + Email
+- **Message:** "⚠️ [Document Type] for [Name] expires in [X] days. Renew now to avoid compliance issues."
+
+**5. Payment Received**
+- **Trigger:** Invoice payment recorded
+- **Recipients:** Owner, Admin, job creator
+- **Channels:** Push notification
+- **Message:** "Payment received: $[Amount] for Invoice #[Number] from [Client Name]"
+
+**6. Team Workload Alerts**
+- **Trigger:** Team member assigned jobs > threshold (e.g., 10 active jobs)
+- **Recipients:** Owner, Admin
+- **Channels:** Push + Email (weekly digest)
+- **Conditions:** Customizable threshold per role
+- **Message:** "[Employee Name] has [X] active jobs. Consider redistributing workload."
+
+**7. Client Communication Response Time**
+- **Trigger:** Inbound SMS or email from client not replied to in X hours
+- **Recipients:** Assigned team member, Owner/Admin
+- **Channels:** Push notification
+- **Conditions:** Customizable delay (default 4 hours)
+- **Message:** "Client [Name] sent a message [X] hours ago. No response yet."
+
+**8. Quote Expiry Reminder**
+- **Trigger:** Quote.valid_until_date approaching (3 days, 1 day)
+- **Recipients:** Quote creator, Owner/Admin
+- **Channels:** Push notification
+- **Message:** "Quote #[Number] for [Client] expires in [X] days. Follow up?"
+
+**9. Job Status Updates**
+- **Trigger:** Job status changes (quoted → scheduled → in_progress → completed)
+- **Recipients:** Job creator, assigned team, Owner/Admin
+- **Channels:** Push notification
+- **Message:** "Job #[Number] status changed to [Status] by [User]"
+
+**10. Material/Time Log Approval Queue**
+- **Trigger:** Pending approvals > threshold (e.g., 5 items) OR oldest pending > X days
+- **Recipients:** Owner, Admin (who can approve)
+- **Channels:** Push + Email (daily digest)
+- **Message:** "[X] items pending approval. Oldest from [Date]."
+
+**11. Low SMS Credits**
+- **Trigger:** SMS credits < 20 (warning), < 10 (urgent)
+- **Recipients:** Owner, Admin
+- **Channels:** Push + Email
+- **Message:** "⚠️ Low SMS credits: [X] remaining. Buy more to continue sending messages."
+
+**12. Recurring Job Due Reminder (Internal)**
+- **Trigger:** Recurring job template due for next occurrence (see Cyclical Jobs section)
+- **Recipients:** Owner, Admin
+- **Channels:** Push + Email
+- **Message:** "Recurring service due: [Service Name] for [Client]. Create job or send reminder?"
+
+**13. Subcontractor Payment Due**
+- **Trigger:** Subcontractor owed_amount > threshold (e.g., $1000) OR X days since last payment
+- **Recipients:** Owner, Admin
+- **Channels:** Push + Email (weekly digest)
+- **Message:** "[Subcontractor Name] is owed $[Amount]. Last payment [X] days ago."
+
+**14. Job Without Assigned Team Member**
+- **Trigger:** Job created without assigned_to_user_id AND scheduled_date < 7 days away
+- **Recipients:** Owner, Admin
+- **Channels:** Push notification
+- **Message:** "Job #[Number] scheduled for [Date] has no assigned team member"
+
+**15. Client Feedback Request**
+- **Trigger:** Job status = "completed" + invoice paid + X days passed
+- **Recipients:** Owner, Admin (internal notification to send feedback request)
+- **Channels:** Push notification
+- **Conditions:** Customizable delay (default 3 days after payment)
+- **Message:** "Job #[Number] completed and paid. Request feedback from [Client]?"
+
+#### Settings UI (Mobile + Web)
+
+**Notifications Settings Screen:**
+- List all notification types with toggles
+- Each notification shows:
+  - Toggle: Enabled/Disabled
+  - Delivery methods: Push, Email, SMS
+  - Recipients (roles + specific users)
+  - Conditions (times, thresholds)
+- "Test Notification" button
+- "Reset to Defaults" option
+
+**Notification Center (Mobile):**
+- Inbox-style list of all notifications
+- Filter by: All, Unread, Type, Date
+- Mark as read/unread
+- Tap to navigate to related entity (job, invoice, etc.)
+- Badge count on app icon
+- Pull to refresh
+
+**Email Digest Options:**
+- Daily summary (choose time)
+- Weekly summary (choose day + time)
+- Instant (real-time emails)
+- Group by type or priority
+
+---
+
+### 2. Cyclical Job Automation (Recurring Services)
+
+Automates recurring maintenance services with client approval workflow to increase retention and reduce manual scheduling.
+
+#### Database Schema
+
+**recurring_job_templates**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- client_id (FK → clients)
+- template_name (e.g., "Annual A/C Service - John Doe")
+- job_type (maintenance/inspection/etc.)
+- description
+- site_address_line1, site_address_line2, site_city, site_state, site_postcode
+- site_access_notes
+- assigned_to_user_id (FK → users, nullable)
+- quoted_amount (decimal)
+- estimated_duration_hours
+- recurrence_pattern (monthly/quarterly/biannually/annually/custom)
+- recurrence_interval (integer, e.g., 3 for every 3 months)
+- recurrence_day_of_month (1-31, nullable)
+- recurrence_month_of_year (1-12, nullable, for annual)
+- next_due_date (date, calculated)
+- last_job_created_date (date, nullable)
+- auto_create_jobs (boolean, default false) // if true, skip client approval
+- client_approval_required (boolean, default true)
+- approval_reminder_days_before (integer, default 14)
+- status (active/paused/cancelled)
+- created_by_user_id (FK → users)
+- created_at, updated_at
+```
+
+**recurring_job_instances**
+```
+- id (uuid, PK)
+- template_id (FK → recurring_job_templates)
+- organization_id (FK → organizations)
+- scheduled_date (date, when service is due)
+- approval_status (pending/approved/declined/auto_created)
+- approval_requested_at
+- approved_at
+- declined_at
+- decline_reason
+- client_response_token (uuid, unique, for approval link)
+- job_id (FK → jobs, nullable) // linked after client approves or admin creates
+- created_at, updated_at
+```
+
+**recurring_job_history**
+```
+- id (uuid, PK)
+- template_id (FK → recurring_job_templates)
+- instance_id (FK → recurring_job_instances)
+- job_id (FK → jobs)
+- scheduled_date
+- completed_date
+- invoice_id (FK → invoices, nullable)
+- total_amount (decimal, nullable)
+- client_satisfaction (1-5, nullable, future)
+- created_at
+```
+
+#### Workflow
+
+**1. Creating Recurring Service Template:**
+- Navigate to client profile or jobs screen
+- "Create Recurring Service" button
+- Form fields:
+  - Service name/description
+  - Job type
+  - Address (pre-filled from client or custom)
+  - Assigned team member (optional)
+  - Estimated cost
+  - Estimated duration
+  - Recurrence pattern:
+    - Monthly (every X months)
+    - Quarterly (every 3 months)
+    - Biannually (every 6 months)
+    - Annually (specify month)
+    - Custom (advanced cron-like)
+  - Next due date (auto-calculated or manual)
+  - Auto-create jobs (toggle)
+    - If ON: Jobs created automatically without client approval
+    - If OFF: Send approval request to client X days before
+- Save template
+
+**2. Automated Reminder & Approval Flow:**
+
+**14 Days Before Due Date (configurable):**
+- System identifies recurring_job_instances with scheduled_date = today + 14 days AND approval_status = 'pending'
+- Sends approval request to client:
+  - **Email:**
+    - Subject: "Approve Your Upcoming [Service Name] - [Business Name]"
+    - Body: Personalized message with service details, date, cost
+    - Two buttons: "Approve Service" | "Decline or Reschedule"
+    - Links contain unique `client_response_token`
+  - **SMS (costs credits, optional):**
+    - "Hi [Client], your [Service] is due on [Date]. Approve here: [Short Link]. - [Business]"
+
+**Client Clicks "Approve":**
+- Redirects to simple approval page (no login required, uses token)
+- Shows service details
+- "Confirm Approval" button
+- On confirm:
+  - Updates `approval_status = 'approved'`
+  - Creates job automatically:
+    - Pre-fills from template
+    - Status = 'scheduled'
+    - Links to recurring_job_instance
+  - Sends confirmation SMS/Email to client
+  - Notifies team member (push notification)
+  - Adds to team calendar
+
+**Client Clicks "Decline or Reschedule":**
+- Redirects to reschedule page
+- Options:
+  - "Not needed this time" (skip this instance)
+  - "Reschedule to different date" (date picker)
+  - "Cancel recurring service" (stop future reminders)
+- Free text reason field (optional)
+- On submit:
+  - Updates `approval_status = 'declined'`
+  - Records decline_reason
+  - Notifies Owner/Admin (push + email)
+  - If rescheduled: updates scheduled_date
+  - If cancelled: updates template status = 'cancelled'
+
+**7 Days Before Due Date:**
+- If still pending, send second reminder (email only to reduce SMS costs)
+
+**On Due Date (if still pending):**
+- Notify Owner/Admin: "Recurring service approval pending for [Client]. Follow up?"
+- Owner/Admin can manually create job or skip
+
+**Auto-Create Mode:**
+- If template.auto_create_jobs = true:
+  - Job created automatically 14 days before due date
+  - No client approval required
+  - Client receives notification: "Your [Service] has been scheduled for [Date]. See you then!"
+
+**3. Admin Dashboard for Recurring Services:**
+
+**Recurring Services List:**
+- Shows all active templates
+- Columns: Client, Service, Next Due, Status, Actions
+- Filter by: Active, Paused, Cancelled
+- Search by client name
+
+**Template Detail View:**
+- Shows all past instances (completed jobs)
+- Upcoming instances (pending approval, approved, auto-created)
+- Performance metrics:
+  - Approval rate (% of approvals vs declines)
+  - Average revenue per service
+  - Client retention (how long active)
+- Edit template button
+- Pause/Resume toggle
+- Cancel template button
+
+**Upcoming Approvals Queue:**
+- Calendar view or list view
+- Shows instances awaiting approval
+- Days until due
+- Last reminder sent
+- Quick actions: Send reminder, Create job manually, Skip instance
+
+**4. Client-Facing Approval Page:**
+
+**Design:**
+- Clean, mobile-friendly
+- Business logo + name
+- Service details card:
+  - Service name
+  - Scheduled date
+  - Estimated duration
+  - Quoted price
+  - Assigned team member (name + photo)
+- Site address
+- "What's included" section (from template description)
+- Two large buttons: "Approve Service" | "Decline or Reschedule"
+- No login required (uses secure token)
+
+**After Approval:**
+- Thank you message
+- "Your service is confirmed for [Date]"
+- Option to add to calendar (Google/Apple)
+- Business contact info
+
+**5. Smart Scheduling Suggestions:**
+
+**For Owner/Admin:**
+- When creating template, suggest optimal recurrence based on:
+  - Industry standards (e.g., HVAC maintenance = annual)
+  - Past job frequency for this client
+  - Equipment manufacturer recommendations (future)
+- "Most common for [Service Type]: Every X months"
+
+**For Clients:**
+- In approval email, show: "Last service was [X] months ago on [Date]"
+- If equipment warranty requires regular service, note: "⚠️ Regular service required to maintain warranty"
+
+#### API Endpoints
+```
+GET    /api/recurring-jobs/templates
+POST   /api/recurring-jobs/templates
+GET    /api/recurring-jobs/templates/:id
+PUT    /api/recurring-jobs/templates/:id
+DELETE /api/recurring-jobs/templates/:id
+POST   /api/recurring-jobs/templates/:id/pause
+POST   /api/recurring-jobs/templates/:id/resume
+
+GET    /api/recurring-jobs/instances/upcoming
+GET    /api/recurring-jobs/instances/:id
+POST   /api/recurring-jobs/instances/:id/send-reminder
+POST   /api/recurring-jobs/instances/:id/create-job
+
+GET    /api/recurring-jobs/client-approval/:token
+POST   /api/recurring-jobs/client-approval/:token/approve
+POST   /api/recurring-jobs/client-approval/:token/decline
+
+GET    /api/recurring-jobs/history/:templateId
+```
+
+#### Mobile UI Screens
+
+**1. Recurring Services Tab (Owner/Admin):**
+- List of all templates
+- "Add Recurring Service" FAB
+- Quick stats: X active services, Y pending approvals
+
+**2. Create/Edit Recurring Service Form:**
+- Stepper/wizard:
+  - Step 1: Service Details
+  - Step 2: Recurrence Pattern
+  - Step 3: Client Approval Settings
+  - Step 4: Review & Save
+
+**3. Recurring Service Detail:**
+- Template info
+- Upcoming instance (next due)
+- History (past 5 jobs)
+- Edit/Pause/Cancel buttons
+
+**4. Approvals Queue:**
+- List of pending approvals
+- Shows: Client, Service, Due Date, Days Left
+- "Send Reminder" and "Create Job" actions
+
+---
+
+### 3. Job Completion Forms & PDF Reports
+
+Customizable completion forms that tradies fill out after finishing a job, generating professional PDF reports to send with invoices.
+
+#### Database Schema
+
+**completion_form_templates**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- template_name (e.g., "Plumbing Job Completion", "HVAC Maintenance Report")
+- job_type (nullable, if specific to job type)
+- description
+- sections (jsonb array of form sections)
+  [
+    {
+      section_name: "Work Performed",
+      fields: [
+        {field_type: "text", label: "Summary", required: true},
+        {field_type: "checklist", label: "Tasks Completed", options: ["Inspected pipes", "Fixed leak", "Tested pressure"]},
+        {field_type: "textarea", label: "Additional Notes"}
+      ]
+    },
+    {
+      section_name: "Materials Used",
+      fields: [
+        {field_type: "table", columns: ["Item", "Quantity", "Part Number"]}
+      ]
+    },
+    {
+      section_name: "Safety & Compliance",
+      fields: [
+        {field_type: "checkbox", label: "Site left clean and tidy"},
+        {field_type: "checkbox", label: "Safety tags installed where required"},
+        {field_type: "signature", label: "Technician Signature"}
+      ]
+    }
+  ]
+- include_photos (boolean, default true)
+- include_before_after_photos (boolean, default true)
+- include_signature (boolean, default true) // client signature
+- pdf_template_id (FK → pdf_templates, nullable) // for custom PDF styling
+- is_default (boolean)
+- created_by_user_id (FK → users)
+- created_at, updated_at
+```
+
+**job_completion_forms**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- job_id (FK → jobs)
+- template_id (FK → completion_form_templates)
+- completed_by_user_id (FK → users)
+- completion_date
+- form_data (jsonb, stores all field responses)
+- client_signature_url (nullable, Vercel Blob)
+- technician_signature_url (nullable, Vercel Blob)
+- pdf_url (nullable, generated PDF stored in Vercel Blob)
+- sent_to_client (boolean, default false)
+- sent_at (nullable)
+- created_at, updated_at
+```
+
+**pdf_templates**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- template_name
+- template_type (completion_report/invoice/quote)
+- header_html (nullable, custom header)
+- footer_html (nullable, custom footer)
+- styles (jsonb: {primaryColor, fontFamily, logoPosition, etc.})
+- created_at, updated_at
+```
+
+#### Field Types Supported
+
+**Input Types:**
+1. **text**: Short text input (e.g., "Job Address")
+2. **textarea**: Long text input (e.g., "Work Summary")
+3. **number**: Numeric input (e.g., "Water Pressure Reading")
+4. **date**: Date picker (e.g., "Completion Date")
+5. **time**: Time picker (e.g., "Start Time")
+6. **checkbox**: Single yes/no (e.g., "Safety Inspection Complete")
+7. **checklist**: Multiple checkboxes (e.g., "Tasks Completed")
+8. **dropdown**: Select one option (e.g., "Job Result: Successful/Needs Follow-up/Incomplete")
+9. **radio**: Radio buttons (e.g., "Equipment Condition: Good/Fair/Poor/Replace")
+10. **table**: Dynamic table (e.g., materials used, readings taken)
+11. **signature**: Signature pad (client or technician)
+12. **photo**: Photo upload (links to job_photos table)
+13. **rating**: Star rating (e.g., "Client Satisfaction")
+
+#### Workflow
+
+**1. Creating Completion Form Template (Owner/Admin):**
+- Navigate to Settings → Completion Forms
+- "Create New Template" button
+- Form builder UI:
+  - Template name
+  - Associated job type (optional filter)
+  - Add sections:
+    - Section title
+    - Add fields (drag-and-drop or click to add)
+    - Reorder fields
+    - Set required fields
+  - Preview form
+- Save template
+- Set as default for specific job types (optional)
+
+**2. Completing Job Form (Mobile - Technician):**
+
+**When Job Status = "Completed":**
+- System prompts: "Fill out completion form?"
+- Or navigate to job → "Completion Form" tab
+- Select template (if multiple available) or use default
+- Fill out form:
+  - Each section displayed as a card
+  - Required fields marked with *
+  - Signature pads for client + technician
+  - Add photos (or link existing job photos)
+  - Auto-populate data where possible:
+    - Materials from job_materials table
+    - Time from time logs
+    - Photos from job_photos
+- "Save Draft" (in progress)
+- "Submit" (final)
+
+**After Submission:**
+- Form data saved to job_completion_forms table
+- Generate PDF in background (serverless function)
+- Notify admin: "Completion form submitted for Job #[Number]"
+- Update job status (if not already completed)
+- Optionally attach PDF to invoice automatically
+
+**3. PDF Generation:**
+
+**Process:**
+- Use Puppeteer or similar to generate PDF from HTML template
+- PDF includes:
+  - **Header:**
+    - Business logo
+    - Business name, ABN, contact details
+    - "Job Completion Report" title
+  - **Job Details:**
+    - Job number, date
+    - Client name, address
+    - Assigned technician
+  - **Form Sections:**
+    - Each section as a distinct block
+    - Formatted responses (tables, checklists, text)
+  - **Photos:**
+    - Before/After side-by-side if applicable
+    - Grid layout for multiple photos
+    - Captions
+  - **Signatures:**
+    - Technician signature with name + date
+    - Client signature with name + date (if captured)
+  - **Footer:**
+    - Page numbers
+    - Generated timestamp
+    - Custom footer text
+- Store PDF in Vercel Blob
+- Link to job
+
+**4. Sending Completion Report:**
+
+**Manual Send:**
+- Job detail screen → "Completion Report" tab
+- "Send to Client" button
+- Options:
+  - Email only (free)
+  - Email + SMS (costs credits)
+- Preview PDF before sending
+- Custom message (optional)
+- Send
+
+**Automatic Attachment to Invoice:**
+- When invoice created from job:
+  - If completion form exists → attach PDF to invoice email
+  - Checkbox: "Include completion report"
+  - PDF embedded in email or attached
+
+**Client Receives:**
+- Email with professional PDF attachment
+- Can download, save, print
+- Link to view online (future: client portal)
+
+**5. Pre-built Templates for Common Trades:**
+
+**Plumbing:**
+- Work Summary
+- Materials Used (table)
+- Fixtures Installed/Repaired (checklist)
+- Water Pressure Readings (before/after)
+- Leak Test Results
+- Safety Compliance (backflow prevention, tags, etc.)
+- Client Signature
+
+**Electrical:**
+- Work Performed
+- Circuits Modified (table: circuit #, description, load)
+- Test Results (insulation resistance, earth continuity)
+- Safety Switch Testing
+- Compliance Certificate Details
+- Wiring Diagrams (photos)
+- Client Signature
+
+**HVAC:**
+- Service Type (maintenance/repair/installation)
+- Equipment Details (make, model, serial #)
+- Refrigerant Levels (before/after)
+- Filter Replacement
+- Performance Test Results (airflow, temperature)
+- Recommendations
+- Next Service Due Date
+- Client Signature
+
+**General Maintenance:**
+- Tasks Completed (checklist)
+- Materials Used
+- Issues Found
+- Recommendations
+- Photos
+- Client Signature
+
+**Custom:**
+- Blank template to build from scratch
+
+**6. Admin Review & Analytics:**
+
+**Completion Forms Dashboard:**
+- List of all completed forms
+- Filter by: date range, technician, job type
+- Search by client or job number
+- Export to CSV
+
+**Individual Form View:**
+- Full form data displayed
+- PDF preview/download
+- Edit (if needed, creates new version)
+- Resend to client
+
+**Analytics (Future):**
+- Average completion time (job start → form submitted)
+- Most common issues found
+- Client satisfaction ratings (if included in form)
+- Compliance metrics (% of jobs with all safety checks completed)
+
+#### Mobile UI
+
+**1. Completion Form Builder (Owner/Admin):**
+- Web-based drag-and-drop form builder
+- Mobile view for previewing
+- Not practical to build complex forms on mobile
+
+**2. Completion Form Fill-out (Technician - Mobile):**
+- Clean, single-column layout
+- One section at a time (or all sections scrollable)
+- Large touch targets for checkboxes, buttons
+- Signature pads optimized for mobile
+- Photo uploads with camera integration
+- Auto-save drafts
+- Validation messages for required fields
+
+**3. Completion Form View (Read-only):**
+- Formatted display of completed form
+- PDF download button
+- "Send to Client" button
+
+#### API Endpoints
+```
+GET    /api/completion-forms/templates
+POST   /api/completion-forms/templates
+GET    /api/completion-forms/templates/:id
+PUT    /api/completion-forms/templates/:id
+DELETE /api/completion-forms/templates/:id
+
+GET    /api/jobs/:jobId/completion-form
+POST   /api/jobs/:jobId/completion-form
+PUT    /api/jobs/:jobId/completion-form/:formId
+GET    /api/jobs/:jobId/completion-form/:formId/pdf
+POST   /api/jobs/:jobId/completion-form/:formId/send
+
+GET    /api/completion-forms (list all for organization)
+```
+
+---
+
+### 4. Online Job Request Form (Embeddable)
+
+A customizable web form that organizations can embed on their website, allowing clients to request jobs online with optional deposit payments.
+
+#### Database Schema
+
+**job_request_forms**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- form_name (e.g., "Emergency Call-Out", "Free Quote Request")
+- slug (unique, for public URL: app.com/request/acme-plumbing-quote)
+- description (shown to client)
+- is_active (boolean)
+- require_account (boolean, default false) // if true, client must create account
+- approval_required (boolean, default true) // if true, job created as draft, needs admin approval
+- // Branding
+- primary_color
+- logo_url
+- header_text
+- footer_text
+- // Fields
+- enabled_fields (jsonb array of field configs)
+  [
+    {field: "client_type", enabled: true, required: false},
+    {field: "company_name", enabled: true, required: false},
+    {field: "first_name", enabled: true, required: true},
+    {field: "last_name", enabled: true, required: true},
+    {field: "email", enabled: true, required: true},
+    {field: "phone", enabled: true, required: true},
+    {field: "address", enabled: true, required: true},
+    {field: "job_description", enabled: true, required: true},
+    {field: "preferred_date", enabled: true, required: false},
+    {field: "urgency", enabled: true, required: false},
+    {field: "photos", enabled: true, required: false},
+    // Custom fields
+    {field: "custom_1", enabled: true, required: false, label: "Property Type", type: "dropdown", options: ["House", "Apartment", "Commercial"]}
+  ]
+- // Service Presets (optional, for fixed-price services)
+- service_presets_enabled (boolean, default false)
+- service_presets (jsonb array)
+  [
+    {
+      id: "preset1",
+      name: "Blocked Drain - Standard",
+      description: "Clear standard blockage",
+      price: 150.00,
+      deposit_required: true,
+      deposit_percentage: 50,
+      deposit_amount: 75.00
+    },
+    {
+      id: "preset2",
+      name: "Emergency Call-Out (After Hours)",
+      description: "Immediate response 24/7",
+      price: 350.00,
+      deposit_required: true,
+      deposit_percentage: 100,
+      deposit_amount: 350.00,
+      requires_full_payment: true
+    }
+  ]
+- // Payment
+- accept_deposits (boolean, default false)
+- stripe_connected (boolean)
+- deposit_percentage (integer, default 50) // if no service presets
+- // Notifications
+- notification_email (nullable, override default org email)
+- notification_sms_enabled (boolean, uses org SMS credits)
+- notification_users (jsonb array of user IDs to notify)
+- // Spam Prevention
+- enable_recaptcha (boolean, default true)
+- rate_limit_per_ip (integer, default 3 per hour)
+- // Tracking
+- submission_count (integer, default 0)
+- conversion_count (integer, default 0) // submissions that became jobs
+- created_at, updated_at
+```
+
+**job_request_submissions**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- form_id (FK → job_request_forms)
+- submission_token (uuid, unique)
+- // Client Data
+- client_type (residential/commercial)
+- company_name (nullable)
+- first_name
+- last_name
+- email
+- phone
+- mobile
+- address_line1, address_line2, city, state, postcode
+- // Job Data
+- job_description
+- preferred_date (nullable)
+- urgency (low/medium/high/emergency)
+- service_preset_id (nullable)
+- custom_fields (jsonb, stores custom field responses)
+- photo_urls (jsonb array)
+- // Payment
+- deposit_required (boolean)
+- deposit_amount (decimal, nullable)
+- deposit_paid (boolean, default false)
+- stripe_payment_intent_id (nullable)
+- paid_at (nullable)
+- // Status
+- status (pending/approved/declined/converted)
+- approval_notes (text, nullable)
+- approved_by_user_id (FK → users, nullable)
+- approved_at (nullable)
+- declined_reason (text, nullable)
+- // Linked Records
+- client_id (FK → clients, nullable) // after conversion
+- job_id (FK → jobs, nullable) // after conversion
+- // Metadata
+- ip_address
+- user_agent
+- referrer_url
+- utm_source, utm_medium, utm_campaign (for tracking marketing)
+- created_at, updated_at
+```
+
+**job_request_analytics**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- form_id (FK → job_request_forms)
+- date (date)
+- views (integer, how many times form loaded)
+- submissions (integer, how many submitted)
+- conversion_rate (decimal, submissions/views)
+- deposits_collected (decimal)
+- jobs_created (integer)
+- created_at
+```
+
+#### Workflow
+
+**1. Creating Job Request Form (Owner/Admin):**
+
+**Form Builder (Web Interface):**
+- Navigate to Settings → Online Forms
+- "Create New Form" button
+- Configuration wizard:
+
+  **Step 1: Basic Info**
+  - Form name (internal)
+  - Public slug (e.g., "emergency-plumbing")
+  - Description (shown to clients)
+  - Active toggle
+
+  **Step 2: Branding**
+  - Upload logo
+  - Choose primary color
+  - Header text (e.g., "Request a Quote")
+  - Footer text (e.g., "We'll respond within 2 hours")
+
+  **Step 3: Form Fields**
+  - Enable/disable standard fields
+  - Mark required fields
+  - Add custom fields:
+    - Field label
+    - Field type (text, dropdown, checkbox, etc.)
+    - Options (for dropdown/radio)
+    - Required toggle
+  - Drag to reorder
+
+  **Step 4: Service Presets (Optional)**
+  - Toggle: Enable service presets
+  - Add preset:
+    - Service name
+    - Description
+    - Price
+    - Require deposit (toggle)
+    - Deposit amount or percentage
+    - Photo/icon
+  - Clients can choose preset or "Custom Request"
+
+  **Step 5: Payment Settings**
+  - Accept deposits (toggle)
+  - If enabled:
+    - Connect Stripe (if not already)
+    - Default deposit percentage (if no presets)
+    - Full payment or deposit
+  - Payment confirmation message
+
+  **Step 6: Notifications**
+  - Who gets notified when submission received:
+    - All owners/admins (default)
+    - Specific users (multi-select)
+  - Email notification (always)
+  - SMS notification (toggle, costs credits)
+  - Custom notification email address
+
+  **Step 7: Spam Prevention**
+  - Enable reCAPTCHA (recommended)
+  - Rate limiting (X submissions per IP per hour)
+
+  **Step 8: Review & Embed**
+  - Preview form
+  - Get embed code:
+    - iFrame embed
+    - Direct link
+    - WordPress plugin (future)
+  - QR code (for print materials)
+  - Save and activate
+
+**2. Client Submits Job Request:**
+
+**Client Experience:**
+- Visits form (embedded on business website or standalone link)
+- Sees professional, branded form
+- Fills out required fields:
+  - Contact info
+  - Job description
+  - Upload photos (optional)
+  - Preferred date (optional)
+  - Urgency level
+- If service presets enabled:
+  - Selects preset service OR "Custom Request"
+  - Sees price upfront
+- If deposit required:
+  - Reviews deposit amount
+  - "Proceed to Payment" button
+  - Redirects to Stripe Checkout
+  - Enters payment details
+  - Payment processed
+  - Returns to confirmation page
+- If no deposit:
+  - "Submit Request" button
+  - Confirmation page immediately
+- Confirmation message:
+  - "Thank you! We've received your request."
+  - "We'll contact you within [X] hours."
+  - Submission reference number
+  - Copy sent to email
+
+**Confirmation Email to Client:**
+- Subject: "Request Received - [Business Name]"
+- Body:
+  - Thank you message
+  - Submission summary (fields submitted)
+  - Deposit receipt (if paid)
+  - What happens next
+  - Contact info if questions
+  - Business logo and branding
+
+**3. Notification to Organization:**
+
+**Instant Notification (when submission received):**
+- **Push Notification:**
+  - "New job request from [Client Name]"
+  - Tap to view details
+- **Email:**
+  - Subject: "New Job Request: [Job Description]"
+  - Body: Full submission details
+  - Link to approve/view in app
+- **SMS (optional, costs credits):**
+  - "New job request from [Name]. View in app."
+
+**4. Admin Reviews Submission (Mobile or Web):**
+
+**Job Requests Queue:**
+- Navigate to "Job Requests" tab/screen
+- Shows pending submissions
+- Filter by: All, Pending, Approved, Declined
+- Sort by: Date, Deposit Paid, Urgency
+
+**Submission Detail View:**
+- Client contact info
+- Job description
+- Photos (if uploaded)
+- Preferred date
+- Service preset selected (if any)
+- Deposit status (paid/not required)
+- Custom field responses
+- Map of address
+- Actions:
+  - **Approve & Create Job:**
+    - Creates client record (if new)
+    - Creates job with pre-filled data
+    - Sends confirmation to client
+    - Links submission to job
+    - Status = "approved"
+  - **Decline:**
+    - Reason field (optional)
+    - Sends decline email to client
+    - Refunds deposit if paid (Stripe refund)
+    - Status = "declined"
+  - **Request More Info:**
+    - Sends email/SMS to client
+    - Keeps status = "pending"
+
+**5. Creating Job from Submission:**
+
+**Auto-Population:**
+- Check if client exists (by email or phone)
+- If exists: Link to existing client
+- If new: Create client record with submitted data
+- Create job:
+  - Title = job_description (or service preset name)
+  - Description = full job_description
+  - Address from submission
+  - Quoted amount = service preset price (if selected)
+  - Status = "quoted" or "scheduled" (based on settings)
+  - Created from job request (flag/tag)
+- Link job to submission
+- Send confirmation to client:
+  - "Your request has been approved!"
+  - Job details
+  - Assigned team member (if assigned)
+  - Scheduled date (if set)
+  - Next steps
+
+**6. Payment Handling:**
+
+**Stripe Checkout Flow:**
+- Client clicks "Proceed to Payment"
+- Creates Stripe Payment Intent:
+  - Amount = deposit_amount
+  - Metadata: organization_id, submission_id, form_id
+  - Description: "Deposit for [Service Name] - [Business Name]"
+- Redirects to Stripe hosted checkout
+- Client pays
+- Stripe webhook → mark submission as paid
+- Update deposit_paid = true
+- Send receipt to client
+
+**Refund (if declined):**
+- Admin declines submission
+- If deposit was paid:
+  - Prompt: "Refund deposit?"
+  - Creates Stripe refund
+  - Email to client: "Your deposit has been refunded"
+
+**7. Embed Options:**
+
+**iFrame Embed:**
+```html
+<iframe src="https://app.tradieapp.com/request/acme-plumbing-quote" width="100%" height="800px" frameborder="0"></iframe>
+```
+
+**Direct Link:**
+```
+https://app.tradieapp.com/request/acme-plumbing-quote
+```
+
+**QR Code:**
+- Generated QR code downloads as image
+- Print on business cards, flyers, vehicle signage
+- Scan → opens form on mobile
+
+**WordPress Plugin (Future):**
+- Install plugin
+- Shortcode: `[tradie_form slug="acme-plumbing-quote"]`
+- Fully integrated, matches WordPress theme
+
+**8. Analytics & Tracking:**
+
+**Form Analytics Dashboard:**
+- Per form:
+  - Total views (page loads)
+  - Total submissions
+  - Conversion rate (submissions / views)
+  - Deposit collection rate
+  - Jobs created from submissions
+  - Revenue from deposits
+- Time series chart (daily/weekly/monthly)
+- Traffic sources (referrer URLs, UTM params)
+- Most popular service presets
+- Average time to approval
+
+**Marketing Attribution:**
+- Track UTM parameters in submission
+- Report: "10 submissions from Google Ads campaign"
+- ROI calculation: ad spend vs. jobs created
+
+#### Mobile UI
+
+**1. Job Requests Screen (Owner/Admin):**
+- List of pending requests
+- Badge count on tab
+- Filter and search
+- Tap to view detail
+
+**2. Request Detail Screen:**
+- Client info card
+- Job description card
+- Photos gallery
+- Map with address pin
+- Action buttons:
+  - "Create Job" (primary)
+  - "Decline"
+  - "Contact Client"
+
+**3. Form Management (Web Only):**
+- Creating/editing forms too complex for mobile
+- But can view form analytics on mobile
+
+#### API Endpoints
+```
+GET    /api/job-request-forms
+POST   /api/job-request-forms
+GET    /api/job-request-forms/:id
+PUT    /api/job-request-forms/:id
+DELETE /api/job-request-forms/:id
+GET    /api/job-request-forms/:slug/public (no auth, for client view)
+
+POST   /api/job-request-forms/:slug/submit (public, with rate limiting)
+GET    /api/job-request-forms/:formId/submissions
+GET    /api/job-request-forms/:formId/submissions/:submissionId
+POST   /api/job-request-forms/:formId/submissions/:submissionId/approve
+POST   /api/job-request-forms/:formId/submissions/:submissionId/decline
+POST   /api/job-request-forms/:formId/submissions/:submissionId/create-job
+
+POST   /api/stripe/job-request-checkout (create payment intent)
+POST   /api/webhooks/stripe/job-request (handle payment)
+
+GET    /api/job-request-forms/:formId/analytics
+```
+
+---
+
+### 5. Notification Preferences & Settings
+
+**Per-User Notification Settings:**
+- Users can customize which notifications they receive
+- Channels: Push, Email, SMS (for critical alerts)
+- Frequency: Instant, Daily Digest, Weekly Summary
+- Do Not Disturb schedule (e.g., no push between 10pm-7am)
+
+**Organization-Level Defaults:**
+- Owner/Admin sets default notification settings for roles
+- New team members inherit defaults
+- Can override individually
+
+**Notification Templates:**
+- Customize message templates for each notification type
+- Variables: {client_name}, {job_number}, {amount}, {date}, etc.
+- Preview before saving
+
+---
+
+## Implementation Priority & Phasing
+
+### Phase 1: Intelligent Notifications (4 weeks)
+**Why First:**
+- High impact, low complexity
+- Enhances existing features without major schema changes
+- Immediate user value (reduce missed appointments, unpaid invoices)
+
+**Deliverables:**
+- Database schema (notification_settings, notification_log)
+- Notification engine (cron jobs for scheduled checks)
+- Push notification infrastructure (Expo Push Notifications)
+- Email digest system
+- Mobile UI for notification center
+- Settings screens for preferences
+
+**Effort: Medium**
+
+---
+
+### Phase 2: Cyclical Job Automation (6 weeks)
+**Why Second:**
+- Directly increases revenue retention
+- Moderately complex (approval workflow, recurrence logic)
+- Builds on notification system
+
+**Deliverables:**
+- Database schema (recurring templates, instances, history)
+- Recurrence calculation engine
+- Client approval workflow (email/SMS with links)
+- Public approval pages (no-login web pages)
+- Admin dashboard for recurring services
+- Mobile UI for creating/managing templates
+
+**Effort: High**
+
+---
+
+### Phase 3: Job Completion Forms (5 weeks)
+**Why Third:**
+- Enhances professionalism and client trust
+- PDF generation is moderately complex
+- Can be built in parallel with Phase 2
+
+**Deliverables:**
+- Database schema (form templates, completed forms, PDF templates)
+- Form builder UI (web)
+- Mobile form fill-out UI
+- PDF generation with Puppeteer
+- Pre-built templates for common trades
+- Email delivery with attachments
+
+**Effort: High**
+
+---
+
+### Phase 4: Online Job Request Form (5 weeks)
+**Why Fourth:**
+- Customer-facing feature, high visibility
+- Stripe integration for deposits
+- Spam prevention critical
+- Analytics for marketing attribution
+
+**Deliverables:**
+- Database schema (forms, submissions, analytics)
+- Form builder UI (web)
+- Public form pages (mobile-responsive)
+- Stripe Checkout integration
+- Admin approval workflow
+- Embed code generation
+- Analytics dashboard
+
+**Effort: High**
+
+---
+
+## Success Metrics
+
+**Intelligent Notifications:**
+- 90%+ on-time appointment attendance
+- 30% reduction in overdue invoices > 30 days
+- 95% document compliance (no expired licenses)
+- Notification engagement rate > 70%
+
+**Cyclical Job Automation:**
+- 50%+ of active organizations create at least 1 recurring service
+- 70%+ client approval rate
+- 20% increase in monthly recurring revenue per org
+- 80%+ auto-renewal rate (clients don't cancel recurring services)
+
+**Job Completion Forms:**
+- 80%+ of completed jobs have a completion form
+- 95%+ client satisfaction with PDF reports
+- 50% reduction in post-job disputes ("he said, she said")
+- Completion forms sent with 90%+ of invoices
+
+**Online Job Request Form:**
+- 10%+ conversion rate (views → submissions)
+- 50%+ of submissions become jobs
+- 30%+ deposit collection rate (for preset services)
+- 5%+ increase in new client acquisition
+
+---
+
+## Technical Requirements
+
+**Infrastructure:**
+- **Cron Jobs:** Vercel cron for scheduled tasks (notification checks, recurring job instances)
+- **PDF Generation:** Puppeteer in serverless function (or PDF service API)
+- **Push Notifications:** Expo Push Notifications
+- **Email Service:** Resend or SendGrid (already planned)
+- **Stripe:** Already integrated for SMS credits, extend for deposits
+- **Analytics:** Track events with Vercel Analytics or Mixpanel
+
+**Security:**
+- **Public Forms:** Rate limiting, reCAPTCHA, CSRF protection
+- **Approval Tokens:** Secure, time-limited, single-use tokens for client approvals
+- **PII Handling:** Encrypt sensitive client data in job_request_submissions
+
+**Performance:**
+- **PDF Generation:** Offload to background job (don't block UI)
+- **Notification Delivery:** Queue system for bulk notifications (e.g., daily digest to 100 users)
+- **Form Submissions:** Handle traffic spikes (public-facing forms)
+
+---
+
+### 6. Zapier Integration & Third-Party Automation
+
+A comprehensive Zapier integration that enables users to connect the tradie app with 6,000+ other applications, automating workflows and extending functionality beyond the app.
+
+#### Why Zapier Integration Matters
+
+**Business Value:**
+- 20-40% of power users typically adopt Zapier integrations
+- Increases switching costs and reduces churn
+- Major competitive differentiator
+- Enables workflows impossible within the app alone
+- Positions app as "connected hub" for trade businesses
+
+**User Benefits:**
+- Connect to CRM (HubSpot, Salesforce, Pipedrive)
+- Sync with accounting (QuickBooks, FreshBooks, Wave)
+- Automate project management (Asana, Trello, Monday.com)
+- Email marketing (Mailchimp, ActiveCampaign)
+- Communication (Slack, Microsoft Teams)
+- And 6,000+ other apps
+
+#### Database Schema
+
+**zapier_api_keys**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- api_key (unique, hashed with SHA-256)
+- api_key_prefix (for display, e.g., "zap_abc123...")
+- name (user-defined name, e.g., "Main Automation Key")
+- is_active (boolean, default true)
+- last_used_at (nullable)
+- created_by_user_id (FK → users)
+- created_at, expires_at (nullable)
+```
+
+**zapier_subscriptions**
+```
+- id (uuid, PK)
+- organization_id (FK → organizations)
+- subscription_id (unique identifier from Zapier)
+- event_type (job.created, invoice.paid, etc.)
+- target_url (Zapier webhook URL)
+- filters (jsonb, optional filters like job_type, status, etc.)
+- is_active (boolean, default true)
+- last_triggered_at (nullable)
+- created_at, updated_at
+```
+
+**zapier_webhook_logs**
+```
+- id (uuid, PK)
+- subscription_id (FK → zapier_subscriptions)
+- organization_id (FK → organizations)
+- event_type
+- payload (jsonb, what was sent)
+- target_url
+- status_code (HTTP response code)
+- response_body (text, nullable)
+- delivery_duration_ms (integer)
+- triggered_at
+- retry_count (integer, default 0)
+```
+
+#### Trigger Types (Events that Start Zaps)
+
+**High Priority Triggers (Phase 1):**
+
+1. **New Job Created**
+   - Event: `job.created`
+   - Payload: Job details, client info, assigned user, scheduled date
+   - Use Cases: Add to project management, create calendar events, notify team
+
+2. **Invoice Paid**
+   - Event: `invoice.paid`
+   - Payload: Invoice details, payment amount, payment method, client info
+   - Use Cases: Update accounting, send thank you emails, trigger rewards
+
+3. **New Client Created**
+   - Event: `client.created`
+   - Payload: Client details, contact info, address
+   - Use Cases: Add to CRM, start email sequences, create in accounting software
+
+4. **Job Completed**
+   - Event: `job.completed`
+   - Payload: Job details, completion time, time logs, materials used
+   - Use Cases: Trigger review requests, update project tracking, send completion reports
+
+5. **Quote Accepted**
+   - Event: `quote.accepted`
+   - Payload: Quote details, client info, accepted amount
+   - Use Cases: Sales conversion tracking, auto-create job, notify team
+
+**Medium Priority Triggers (Phase 2):**
+
+6. **Quote Sent**
+   - Event: `quote.sent`
+   - Payload: Quote details, client info, expiry date
+   - Use Cases: Follow-up workflows, sales pipeline tracking
+
+7. **Expense Submitted**
+   - Event: `expense.submitted`
+   - Payload: Expense details, receipt URL, submitter
+   - Use Cases: Notify approvers, add to expense tracking, create approval workflow
+
+8. **Time Log Submitted**
+   - Event: `time_log.submitted`
+   - Payload: Time log details, job info, hours worked
+   - Use Cases: Payroll tracking, productivity monitoring
+
+9. **Invoice Overdue**
+   - Event: `invoice.overdue`
+   - Payload: Invoice details, days overdue, client contact
+   - Use Cases: Payment reminder workflows, escalation processes
+
+10. **Appointment Scheduled**
+    - Event: `appointment.scheduled`
+    - Payload: Appointment details, assigned user, time/date
+    - Use Cases: Calendar sync, team coordination, client reminders
+
+**Low Priority Triggers (Phase 3):**
+
+11. **Job Status Changed**
+    - Event: `job.status_changed`
+    - Payload: Job details, old status, new status, changed by
+    - Use Cases: Workflow automation, progress tracking
+
+12. **Payment Received (Partial)**
+    - Event: `invoice.payment_partial`
+    - Payload: Invoice details, payment amount, remaining balance
+    - Use Cases: Track installments, send receipts
+
+13. **Quote Rejected**
+    - Event: `quote.rejected`
+    - Payload: Quote details, rejection reason
+    - Use Cases: Loss analysis, follow-up workflows
+
+14. **Document Expiring Soon**
+    - Event: `document.expiring`
+    - Payload: Document details, expiry date, days until expiry
+    - Use Cases: Compliance reminders, renewal workflows
+
+15. **New SMS Received**
+    - Event: `sms.received`
+    - Payload: Message body, sender phone, conversation context
+    - Use Cases: Client communication workflows, support ticketing
+
+#### Action Types (Things Zapier Can Do)
+
+**High Priority Actions (Phase 1):**
+
+1. **Create Client**
+   - Endpoint: `POST /api/clients`
+   - Required: organization_id, client_type, name/company_name, email or phone
+   - Returns: Created client object
+   - Use Cases: Import from CRM, form submissions, marketing lists
+
+2. **Create Job**
+   - Endpoint: `POST /api/jobs`
+   - Required: organization_id, client_id, title, job_type
+   - Returns: Created job with job_number
+   - Use Cases: Auto-create from emails, calendars, forms
+
+3. **Create Invoice**
+   - Endpoint: `POST /api/invoices`
+   - Required: organization_id, client_id, issue_date, due_date
+   - Returns: Created invoice with invoice_number
+   - Use Cases: Automated billing, recurring invoices
+
+4. **Send Invoice via Email**
+   - Endpoint: `POST /api/invoices/[id]/send-email`
+   - Required: invoice_id
+   - Returns: Send status
+   - Use Cases: Automated invoice delivery workflows
+
+5. **Record Invoice Payment**
+   - Endpoint: `POST /api/invoices/[id]/payments`
+   - Required: invoice_id, amount, payment_date, payment_method
+   - Returns: Updated invoice
+   - Use Cases: Sync payments from Stripe, bank feeds, manual entry
+
+**Medium Priority Actions (Phase 2):**
+
+6. **Create Quote**
+   - Endpoint: `POST /api/quotes`
+   - Required: organization_id, client_id, title
+   - Returns: Created quote
+   - Use Cases: Automated quoting workflows
+
+7. **Update Job Status**
+   - Endpoint: `PUT /api/jobs/[id]`
+   - Required: job_id, status
+   - Returns: Updated job
+   - Use Cases: Workflow automation based on external triggers
+
+8. **Add Time Log to Job**
+   - Endpoint: `POST /api/jobs/[id]/time-logs`
+   - Required: job_id, start_time, end_time, user_id
+   - Returns: Created time log
+   - Use Cases: Import from time tracking apps (Toggl, Harvest)
+
+9. **Add Expense**
+   - Endpoint: `POST /api/expenses`
+   - Required: organization_id, user_id, amount, category
+   - Returns: Created expense
+   - Use Cases: Import from receipt scanning apps
+
+10. **Send SMS**
+    - Endpoint: `POST /api/sms/send`
+    - Required: organization_id, recipient_phone, message_body
+    - Returns: SMS status, credits used
+    - Use Cases: Custom notification workflows
+
+#### Search Endpoints (Find Existing Data)
+
+1. **Find Client by Email**
+   - Endpoint: `GET /api/clients/search?email=[email]`
+   - Returns: Client object or null
+   - Use Cases: Dedupe before creating, link to existing
+
+2. **Find Client by Phone**
+   - Endpoint: `GET /api/clients/search?phone=[phone]`
+   - Returns: Client object or null
+   - Use Cases: Phone-based lookups, SMS integrations
+
+3. **Find Job by Job Number**
+   - Endpoint: `GET /api/jobs/search?job_number=[number]`
+   - Returns: Job object or null
+   - Use Cases: Reference existing jobs in workflows
+
+4. **Find Invoice by Invoice Number**
+   - Endpoint: `GET /api/invoices/search?invoice_number=[number]`
+   - Returns: Invoice object or null
+   - Use Cases: Payment reconciliation
+
+#### Technical Implementation
+
+**New API Endpoints Required:**
+
+```
+POST   /api/zapier/auth/verify
+  - Verify API key validity
+  - Return organization details and permissions
+
+POST   /api/zapier/hooks/subscribe
+  - Create webhook subscription
+  - Parameters: event_type, target_url, filters (optional)
+  - Return: subscription_id, hook_url
+
+DELETE /api/zapier/hooks/unsubscribe/:subscription_id
+  - Remove webhook subscription
+  - Zapier calls this when user turns off Zap
+
+GET    /api/zapier/hooks/poll/:event_type
+  - Fallback polling endpoint for testing
+  - Returns recent events (last 100)
+
+GET    /api/clients/search
+  - Query params: email, phone, name
+  - Returns matching clients
+
+GET    /api/jobs/search
+  - Query params: job_number, client_id, status
+  - Returns matching jobs
+
+GET    /api/invoices/search
+  - Query params: invoice_number, client_id, status
+  - Returns matching invoices
+```
+
+**Webhook Trigger System:**
+
+After key database operations, emit webhooks to subscribed Zapier URLs:
+
+```typescript
+// lib/zapier/webhooks.ts
+export async function triggerZapierWebhook(params: {
+  organization_id: string
+  event_type: string
+  payload: any
+}) {
+  // Find active subscriptions
+  const subscriptions = await sql`
+    SELECT * FROM zapier_subscriptions
+    WHERE organization_id = ${params.organization_id}
+    AND event_type = ${params.event_type}
+    AND is_active = true
+  `
+
+  // Send webhook to each subscription (async)
+  for (const sub of subscriptions) {
+    // Apply filters if any
+    if (sub.filters && !matchesFilters(params.payload, sub.filters)) {
+      continue
+    }
+
+    // Send webhook (with retry logic)
+    await sendWebhookWithRetry(sub.target_url, params.payload, sub.id)
+  }
+}
+```
+
+**API Key Authentication:**
+
+```typescript
+// middleware/zapier-auth.ts
+export async function verifyZapierApiKey(apiKey: string) {
+  const hash = crypto.createHash('sha256').update(apiKey).digest('hex')
+
+  const keys = await sql`
+    SELECT zak.*, o.id as org_id, o.name as org_name
+    FROM zapier_api_keys zak
+    JOIN organizations o ON zak.organization_id = o.id
+    WHERE zak.api_key = ${hash}
+    AND zak.is_active = true
+    AND (zak.expires_at IS NULL OR zak.expires_at > NOW())
+  `
+
+  if (keys.length === 0) return null
+
+  // Update last used
+  await sql`UPDATE zapier_api_keys SET last_used_at = NOW() WHERE id = ${keys[0].id}`
+
+  return {
+    organization_id: keys[0].organization_id,
+    organization_name: keys[0].org_name
+  }
+}
+```
+
+**Zapier Platform App Structure:**
+
+```
+zapier-tradie-app/
+├── package.json
+├── index.js                 # Main entry point
+├── authentication.js        # API key auth
+├── triggers/
+│   ├── new_job.js
+│   ├── invoice_paid.js
+│   ├── new_client.js
+│   ├── job_completed.js
+│   └── quote_accepted.js
+├── creates/
+│   ├── create_client.js
+│   ├── create_job.js
+│   ├── create_invoice.js
+│   ├── send_invoice.js
+│   └── record_payment.js
+├── searches/
+│   ├── find_client.js
+│   ├── find_job.js
+│   └── find_invoice.js
+└── test/
+    └── triggers.test.js
+```
+
+#### Workflow Examples
+
+**Example 1: New Job → Google Calendar Event**
+1. Trigger: New Job Created
+2. Filter: Only scheduled jobs
+3. Action: Create Google Calendar event with job details, client address, assigned team member
+
+**Example 2: Invoice Paid → QuickBooks Payment**
+1. Trigger: Invoice Paid
+2. Search: Find QuickBooks invoice by invoice_number
+3. Action: Record payment in QuickBooks
+
+**Example 3: Form Submission → New Job**
+1. Trigger: Typeform submission
+2. Search: Find client by email (or create if not exists)
+3. Action: Create job with details from form
+
+**Example 4: Time Tracked → Spreadsheet Update**
+1. Trigger: Time Log Submitted
+2. Action: Add row to Google Sheets with hours, job, date
+
+**Example 5: Overdue Invoice → SMS Reminder**
+1. Trigger: Invoice Overdue
+2. Filter: >7 days overdue
+3. Action: Send SMS via Twilio with payment link
+
+#### Mobile UI (API Key Management)
+
+**Settings → Integrations → Zapier:**
+- "Connect to Zapier" button
+- Shows: "Zapier lets you connect to 6,000+ apps"
+- Click → Shows API key generation screen
+
+**API Key Generation:**
+- "Generate New API Key" button
+- Form:
+  - Key name (e.g., "Main Automation")
+  - Expiry (never, 30 days, 90 days, 1 year)
+- Generate → Display key ONCE with copy button
+- Warning: "Save this key now. You won't be able to see it again."
+
+**API Key List:**
+- Shows active keys with:
+  - Name
+  - Prefix (zap_abc123...)
+  - Created date
+  - Last used
+  - Expires
+  - Revoke button
+
+**Active Zaps Dashboard:**
+- List of webhook subscriptions
+- Shows: Event type, target URL (truncated), created date
+- Can deactivate (but user manages in Zapier)
+
+**Webhook Activity Log:**
+- Last 100 webhook deliveries
+- Shows: Event, status (success/failed), timestamp
+- Filter by: success, failed, event type
+- For debugging connection issues
+
+#### Implementation Phases
+
+### Phase 1: Core Infrastructure (3 weeks)
+
+**Week 1: Database & Authentication**
+- Create database migrations for 3 new tables
+- Implement API key generation utility
+- Build API key authentication middleware
+- Create `/api/zapier/auth/verify` endpoint
+- Testing: API key lifecycle
+
+**Week 2: Webhook Subscription System**
+- Build `/api/zapier/hooks/subscribe` endpoint
+- Build `/api/zapier/hooks/unsubscribe/:id` endpoint
+- Create webhook trigger utility function
+- Implement retry logic with exponential backoff
+- Testing: Subscription CRUD
+
+**Week 3: High-Priority Triggers (5 triggers)**
+- Implement webhook calls for:
+  - job.created (after POST /api/jobs)
+  - invoice.paid (after payment recorded)
+  - client.created (after POST /api/clients)
+  - job.completed (after status change)
+  - quote.accepted (after acceptance)
+- Build polling fallback endpoints
+- Testing: End-to-end trigger delivery
+
+---
+
+### Phase 2: Zapier Platform App (2 weeks)
+
+**Week 4: Zapier App Development**
+- Set up Zapier Platform CLI project
+- Configure API key authentication
+- Implement 5 core triggers with REST Hooks
+- Implement 5 core actions
+- Implement 3 core searches
+- Local testing with `zapier test`
+
+**Week 5: Beta Testing & Polish**
+- Deploy to Zapier private beta
+- Test with 5 real Zaps from different use cases
+- Create pre-built Zap templates
+- Error handling improvements
+- User documentation
+- Submit for Zapier review
+
+---
+
+### Phase 3: Extended Features (2 weeks)
+
+**Week 6: Additional Triggers & Actions**
+- Add 5 more triggers (quote.sent, expense.submitted, etc.)
+- Add 5 more actions (create quote, update job, add expense, etc.)
+- Enhanced search capabilities
+- Filtering support for triggers
+- Testing: Extended coverage
+
+**Week 7: Launch & Marketing**
+- Public launch in Zapier App Directory
+- Create 10 pre-built Zap templates
+- Record 5 tutorial videos
+- Blog post with use cases
+- Email announcement to users
+- Monitor adoption and feedback
+
+---
+
+## MVP Scope (Launch in 3-4 weeks)
+
+**Minimum Viable Integration:**
+
+**Triggers (5):**
+1. New Job Created
+2. Invoice Paid
+3. New Client Created
+4. Job Completed
+5. Quote Accepted
+
+**Actions (5):**
+1. Create Client
+2. Create Job
+3. Create Invoice
+4. Send Invoice via Email
+5. Record Invoice Payment
+
+**Searches (3):**
+1. Find Client by Email
+2. Find Job by Job Number
+3. Find Invoice by Invoice Number
+
+**Authentication:** API Keys (OAuth 2.0 in Phase 4)
+
+**Estimated Effort:** 3-4 weeks (1 developer) or 2 weeks (2 developers in parallel)
+
+---
+
+## Success Metrics
+
+**Adoption Metrics:**
+- 20%+ of active organizations enable Zapier integration within 3 months
+- Average 3+ Zaps created per organization
+- 50%+ of Zaps still active after 30 days
+
+**Technical Metrics:**
+- Webhook delivery success rate: >99%
+- API response time: <500ms (P95)
+- API error rate: <1%
+- Zero data leaks between organizations
+
+**User Satisfaction:**
+- NPS score >50 for Zapier integration
+- <5% support ticket rate related to integration
+- App Store reviews mentioning Zapier automation
+
+**Business Impact:**
+- Reduces churn by 15% among power users
+- Increases feature adoption (users create more jobs/invoices)
+- Positive differentiator in sales process
+
+---
+
+## Popular Use Cases (Top 20)
+
+1. **New job → Google Calendar** - Auto-create calendar events
+2. **Invoice paid → QuickBooks** - Sync payments to accounting
+3. **New client → HubSpot** - Add to CRM automatically
+4. **Job completed → Email** - Send review request
+5. **Quote accepted → Slack** - Notify sales team
+6. **Expense submitted → Approve via Slack** - Approval workflow
+7. **New job → Trello card** - Project management
+8. **Invoice sent → Follow-up email** - 3 days later if unpaid
+9. **Client created → Mailchimp** - Add to email list
+10. **Payment received → Thank you email** - Customer appreciation
+11. **Typeform submission → New job** - Website form integration
+12. **Time logged → Google Sheets** - Payroll tracking
+13. **Overdue invoice → SMS reminder** - Via Twilio
+14. **New job → Monday.com** - Project board
+15. **Quote sent → Airtable** - Sales pipeline tracking
+16. **Job completed → Generate PDF report** - Via DocuPilot
+17. **SMS received → Create ticket** - Support system
+18. **Invoice created → Dropbox** - Backup PDFs
+19. **New appointment → SMS reminder** - Day before
+20. **Material added → Inventory update** - Stock management
+
+---
+
+## Open Questions
+
+1. **Recurring Job Automation:**
+   - Should clients be able to manage their recurring services (pause, cancel) via a client portal?
+   - How to handle pricing changes for recurring services (lock in price vs. notify of increase)?
+
+2. **Completion Forms:**
+   - Should clients be required to sign completion forms, or optional?
+   - Store completion forms indefinitely or expire after X years?
+
+3. **Online Job Request Forms:**
+   - Allow anonymous requests (no email required) with SMS-only contact?
+   - Integrate with website chat (e.g., "Start a request from this chat")?
+
+4. **Notifications:**
+   - Push notification daily limit per user (avoid spam)?
+   - Escalation rules (if notification not acted on, escalate to manager)?
+
+5. **Zapier Integration:**
+   - Should Zapier be free tier or premium feature?
+   - Limit number of Zaps or API calls for free tier?
+   - Offer OAuth 2.0 authentication in addition to API keys?
+   - Support incoming webhooks (not just outgoing)?
+
+6. **All Features:**
+   - Which feature should be prioritized first based on user feedback?
+   - Should any features be premium/paid-only, or all included in free tier?
+
+---
 
 Questions for Clarification
 
