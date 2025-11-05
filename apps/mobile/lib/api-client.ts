@@ -861,6 +861,33 @@ class ApiClient {
       }
     )
   }
+
+  // ==================== PUSH NOTIFICATIONS ====================
+
+  /**
+   * Register Expo push token for current user
+   */
+  async registerPushToken(expoPushToken: string) {
+    return this.request<{ success: boolean; message: string; expo_push_token: string }>(
+      '/users/push-token',
+      {
+        method: 'POST',
+        body: JSON.stringify({ expo_push_token: expoPushToken }),
+      }
+    )
+  }
+
+  /**
+   * Unregister push token (e.g., on logout)
+   */
+  async unregisterPushToken() {
+    return this.request<{ success: boolean; message: string }>(
+      '/users/push-token',
+      {
+        method: 'DELETE',
+      }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()

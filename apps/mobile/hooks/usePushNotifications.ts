@@ -98,18 +98,8 @@ async function registerForPushNotificationsAsync() {
 
 async function registerTokenWithBackend(token: string) {
   try {
-    const response = await apiClient.fetch('/api/users/push-token', {
-      method: 'POST',
-      body: JSON.stringify({
-        expo_push_token: token,
-      }),
-    })
-
-    if (response.ok) {
-      console.log('Push token registered with backend')
-    } else {
-      console.error('Failed to register push token with backend')
-    }
+    const response = await apiClient.registerPushToken(token)
+    console.log('Push token registered with backend:', response.message)
   } catch (error) {
     console.error('Error registering push token:', error)
   }
