@@ -309,9 +309,12 @@ export async function POST(
 
     console.log('[Email Report] Sending email to:', toEmail)
 
+    // Prepare from email (same as invoices/quotes)
+    const fromEmail = process.env.AWS_SES_FROM_EMAIL || 'noreply@tradieapp.com'
+
     // Send email with PDF attachment using AWS SES
     await sendEmail({
-      from: job.org_email || `${job.org_name} <noreply@tradie-app.com>`,
+      from: fromEmail,
       to: toEmail,
       subject: `Job Completion Report - ${job.title} (${job.job_number})`,
       htmlBody: emailHtml,

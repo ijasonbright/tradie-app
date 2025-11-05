@@ -76,34 +76,28 @@ export default function CompletionFormPreviewScreen() {
       // Download PDF blob
       const pdfBlob = await apiClient.downloadCompletionFormPDF(id as string)
 
-      // Convert blob to base64
-      const reader = new FileReader()
-      reader.readAsDataURL(pdfBlob)
+      // Convert blob to array buffer
+      const arrayBuffer = await pdfBlob.arrayBuffer()
+      const uint8Array = new Uint8Array(arrayBuffer)
 
-      reader.onloadend = async () => {
-        const base64data = reader.result as string
-        const base64 = base64data.split(',')[1]
+      // Save to file system using new File API
+      const filename = `completion-report-${id}.pdf`
+      const file = new FileSystem.File(FileSystem.Paths.cache, filename)
 
-        // Save to file system
-        const filename = `completion-report-${id}.pdf`
-        const fileUri = `${FileSystem.documentDirectory}${filename}`
+      // Write the binary data directly (no need for base64)
+      file.write(uint8Array)
 
-        await FileSystem.writeAsStringAsync(fileUri, base64, {
-          encoding: 'base64',
+      console.log('PDF saved to:', file.uri)
+
+      // Share the file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(file.uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Job Completion Report',
+          UTI: 'com.adobe.pdf',
         })
-
-        console.log('PDF saved to:', fileUri)
-
-        // Share the file
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(fileUri, {
-            mimeType: 'application/pdf',
-            dialogTitle: 'Job Completion Report',
-            UTI: 'com.adobe.pdf',
-          })
-        } else {
-          Alert.alert('Success', 'PDF downloaded successfully')
-        }
+      } else {
+        Alert.alert('Success', 'PDF downloaded successfully')
       }
     } catch (err: any) {
       console.error('Failed to download PDF:', err)
