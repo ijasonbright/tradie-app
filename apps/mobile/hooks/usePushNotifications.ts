@@ -81,10 +81,16 @@ async function registerForPushNotificationsAsync() {
   }
 
   try {
-    token = (await Notifications.getExpoPushTokenAsync()).data
+    // Get projectId from app.json or use environment variable
+    const projectId = process.env.EXPO_PUBLIC_PROJECT_ID
+
+    token = (await Notifications.getExpoPushTokenAsync({
+      projectId: projectId,
+    })).data
     console.log('Expo Push Token:', token)
   } catch (error) {
     console.error('Error getting push token:', error)
+    console.error('Make sure to set EXPO_PUBLIC_PROJECT_ID in .env or run: npx expo login && eas init')
   }
 
   return token
