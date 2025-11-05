@@ -54,6 +54,31 @@ export default function JobDetailScreen() {
     }
   }
 
+  const handleCompletionFormPress = async () => {
+    try {
+      // Check if a completion form exists for this job
+      const response = await apiClient.getJobCompletionForm(id as string)
+
+      if (response.form) {
+        // Form exists - check status
+        if (response.form.status === 'draft') {
+          // Draft form - allow editing
+          router.push(`/job/${id}/completion-form?template_id=${response.form.template_id}`)
+        } else {
+          // Submitted/completed form - show preview
+          router.push(`/job/${id}/completion-form-preview`)
+        }
+      } else {
+        // No form exists - go to template selection
+        router.push(`/job/${id}/completion-form-templates`)
+      }
+    } catch (err: any) {
+      console.error('Failed to check completion form:', err)
+      // If error, just go to template selection
+      router.push(`/job/${id}/completion-form-templates`)
+    }
+  }
+
   useEffect(() => {
     if (id) {
       fetchJob()
@@ -688,7 +713,7 @@ export default function JobDetailScreen() {
 
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={() => router.push(`/job/${id}/completion-form-preview`)}
+              onPress={handleCompletionFormPress}
             >
               <MaterialCommunityIcons name="file-document-check" size={32} color="#2563eb" />
               <Text style={styles.quickActionLabel}>Completion Form</Text>

@@ -267,6 +267,14 @@ export default function CompletionFormPreviewScreen() {
 
         {form.status === 'submitted' && (
           <View style={styles.actions}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => router.push(`/job/${id}/completion-form?template_id=${form.template_id}`)}
+            >
+              <MaterialCommunityIcons name="pencil" size={20} color="#fff" />
+              <Text style={styles.editButtonText}>Edit Form</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.downloadButton}>
               <MaterialCommunityIcons name="file-pdf-box" size={20} color="#2563eb" />
               <Text style={styles.downloadButtonText}>Download PDF</Text>
