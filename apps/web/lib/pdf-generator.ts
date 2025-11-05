@@ -1,6 +1,11 @@
 import puppeteer from 'puppeteer-core'
 import chromium from '@sparticuz/chromium'
 
+// For Vercel deployment, ensure chromium binaries are available
+if (process.env.VERCEL) {
+  chromium.setGraphicsMode = false
+}
+
 interface CompletionFormData {
   form: {
     id: string
@@ -75,30 +80,43 @@ interface CompletionFormData {
 export async function generateCompletionFormPDF(data: CompletionFormData): Promise<Buffer> {
   const html = generateHTML(data)
 
-  const browser = await puppeteer.launch({
-    args: chromium.args,
-    defaultViewport: { width: 1280, height: 720 },
-    executablePath: await chromium.executablePath(),
-    headless: true,
-  })
+  let browser = null
+  try {
+    // Get Chromium executable path - will download if needed in serverless
+    const executablePath = await chromium.executablePath({
+      useBrotli: true, // Use brotli compression for Vercel
+    })
 
-  const page = await browser.newPage()
-  await page.setContent(html, { waitUntil: 'networkidle0' })
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath,
+      headless: chromium.headless,
+    })
 
-  const pdf = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '20mm',
-      right: '15mm',
-      bottom: '20mm',
-      left: '15mm',
-    },
-  })
+    const page = await browser.newPage()
+    await page.setContent(html, { waitUntil: 'networkidle0' })
 
-  await browser.close()
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm',
+      },
+    })
 
-  return Buffer.from(pdf)
+    return Buffer.from(pdf)
+  } catch (error) {
+    console.error('PDF generation error:', error)
+    throw error
+  } finally {
+    if (browser) {
+      await browser.close()
+    }
+  }
 }
 
 function generateHTML(data: CompletionFormData): string {
