@@ -352,7 +352,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     })
     yPosition -= 30
 
-    // Questions
+    // Questions and answers (no photos inline)
     for (const question of group.questions) {
       // Check if we need a new page
       if (yPosition < 100) {
@@ -387,93 +387,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
         yPosition -= 14
       })
 
-      yPosition -= 5
-
-      // Add photos for this question if any
-      if (question.photos && question.photos.length > 0) {
-        yPosition -= 10
-
-        for (const photo of question.photos) {
-          try {
-            // Check if we need a new page
-            if (yPosition < 200) {
-              page = pdfDoc.addPage([595, 842])
-              yPosition = height - 50
-            }
-
-            console.log('[PDF Generator] Loading question photo from:', photo.photo_url)
-            const photoResponse = await fetch(photo.photo_url)
-            if (!photoResponse.ok) {
-              console.error('[PDF Generator] Failed to fetch photo:', photoResponse.status)
-              continue
-            }
-
-            const photoBytes = await photoResponse.arrayBuffer()
-            const photoExt = photo.photo_url.toLowerCase()
-
-            let photoImage
-            if (photoExt.includes('.png')) {
-              photoImage = await pdfDoc.embedPng(photoBytes)
-            } else if (photoExt.includes('.jpg') || photoExt.includes('.jpeg')) {
-              photoImage = await pdfDoc.embedJpg(photoBytes)
-            } else {
-              // Try JPG first for photos
-              try {
-                photoImage = await pdfDoc.embedJpg(photoBytes)
-              } catch {
-                photoImage = await pdfDoc.embedPng(photoBytes)
-              }
-            }
-
-            // Scale photo to fit (max width 400, max height 150)
-            const photoDims = photoImage.scale(1)
-            const maxWidth = 400
-            const maxHeight = 150
-            let photoWidth = photoDims.width
-            let photoHeight = photoDims.height
-
-            // Scale down if too large
-            if (photoWidth > maxWidth) {
-              const scale = maxWidth / photoWidth
-              photoWidth = maxWidth
-              photoHeight = photoHeight * scale
-            }
-            if (photoHeight > maxHeight) {
-              const scale = maxHeight / photoHeight
-              photoHeight = maxHeight
-              photoWidth = photoWidth * scale
-            }
-
-            // Draw photo
-            page.drawImage(photoImage, {
-              x: 65,
-              y: yPosition - photoHeight,
-              width: photoWidth,
-              height: photoHeight,
-            })
-
-            // Draw caption if exists
-            if (photo.caption) {
-              page.drawText(photo.caption, {
-                x: 65,
-                y: yPosition - photoHeight - 15,
-                size: 8,
-                font: regularFont,
-                color: lightGray,
-              })
-              yPosition -= photoHeight + 25
-            } else {
-              yPosition -= photoHeight + 10
-            }
-
-            console.log('[PDF Generator] Photo added successfully')
-          } catch (error) {
-            console.error('[PDF Generator] Failed to load question photo:', error)
-          }
-        }
-
-        yPosition -= 10
-      }
+      yPosition -= 10
     }
 
     // Add group photos section if there are any photos in this group
