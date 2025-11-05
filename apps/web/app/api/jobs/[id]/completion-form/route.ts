@@ -11,7 +11,7 @@ import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: { id: string } }
 ) {
   // Dual authentication: Clerk (web) + JWT (mobile)
   let clerkUserId: string | null = null
@@ -42,7 +42,7 @@ export async function GET(
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const jobId = params.jobId
+    const jobId = params.id
 
     // Get user's organization
     const userOrgs = await sql`
@@ -176,7 +176,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { jobId: string } }
+  { params }: { params: { id: string } }
 ) {
   // Dual authentication: Clerk (web) + JWT (mobile)
   let clerkUserId: string | null = null
@@ -207,7 +207,7 @@ export async function POST(
 
   try {
     const sql = neon(process.env.DATABASE_URL!)
-    const jobId = params.jobId
+    const jobId = params.id
     const body = await request.json()
 
     // Validate required fields
