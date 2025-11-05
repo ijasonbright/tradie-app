@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '../../../lib/api-client'
 import * as FileSystem from 'expo-file-system'
-import { EncodingType } from 'expo-file-system'
 import * as Sharing from 'expo-sharing'
 
 interface CompletionForm {
@@ -90,7 +89,7 @@ export default function CompletionFormPreviewScreen() {
         const fileUri = `${FileSystem.documentDirectory}${filename}`
 
         await FileSystem.writeAsStringAsync(fileUri, base64, {
-          encoding: EncodingType.Base64,
+          encoding: 'base64',
         })
 
         console.log('PDF saved to:', fileUri)
