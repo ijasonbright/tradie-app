@@ -216,6 +216,14 @@ export default function MoreScreen() {
         />
 
         <List.Item
+          title="Test Push Notification"
+          description="Send a test notification to this device"
+          left={(props) => <List.Icon {...props} icon="bell-ring" />}
+          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          onPress={() => router.push('/test-notification')}
+        />
+
+        <List.Item
           title="Privacy & Security"
           description="Manage your data and security"
           left={(props) => <List.Icon {...props} icon="shield-lock" />}
