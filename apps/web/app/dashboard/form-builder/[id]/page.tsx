@@ -84,7 +84,7 @@ export default function FormEditorPage() {
       setSaving(true)
 
       // Update question details
-      const response = await fetch(`/api/completion-forms/questions/${questionId}`, {
+      const response = await fetch(`/api/form-builder/questions/${questionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -94,7 +94,7 @@ export default function FormEditorPage() {
 
       // If answer options were provided, save them
       if (newAnswerOptions !== undefined) {
-        const optionsResponse = await fetch(`/api/completion-forms/questions/${questionId}/answer-options`, {
+        const optionsResponse = await fetch(`/api/form-builder/questions/${questionId}/answer-options`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ answer_options: newAnswerOptions }),
