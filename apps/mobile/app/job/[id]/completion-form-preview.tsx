@@ -252,13 +252,13 @@ export default function CompletionFormPreviewScreen() {
               <View
                 style={[
                   styles.statusBadge,
-                  form.status === 'submitted'
+                  form.status === 'submitted' || form.status === 'sent_to_client'
                     ? styles.statusSubmitted
                     : styles.statusDraft,
                 ]}
               >
                 <Text style={styles.statusText}>
-                  {form.status === 'submitted' ? 'Submitted' : 'Draft'}
+                  {form.status === 'sent_to_client' ? 'Sent to Client' : form.status === 'submitted' ? 'Submitted' : 'Draft'}
                 </Text>
               </View>
               {form.completion_date && (
@@ -346,7 +346,7 @@ export default function CompletionFormPreviewScreen() {
           </View>
         )}
 
-        {form.status === 'submitted' && (
+        {(form.status === 'submitted' || form.status === 'sent_to_client') && (
           <View style={styles.actions}>
             <TouchableOpacity
               style={styles.editButton}
