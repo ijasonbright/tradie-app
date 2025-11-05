@@ -740,6 +740,10 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_reminder_history_invoice_id ON reminder_history(invoice_id)`,
       `CREATE INDEX IF NOT EXISTS idx_client_reminder_preferences_organization_id ON client_reminder_preferences(organization_id)`,
       `CREATE INDEX IF NOT EXISTS idx_client_reminder_preferences_client_id ON client_reminder_preferences(client_id)`,
+
+      // ========== PUSH NOTIFICATIONS ==========
+      // Add expo_push_token to users table for push notification support
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS expo_push_token TEXT`,
     ]
 
     const results = []
