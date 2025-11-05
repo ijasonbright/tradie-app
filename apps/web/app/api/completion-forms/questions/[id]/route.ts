@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 
+export const dynamic = 'force-dynamic'
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
