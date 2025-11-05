@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Image, Alert, Share, Platform } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '../../../lib/api-client'
+import * as FileSystem from 'expo-file-system'
+import * as Sharing from 'expo-sharing'
 
 interface CompletionForm {
   id: string
@@ -38,6 +40,8 @@ export default function CompletionFormPreviewScreen() {
   const [form, setForm] = useState<CompletionForm | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [sending, setSending] = useState(false)
 
   useEffect(() => {
     fetchForm()
@@ -61,6 +65,81 @@ export default function CompletionFormPreviewScreen() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleDownloadPDF = async () => {
+    try {
+      setDownloading(true)
+
+      console.log('Downloading PDF for job:', id)
+
+      // Download PDF blob
+      const pdfBlob = await apiClient.downloadCompletionFormPDF(id as string)
+
+      // Convert blob to base64
+      const reader = new FileReader()
+      reader.readAsDataURL(pdfBlob)
+
+      reader.onloadend = async () => {
+        const base64data = reader.result as string
+        const base64 = base64data.split(',')[1]
+
+        // Save to file system
+        const filename = `completion-report-${id}.pdf`
+        const fileUri = `${FileSystem.documentDirectory}${filename}`
+
+        await FileSystem.writeAsStringAsync(fileUri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        })
+
+        console.log('PDF saved to:', fileUri)
+
+        // Share the file
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(fileUri, {
+            mimeType: 'application/pdf',
+            dialogTitle: 'Job Completion Report',
+            UTI: 'com.adobe.pdf',
+          })
+        } else {
+          Alert.alert('Success', 'PDF downloaded successfully')
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to download PDF:', err)
+      Alert.alert('Error', err.message || 'Failed to download PDF')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const handleSendToClient = async () => {
+    Alert.alert(
+      'Send Completion Report',
+      'Send this completion report via email to the client?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: async () => {
+            try {
+              setSending(true)
+
+              console.log('Sending completion report for job:', id)
+
+              const response = await apiClient.sendCompletionReport(id as string)
+
+              Alert.alert('Success', response.message || 'Completion report sent successfully')
+            } catch (err: any) {
+              console.error('Failed to send report:', err)
+              Alert.alert('Error', err.message || 'Failed to send completion report')
+            } finally {
+              setSending(false)
+            }
+          },
+        },
+      ]
+    )
   }
 
   const renderAnswer = (question: any, answer: any) => {
@@ -275,14 +354,34 @@ export default function CompletionFormPreviewScreen() {
               <Text style={styles.editButtonText}>Edit Form</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.downloadButton}>
-              <MaterialCommunityIcons name="file-pdf-box" size={20} color="#2563eb" />
-              <Text style={styles.downloadButtonText}>Download PDF</Text>
+            <TouchableOpacity
+              style={[styles.downloadButton, downloading && styles.buttonDisabled]}
+              onPress={handleDownloadPDF}
+              disabled={downloading}
+            >
+              {downloading ? (
+                <ActivityIndicator size="small" color="#2563eb" />
+              ) : (
+                <MaterialCommunityIcons name="file-pdf-box" size={20} color="#2563eb" />
+              )}
+              <Text style={styles.downloadButtonText}>
+                {downloading ? 'Downloading...' : 'Download PDF'}
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.shareButton}>
-              <MaterialCommunityIcons name="share" size={20} color="#2563eb" />
-              <Text style={styles.shareButtonText}>Share with Client</Text>
+            <TouchableOpacity
+              style={[styles.shareButton, sending && styles.buttonDisabled]}
+              onPress={handleSendToClient}
+              disabled={sending}
+            >
+              {sending ? (
+                <ActivityIndicator size="small" color="#2563eb" />
+              ) : (
+                <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
+              )}
+              <Text style={styles.shareButtonText}>
+                {sending ? 'Sending...' : 'Email to Client'}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -554,5 +653,8 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     fontSize: 16,
     fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
 })

@@ -950,6 +950,44 @@ class ApiClient {
   }
 
   /**
+   * Download completion form PDF
+   */
+  async downloadCompletionFormPDF(jobId: string): Promise<Blob> {
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/jobs/${jobId}/completion-form/pdf`
+
+    console.log(`API Request: GET ${url}`)
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.blob()
+  }
+
+  /**
+   * Send completion report via email to client
+   */
+  async sendCompletionReport(jobId: string, options?: { message?: string; recipient_email?: string }) {
+    return this.request<{ success: boolean; message: string; email_id?: string }>(
+      `/jobs/${jobId}/completion-form/send-report`,
+      {
+        method: 'POST',
+        body: JSON.stringify(options || {}),
+      }
+    )
+  }
+
+  /**
    * Upload photo to completion form
    */
   async uploadCompletionFormPhoto(jobId: string, imageUri: string, caption: string, photoType: string, questionId?: string) {
