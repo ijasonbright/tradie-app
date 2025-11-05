@@ -27,6 +27,45 @@ export async function updateQuestion(
 
     // Validate user has access to this question's organization
     console.log('[updateQuestion] Checking access for question:', questionId)
+
+    // Debug: Check if question exists
+    const questionCheck = await sql`SELECT q.id, q.group_id FROM completion_form_template_questions q WHERE q.id = ${questionId}`
+    console.log('[updateQuestion] Question check:', questionCheck)
+
+    if (questionCheck.length === 0) {
+      console.error('[updateQuestion] Question not found')
+      throw new Error('Question not found')
+    }
+
+    // Debug: Check group
+    const groupCheck = await sql`
+      SELECT g.id, g.template_id
+      FROM completion_form_template_groups g
+      WHERE g.id = ${questionCheck[0].group_id}
+    `
+    console.log('[updateQuestion] Group check:', groupCheck)
+
+    // Debug: Check template
+    if (groupCheck.length > 0) {
+      const templateCheck = await sql`
+        SELECT t.id, t.organization_id, t.is_global
+        FROM completion_form_templates t
+        WHERE t.id = ${groupCheck[0].template_id}
+      `
+      console.log('[updateQuestion] Template check:', templateCheck)
+
+      // Debug: Check user's organization membership
+      if (templateCheck.length > 0) {
+        const userOrgCheck = await sql`
+          SELECT om.id, om.role, om.organization_id, u.clerk_user_id
+          FROM organization_members om
+          JOIN users u ON om.user_id = u.id
+          WHERE u.clerk_user_id = ${authResult.userId}
+        `
+        console.log('[updateQuestion] User org membership:', userOrgCheck)
+      }
+    }
+
     const accessCheck = await sql`
       SELECT q.id
       FROM completion_form_template_questions q
@@ -39,6 +78,7 @@ export async function updateQuestion(
         AND u.clerk_user_id = ${authResult.userId}
         AND om.role IN ('owner', 'admin')
     `
+    console.log('[updateQuestion] Full access check result:', accessCheck)
 
     if (accessCheck.length === 0) {
       console.error('[updateQuestion] Access check failed - no access for user')
