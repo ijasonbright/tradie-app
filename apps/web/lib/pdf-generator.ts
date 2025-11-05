@@ -72,15 +72,18 @@ interface CompletionFormData {
 }
 
 export async function generateCompletionFormPDF(data: CompletionFormData): Promise<Buffer> {
-  const { form, job, client, organization, template, groups, completedBy } = data
+  try {
+    console.log('[PDF Generator] Starting PDF generation')
+    const { form, job, client, organization, template, groups, completedBy } = data
 
-  // Create a new PDF document
-  const pdfDoc = await PDFDocument.create()
-  let page = pdfDoc.addPage([595, 842]) // A4 size in points
+    // Create a new PDF document
+    const pdfDoc = await PDFDocument.create()
+    let page = pdfDoc.addPage([595, 842]) // A4 size in points
 
-  // Load fonts
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    // Load fonts
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+    const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
+    console.log('[PDF Generator] Fonts loaded')
 
   // Colors
   const primaryColor = rgb(0.15, 0.39, 0.92) // Blue #2563eb
@@ -94,7 +97,11 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   let logoHeight = 0
   if (organization.logo_url) {
     try {
+      console.log('[PDF Generator] Loading logo from:', organization.logo_url)
       const logoResponse = await fetch(organization.logo_url)
+      if (!logoResponse.ok) {
+        throw new Error(`Failed to fetch logo: ${logoResponse.status}`)
+      }
       const logoBytes = await logoResponse.arrayBuffer()
       const logoExt = organization.logo_url.toLowerCase()
 
@@ -108,9 +115,10 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
         const logoDims = logoImage.scale(0.3)
         logoWidth = Math.min(logoDims.width, 150)
         logoHeight = logoWidth * (logoImage.height / logoImage.width)
+        console.log('[PDF Generator] Logo loaded successfully')
       }
     } catch (error) {
-      console.error('Failed to load logo for PDF:', error)
+      console.error('[PDF Generator] Failed to load logo:', error)
     }
   }
 
@@ -483,7 +491,13 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
     color: lightGray,
   })
 
-  // Serialize the PDF to bytes
-  const pdfBytes = await pdfDoc.save()
-  return Buffer.from(pdfBytes)
+    // Serialize the PDF to bytes
+    console.log('[PDF Generator] Saving PDF')
+    const pdfBytes = await pdfDoc.save()
+    console.log('[PDF Generator] PDF saved, size:', pdfBytes.length, 'bytes')
+    return Buffer.from(pdfBytes)
+  } catch (error) {
+    console.error('[PDF Generator] Error generating PDF:', error)
+    throw error
+  }
 }
