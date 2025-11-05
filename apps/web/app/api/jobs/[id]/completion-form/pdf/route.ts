@@ -116,24 +116,17 @@ export async function GET(
       ORDER BY sort_order ASC
     `
 
-    // Fetch photos
+    // Fetch completion form photos with question associations
     const photos = await sql`
-      SELECT photo_url, thumbnail_url, caption, photo_type
-      FROM job_photos
-      WHERE job_id = ${jobId}
+      SELECT photo_url, caption, photo_type, question_id
+      FROM job_completion_form_photos
+      WHERE completion_form_id = ${form.id}
       ORDER BY uploaded_at ASC
     `
 
+    console.log('[PDF Generation] Total photos found in job_completion_form_photos table:', photos.length)
+
     // Build groups with questions and answers
-    console.log('[PDF Generation] Total photos found in job_photos table:', photos.length)
-
-    // Convert photos array to format expected by PDF generator
-    const allPhotos = photos.map((p: any) => ({
-      photo_url: p.photo_url,
-      caption: p.caption || '',
-      photo_type: p.photo_type || 'general',
-    }))
-
     const groupsWithQuestions = groups.map((group: any) => {
       const groupQuestions = questions.filter((q: any) => q.group_id === group.id)
 
@@ -145,18 +138,38 @@ export async function GET(
           // Get answer from form_data
           const answer = form.form_data?.[q.id] || null
 
+          // Get photos for this specific question
+          const questionPhotos = photos
+            .filter((p: any) => p.question_id === q.id)
+            .map((p: any) => ({
+              photo_url: p.photo_url,
+              caption: p.caption || '',
+              photo_type: p.photo_type || 'general',
+            }))
+
+          console.log(`[PDF Generation] Question "${q.question_text}" has ${questionPhotos.length} photos`)
+
           return {
             id: q.id,
             question_text: q.question_text,
             field_type: q.field_type,
             answer,
-            photos: [], // Don't link photos to individual questions for now
+            photos: questionPhotos,
           }
         }),
       }
     })
 
-    console.log(`[PDF Generation] Will include ${allPhotos.length} photos in the first group's photo section`)
+    // Get photos not linked to any question (general job photos)
+    const unlinkedPhotos = photos
+      .filter((p: any) => !p.question_id)
+      .map((p: any) => ({
+        photo_url: p.photo_url,
+        caption: p.caption || '',
+        photo_type: p.photo_type || 'general',
+      }))
+
+    console.log(`[PDF Generation] Found ${unlinkedPhotos.length} unlinked photos for general section`)
 
     // Prepare data for PDF generation
     const pdfData = {
@@ -206,11 +219,7 @@ export async function GET(
       },
       groups: groupsWithQuestions,
       completedBy,
-      photos: photos.map((p: any) => ({
-        photo_url: p.photo_url,
-        caption: p.caption,
-        photo_type: p.photo_type,
-      })),
+      photos: unlinkedPhotos, // Only unlinked photos go in the general "Job Photos" section
     }
 
     console.log('[PDF Generation] Starting PDF generation for job:', jobId)

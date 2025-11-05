@@ -128,13 +128,15 @@ export async function POST(
       ORDER BY sort_order ASC
     `
 
-    // Fetch photos
+    // Fetch completion form photos with question associations
     const photos = await sql`
-      SELECT photo_url, thumbnail_url, caption, photo_type
-      FROM job_photos
-      WHERE job_id = ${jobId}
+      SELECT photo_url, caption, photo_type, question_id
+      FROM job_completion_form_photos
+      WHERE completion_form_id = ${form.id}
       ORDER BY uploaded_at ASC
     `
+
+    console.log('[Email Report] Total photos found in job_completion_form_photos table:', photos.length)
 
     // Build groups with questions and answers
     const groupsWithQuestions = groups.map((group: any) => {
@@ -146,12 +148,17 @@ export async function POST(
         description: group.description,
         questions: groupQuestions.map((q: any) => {
           const answer = form.form_data?.[q.id] || null
+
+          // Get photos for this specific question
           const questionPhotos = photos
-            .filter((p: any) => form.form_data?.[`${q.id}_photos`]?.includes(p.photo_url))
+            .filter((p: any) => p.question_id === q.id)
             .map((p: any) => ({
               photo_url: p.photo_url,
-              caption: p.caption,
+              caption: p.caption || '',
+              photo_type: p.photo_type || 'general',
             }))
+
+          console.log(`[Email Report] Question "${q.question_text}" has ${questionPhotos.length} photos`)
 
           return {
             id: q.id,
@@ -163,6 +170,17 @@ export async function POST(
         }),
       }
     })
+
+    // Get photos not linked to any question (general job photos)
+    const unlinkedPhotos = photos
+      .filter((p: any) => !p.question_id)
+      .map((p: any) => ({
+        photo_url: p.photo_url,
+        caption: p.caption || '',
+        photo_type: p.photo_type || 'general',
+      }))
+
+    console.log(`[Email Report] Found ${unlinkedPhotos.length} unlinked photos for general section`)
 
     // Prepare data for PDF generation
     const pdfData = {
@@ -212,11 +230,7 @@ export async function POST(
       },
       groups: groupsWithQuestions,
       completedBy,
-      photos: photos.map((p: any) => ({
-        photo_url: p.photo_url,
-        caption: p.caption,
-        photo_type: p.photo_type,
-      })),
+      photos: unlinkedPhotos, // Only unlinked photos go in the general "Job Photos" section
     }
 
     console.log('[Email Report] Generating PDF for job:', jobId)
