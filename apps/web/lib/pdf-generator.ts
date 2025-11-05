@@ -346,9 +346,14 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
   yPosition -= 20
 
   // Groups and Questions
-  for (const group of groups) {
-    // Check if we need a new page
-    if (yPosition < 150) {
+  for (let groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+    const group = groups[groupIndex]
+
+    // Start each group on a new page (except the first one)
+    if (groupIndex > 0) {
+      page = pdfDoc.addPage([595, 842])
+      yPosition = height - 50
+    } else if (yPosition < 150) {
       page = pdfDoc.addPage([595, 842])
       yPosition = height - 50
     }
@@ -392,11 +397,12 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
         yPosition -= 15
       })
 
-      // Answer
-      const answerText = question.answer ? String(question.answer) : 'N/A'
-      const answerLines = wrapText(answerText, 490, 9, regularFont)
-      answerLines.forEach((line) => {
-        page.drawText(line, {
+      // Answer (skip URLs for file fields - photos are shown in photo section)
+      if (question.field_type === 'file') {
+        // Don't show URLs for file fields, photos are displayed in the photo section
+        const photoCount = question.photos?.length || 0
+        const answerText = photoCount > 0 ? `${photoCount} photo${photoCount > 1 ? 's' : ''} attached (see below)` : 'No photos'
+        page.drawText(answerText, {
           x: 65,
           y: yPosition,
           size: 9,
@@ -404,7 +410,20 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
           color: lightGray,
         })
         yPosition -= 14
-      })
+      } else {
+        const answerText = question.answer ? String(question.answer) : 'N/A'
+        const answerLines = wrapText(answerText, 490, 9, regularFont)
+        answerLines.forEach((line) => {
+          page.drawText(line, {
+            x: 65,
+            y: yPosition,
+            size: 9,
+            font: regularFont,
+            color: lightGray,
+          })
+          yPosition -= 14
+        })
+      }
 
       yPosition -= 10
     }
