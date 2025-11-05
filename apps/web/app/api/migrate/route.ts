@@ -847,6 +847,29 @@ export async function POST() {
         uploaded_at TIMESTAMP DEFAULT NOW() NOT NULL
       )`,
 
+      // Create job completion form answers (normalized - matches SQL Server structure)
+      `CREATE TABLE IF NOT EXISTS job_completion_form_answers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        completion_form_id UUID NOT NULL REFERENCES job_completion_forms(id) ON DELETE CASCADE,
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        job_id UUID NOT NULL REFERENCES jobs(id),
+        question_id UUID NOT NULL REFERENCES completion_form_template_questions(id),
+        answer_id VARCHAR(100),
+        value TEXT,
+        value_numeric INTEGER,
+        file_category VARCHAR(100),
+        file_path VARCHAR(500),
+        file_ref VARCHAR(255),
+        file_suffix VARCHAR(50),
+        file_name VARCHAR(255),
+        file_size INTEGER,
+        submission_type_id INTEGER DEFAULT 0,
+        csv_question_id INTEGER,
+        csv_answer_id INTEGER,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
       // Create indexes for completion forms
       `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_organization_id ON completion_form_templates(organization_id)`,
       `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_is_global ON completion_form_templates(is_global) WHERE is_global = true`,
@@ -857,6 +880,9 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_job_completion_forms_job_id ON job_completion_forms(job_id)`,
       `CREATE INDEX IF NOT EXISTS idx_job_completion_forms_status ON job_completion_forms(status)`,
       `CREATE INDEX IF NOT EXISTS idx_job_completion_form_photos_completion_form_id ON job_completion_form_photos(completion_form_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_completion_form_id ON job_completion_form_answers(completion_form_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_job_id ON job_completion_form_answers(job_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_question_id ON job_completion_form_answers(question_id)`,
     ]
 
     const results = []

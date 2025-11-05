@@ -177,3 +177,44 @@ export const jobCompletionFormPhotos = pgTable('job_completion_form_photos', {
   uploadedByUserId: uuid('uploaded_by_user_id').references(() => users.id).notNull(),
   uploadedAt: timestamp('uploaded_at').defaultNow().notNull(),
 })
+
+/**
+ * Job Completion Form Answers (Normalized)
+ * Individual answer rows - matches SQL Server structure for easy data export
+ * This provides a normalized view of answers (alternative to JSONB form_data)
+ */
+export const jobCompletionFormAnswers = pgTable('job_completion_form_answers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  completionFormId: uuid('completion_form_id').references(() => jobCompletionForms.id, { onDelete: 'cascade' }).notNull(),
+  organizationId: uuid('organization_id').references(() => organizations.id).notNull(),
+  jobId: uuid('job_id').references(() => jobs.id).notNull(),
+
+  // Question reference
+  questionId: uuid('question_id').references(() => completionFormTemplateQuestions.id).notNull(),
+
+  // Answer reference (for choice-based questions)
+  answerId: varchar('answer_id', { length: 100 }), // References answer_options[].id in question
+
+  // Answer value (text, number, date, etc.)
+  value: text('value'), // The actual answer value
+  valueNumeric: integer('value_numeric'), // For numeric answers
+
+  // File upload fields (matches SQL Server structure)
+  fileCategory: varchar('file_category', { length: 100 }),
+  filePath: varchar('file_path', { length: 500 }),
+  fileRef: varchar('file_ref', { length: 255 }),
+  fileSuffix: varchar('file_suffix', { length: 50 }),
+  fileName: varchar('file_name', { length: 255 }),
+  fileSize: integer('file_size'),
+
+  // Submission metadata
+  submissionTypeId: integer('submission_type_id').default(0),
+
+  // Legacy CSV IDs for reference
+  csvQuestionId: integer('csv_question_id'), // Original CSV question ID
+  csvAnswerId: integer('csv_answer_id'), // Original CSV answer ID
+
+  // Metadata
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})

@@ -1,7 +1,7 @@
 import { View, StyleSheet, Alert } from 'react-native'
 import { Button, Card, Text } from 'react-native-paper'
 import { useState } from 'react'
-import { apiClient } from '../../../lib/api-client'
+import { apiClient } from '../lib/api-client'
 
 export default function TestNotificationScreen() {
   const [loading, setLoading] = useState(false)
