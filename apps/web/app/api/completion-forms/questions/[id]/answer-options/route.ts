@@ -29,8 +29,8 @@ export async function PUT(
     // Validate user has access to this question's organization
     const accessCheck = await sql`
       SELECT q.id
-      FROM completion_form_questions q
-      JOIN completion_form_groups g ON q.group_id = g.id
+      FROM completion_form_template_questions q
+      JOIN completion_form_template_groups g ON q.group_id = g.id
       JOIN completion_form_templates t ON g.template_id = t.id
       JOIN organizations o ON t.organization_id = o.id
       JOIN organization_members om ON o.id = om.organization_id
@@ -47,36 +47,25 @@ export async function PUT(
       )
     }
 
-    // Delete existing answer options for this question
-    await sql`
-      DELETE FROM completion_form_answer_options
-      WHERE question_id = ${questionId}
-    `
+    // Format answer options with proper structure and ordering
+    const formattedOptions = answer_options.map((option, index) => ({
+      id: option.id && !option.id.startsWith('temp-') ? option.id : `option-${index + 1}`,
+      text: option.text,
+      value: option.value || option.text,
+      option_order: index + 1,
+    }))
 
-    // Insert new answer options
-    const insertedOptions = []
-    for (let i = 0; i < answer_options.length; i++) {
-      const option = answer_options[i]
-      const result = await sql`
-        INSERT INTO completion_form_answer_options (
-          question_id,
-          text,
-          value,
-          option_order
-        ) VALUES (
-          ${questionId},
-          ${option.text},
-          ${option.value || option.text},
-          ${i + 1}
-        )
-        RETURNING *
-      `
-      insertedOptions.push(result[0])
-    }
+    // Update the answer_options JSONB field
+    await sql`
+      UPDATE completion_form_template_questions
+      SET answer_options = ${JSON.stringify(formattedOptions)},
+          updated_at = NOW()
+      WHERE id = ${questionId}
+    `
 
     return NextResponse.json({
       success: true,
-      answer_options: insertedOptions,
+      answer_options: formattedOptions,
     })
   } catch (error) {
     console.error('Error updating answer options:', error)

@@ -21,8 +21,8 @@ export async function PUT(
     // Validate user has access to this question's organization
     const accessCheck = await sql`
       SELECT q.id
-      FROM completion_form_questions q
-      JOIN completion_form_groups g ON q.group_id = g.id
+      FROM completion_form_template_questions q
+      JOIN completion_form_template_groups g ON q.group_id = g.id
       JOIN completion_form_templates t ON g.template_id = t.id
       JOIN organizations o ON t.organization_id = o.id
       JOIN organization_members om ON o.id = om.organization_id
@@ -68,19 +68,19 @@ export async function PUT(
     // Perform individual updates (Neon tagged templates don't support dynamic field names easily)
     for (const update of updates) {
       if (update.field === 'question_text') {
-        await sql`UPDATE completion_form_questions SET question_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+        await sql`UPDATE completion_form_template_questions SET question_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
       } else if (update.field === 'field_type') {
-        await sql`UPDATE completion_form_questions SET field_type = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+        await sql`UPDATE completion_form_template_questions SET field_type = ${update.value}, updated_at = NOW() WHERE id = ${id}`
       } else if (update.field === 'is_required') {
-        await sql`UPDATE completion_form_questions SET is_required = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+        await sql`UPDATE completion_form_template_questions SET is_required = ${update.value}, updated_at = NOW() WHERE id = ${id}`
       } else if (update.field === 'help_text') {
-        await sql`UPDATE completion_form_questions SET help_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
+        await sql`UPDATE completion_form_template_questions SET help_text = ${update.value}, updated_at = NOW() WHERE id = ${id}`
       }
     }
 
     // Get the updated question
     const result = await sql`
-      SELECT * FROM completion_form_questions WHERE id = ${id}
+      SELECT * FROM completion_form_template_questions WHERE id = ${id}
     `
 
     if (result.length === 0) {
