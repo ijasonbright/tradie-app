@@ -1,3 +1,5 @@
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+
 interface CompletionFormData {
   form: {
     id: string
@@ -70,583 +72,403 @@ interface CompletionFormData {
 }
 
 export async function generateCompletionFormPDF(data: CompletionFormData): Promise<Buffer> {
-  const html = generateHTML(data)
+  const { form, job, client, organization, template, groups, completedBy } = data
 
-  let browser = null
-  try {
-    // Dynamically load packages based on environment
-    const isProduction = process.env.VERCEL_ENV === 'production'
-    let puppeteer: any
-    let launchOptions: any
+  // Create a new PDF document
+  const pdfDoc = await PDFDocument.create()
+  let page = pdfDoc.addPage([595, 842]) // A4 size in points
 
-    if (isProduction) {
-      // Production (Vercel) - use @sparticuz/chromium
-      const chromium = (await import('@sparticuz/chromium')).default
-      puppeteer = await import('puppeteer-core')
-      const executablePath = await chromium.executablePath()
+  // Load fonts
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
-      launchOptions = {
-        args: [...chromium.args, '--single-process', '--no-zygote', '--no-sandbox'],
-        defaultViewport: chromium.defaultViewport,
-        executablePath,
-        headless: chromium.headless,
+  // Colors
+  const primaryColor = rgb(0.15, 0.39, 0.92) // Blue #2563eb
+  const textColor = rgb(0.12, 0.16, 0.22) // Dark gray
+  const lightGray = rgb(0.42, 0.45, 0.50)
+  const veryLightGray = rgb(0.98, 0.98, 0.99)
+
+  // Load logo if available
+  let logoImage = null
+  let logoWidth = 0
+  let logoHeight = 0
+  if (organization.logo_url) {
+    try {
+      const logoResponse = await fetch(organization.logo_url)
+      const logoBytes = await logoResponse.arrayBuffer()
+      const logoExt = organization.logo_url.toLowerCase()
+
+      if (logoExt.includes('.png')) {
+        logoImage = await pdfDoc.embedPng(logoBytes)
+      } else if (logoExt.includes('.jpg') || logoExt.includes('.jpeg')) {
+        logoImage = await pdfDoc.embedJpg(logoBytes)
       }
-    } else {
-      // Local development - use full puppeteer
-      puppeteer = await import('puppeteer')
-      launchOptions = {
-        headless: true,
+
+      if (logoImage) {
+        const logoDims = logoImage.scale(0.3)
+        logoWidth = Math.min(logoDims.width, 150)
+        logoHeight = logoWidth * (logoImage.height / logoImage.width)
       }
-    }
-
-    browser = await puppeteer.launch(launchOptions)
-    const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle0' })
-
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: {
-        top: '20mm',
-        right: '15mm',
-        bottom: '20mm',
-        left: '15mm',
-      },
-    })
-
-    return Buffer.from(pdf)
-  } catch (error) {
-    console.error('PDF generation error:', error)
-    throw error
-  } finally {
-    if (browser) {
-      await browser.close()
+    } catch (error) {
+      console.error('Failed to load logo for PDF:', error)
     }
   }
-}
 
-function generateHTML(data: CompletionFormData): string {
-  const clientName = data.client.company_name || `${data.client.first_name} ${data.client.last_name}`
-  const address = [
-    data.job.site_address_line1,
-    data.job.site_address_line2,
-    data.job.site_city,
-    data.job.site_state,
-    data.job.site_postcode,
-  ]
-    .filter(Boolean)
-    .join(', ')
+  // Helper to format date
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('en-AU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
 
-  const completedDate = new Date(data.form.completed_date).toLocaleDateString('en-AU', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+  // Helper to wrap text
+  const wrapText = (text: string, maxWidth: number, fontSize: number, font: any): string[] => {
+    const words = text.split(' ')
+    const lines: string[] = []
+    let currentLine = ''
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word
+      const textWidth = font.widthOfTextAtSize(testLine, fontSize)
+
+      if (textWidth > maxWidth && currentLine) {
+        lines.push(currentLine)
+        currentLine = word
+      } else {
+        currentLine = testLine
+      }
+    }
+
+    if (currentLine) {
+      lines.push(currentLine)
+    }
+
+    return lines
+  }
+
+  const { width, height } = page.getSize()
+  let yPosition = height - 50
+
+  // Header - Logo (if available)
+  if (logoImage) {
+    page.drawImage(logoImage, {
+      x: 50,
+      y: yPosition - logoHeight,
+      width: logoWidth,
+      height: logoHeight,
+    })
+    yPosition -= logoHeight + 20
+  }
+
+  // Header - Company Name
+  page.drawText(organization.name, {
+    x: 50,
+    y: yPosition,
+    size: logoImage ? 18 : 24,
+    font: boldFont,
+    color: primaryColor,
+  })
+  yPosition -= 30
+
+  // Company details
+  const companyDetails = []
+  if (organization.abn) companyDetails.push(`ABN: ${organization.abn}`)
+  if (organization.address_line1) companyDetails.push(organization.address_line1)
+  if (organization.city || organization.state || organization.postcode) {
+    companyDetails.push([organization.city, organization.state, organization.postcode].filter(Boolean).join(', '))
+  }
+  if (organization.email) companyDetails.push(`Email: ${organization.email}`)
+  if (organization.phone) companyDetails.push(`Phone: ${organization.phone}`)
+
+  companyDetails.forEach((detail) => {
+    page.drawText(detail, {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: lightGray,
+    })
+    yPosition -= 15
   })
 
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${data.template.name} - ${data.job.job_number}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  // Report Title
+  yPosition -= 20
+  page.drawText('JOB COMPLETION REPORT', {
+    x: 50,
+    y: yPosition,
+    size: 24,
+    font: boldFont,
+    color: textColor,
+  })
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-      font-size: 11pt;
-      line-height: 1.6;
-      color: #333;
-    }
+  // Job details (right side)
+  const rightX = 380
+  let rightY = height - 120
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 3px solid #2563eb;
-    }
+  page.drawText('Job Number:', {
+    x: rightX,
+    y: rightY,
+    size: 10,
+    font: regularFont,
+    color: lightGray,
+  })
+  page.drawText(job.job_number, {
+    x: rightX,
+    y: rightY - 15,
+    size: 10,
+    font: boldFont,
+    color: textColor,
+  })
 
-    .logo-section {
-      flex: 1;
-    }
+  rightY -= 45
+  page.drawText('Completed:', {
+    x: rightX,
+    y: rightY,
+    size: 10,
+    font: regularFont,
+    color: lightGray,
+  })
+  page.drawText(formatDate(form.completed_date), {
+    x: rightX,
+    y: rightY - 15,
+    size: 10,
+    font: regularFont,
+    color: textColor,
+  })
 
-    .logo {
-      max-width: 200px;
-      max-height: 80px;
-      margin-bottom: 10px;
-    }
+  // Job title
+  yPosition -= 60
+  page.drawText(job.title, {
+    x: 50,
+    y: yPosition,
+    size: 14,
+    font: boldFont,
+    color: textColor,
+  })
+  yPosition -= 25
 
-    .company-info {
-      font-size: 9pt;
-      color: #666;
-      line-height: 1.4;
-    }
+  // Client section
+  page.drawText('CLIENT', {
+    x: 50,
+    y: yPosition,
+    size: 12,
+    font: boldFont,
+    color: primaryColor,
+  })
+  yPosition -= 18
 
-    .report-title-section {
-      text-align: right;
-      flex: 1;
-    }
+  const clientName = client.company_name || `${client.first_name} ${client.last_name}`
+  page.drawText(clientName, {
+    x: 50,
+    y: yPosition,
+    size: 11,
+    font: boldFont,
+    color: textColor,
+  })
+  yPosition -= 15
 
-    .report-type {
-      font-size: 10pt;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 5px;
-    }
+  const clientDetails = []
+  const siteAddress = [job.site_address_line1, job.site_address_line2].filter(Boolean).join(', ')
+  if (siteAddress) clientDetails.push(siteAddress)
+  if (job.site_city || job.site_state || job.site_postcode) {
+    clientDetails.push([job.site_city, job.site_state, job.site_postcode].filter(Boolean).join(', '))
+  }
+  if (client.email) clientDetails.push(`Email: ${client.email}`)
+  if (client.phone) clientDetails.push(`Phone: ${client.phone}`)
 
-    .report-title {
-      font-size: 18pt;
-      font-weight: bold;
-      color: #2563eb;
-      margin-bottom: 10px;
-    }
+  clientDetails.forEach((detail) => {
+    page.drawText(detail, {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: lightGray,
+    })
+    yPosition -= 15
+  })
 
-    .job-number {
-      font-size: 10pt;
-      color: #666;
-      margin-bottom: 5px;
-    }
+  yPosition -= 20
 
-    .report-date {
-      font-size: 9pt;
-      color: #999;
-    }
+  // Template name and description
+  page.drawText(template.name, {
+    x: 50,
+    y: yPosition,
+    size: 12,
+    font: boldFont,
+    color: primaryColor,
+  })
+  yPosition -= 15
 
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: #f8fafc;
-      border-radius: 8px;
-    }
-
-    .info-block {
-      margin-bottom: 10px;
-    }
-
-    .info-label {
-      font-size: 9pt;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .info-value {
-      font-size: 11pt;
-      color: #111;
-      font-weight: 500;
-    }
-
-    .section {
-      margin-bottom: 40px;
-      page-break-inside: avoid;
-    }
-
-    .section-header {
-      background: #2563eb;
-      color: white;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      border-radius: 6px;
-      font-size: 13pt;
-      font-weight: 600;
-    }
-
-    .section-description {
-      font-size: 10pt;
-      color: #666;
-      font-style: italic;
-      margin-bottom: 20px;
-      padding-left: 16px;
-    }
-
-    .question {
-      margin-bottom: 25px;
-      padding-left: 16px;
-      page-break-inside: avoid;
-    }
-
-    .question-text {
-      font-size: 11pt;
-      font-weight: 600;
-      color: #111;
-      margin-bottom: 8px;
-    }
-
-    .question-type {
-      font-size: 8pt;
-      color: #999;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
-    }
-
-    .answer {
-      font-size: 11pt;
-      color: #444;
-      padding: 12px;
-      background: #ffffff;
-      border-left: 3px solid #2563eb;
-      border-radius: 4px;
-      margin-bottom: 12px;
-    }
-
-    .answer-checkbox {
-      display: inline-flex;
-      align-items: center;
-      padding: 6px 12px;
-      background: #f0f9ff;
-      border-radius: 4px;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-
-    .answer-checkbox.checked {
-      background: #dbeafe;
-      border: 1px solid #2563eb;
-    }
-
-    .checkbox-icon {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid #2563eb;
-      border-radius: 3px;
-      margin-right: 6px;
-      background: #2563eb;
-      position: relative;
-    }
-
-    .checkbox-icon::after {
-      content: '✓';
-      position: absolute;
-      top: -2px;
-      left: 2px;
-      color: white;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .photos-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 12px;
-    }
-
-    .photo-container {
-      page-break-inside: avoid;
-    }
-
-    .photo {
-      width: 100%;
-      height: auto;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .photo-caption {
-      font-size: 9pt;
-      color: #666;
-      margin-top: 6px;
-      font-style: italic;
-    }
-
-    .signatures {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      margin-top: 40px;
-      padding-top: 30px;
-      border-top: 2px solid #e5e7eb;
-      page-break-inside: avoid;
-    }
-
-    .signature-box {
-      text-align: center;
-    }
-
-    .signature-label {
-      font-size: 10pt;
-      color: #666;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .signature-image {
-      max-width: 200px;
-      max-height: 80px;
-      border: 1px solid #e5e7eb;
-      border-radius: 4px;
-      padding: 10px;
-      background: white;
-      margin: 0 auto 10px;
-    }
-
-    .signature-line {
-      border-top: 1px solid #333;
-      margin: 0 auto 5px;
-      width: 250px;
-    }
-
-    .signature-name {
-      font-size: 10pt;
-      color: #111;
-      font-weight: 600;
-    }
-
-    .signature-date {
-      font-size: 9pt;
-      color: #666;
-    }
-
-    .footer {
-      margin-top: 50px;
-      padding-top: 20px;
-      border-top: 2px solid #e5e7eb;
-      text-align: center;
-      font-size: 9pt;
-      color: #999;
-    }
-
-    .no-answer {
-      color: #999;
-      font-style: italic;
-    }
-
-    @media print {
-      body {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-    }
-  </style>
-</head>
-<body>
-  <!-- Header -->
-  <div class="header">
-    <div class="logo-section">
-      ${
-        data.organization.logo_url
-          ? `<img src="${data.organization.logo_url}" alt="${data.organization.name}" class="logo">`
-          : `<h2 style="color: #2563eb; margin-bottom: 10px;">${data.organization.name}</h2>`
-      }
-      <div class="company-info">
-        ${data.organization.abn ? `<div>ABN: ${data.organization.abn}</div>` : ''}
-        ${data.organization.phone ? `<div>Phone: ${data.organization.phone}</div>` : ''}
-        ${data.organization.email ? `<div>Email: ${data.organization.email}</div>` : ''}
-        ${
-          data.organization.address_line1
-            ? `<div>${[data.organization.address_line1, data.organization.city, data.organization.state, data.organization.postcode].filter(Boolean).join(', ')}</div>`
-            : ''
-        }
-      </div>
-    </div>
-    <div class="report-title-section">
-      <div class="report-type">Job Completion Report</div>
-      <div class="report-title">${data.template.name}</div>
-      <div class="job-number">Job #${data.job.job_number}</div>
-      <div class="report-date">Completed: ${completedDate}</div>
-    </div>
-  </div>
-
-  <!-- Job Info -->
-  <div class="info-grid">
-    <div>
-      <div class="info-block">
-        <div class="info-label">Client</div>
-        <div class="info-value">${clientName}</div>
-      </div>
-      ${
-        data.client.phone
-          ? `<div class="info-block">
-        <div class="info-label">Phone</div>
-        <div class="info-value">${data.client.phone}</div>
-      </div>`
-          : ''
-      }
-      ${
-        data.client.email
-          ? `<div class="info-block">
-        <div class="info-label">Email</div>
-        <div class="info-value">${data.client.email}</div>
-      </div>`
-          : ''
-      }
-    </div>
-    <div>
-      <div class="info-block">
-        <div class="info-label">Job Title</div>
-        <div class="info-value">${data.job.title}</div>
-      </div>
-      ${
-        address
-          ? `<div class="info-block">
-        <div class="info-label">Site Address</div>
-        <div class="info-value">${address}</div>
-      </div>`
-          : ''
-      }
-      <div class="info-block">
-        <div class="info-label">Completed By</div>
-        <div class="info-value">${data.completedBy.full_name}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Form Sections -->
-  ${data.groups
-    .map(
-      (group) => `
-    <div class="section">
-      <div class="section-header">${group.group_name}</div>
-      ${group.description ? `<div class="section-description">${group.description}</div>` : ''}
-
-      ${group.questions
-        .map(
-          (question) => `
-        <div class="question">
-          <div class="question-text">${question.question_text}</div>
-          <div class="question-type">${question.field_type.replace('_', ' ')}</div>
-
-          ${formatAnswer(question)}
-
-          ${
-            question.photos && question.photos.length > 0
-              ? `
-            <div class="photos-grid">
-              ${question.photos
-                .map(
-                  (photo) => `
-                <div class="photo-container">
-                  <img src="${photo.photo_url}" alt="${photo.caption || ''}" class="photo">
-                  ${photo.caption ? `<div class="photo-caption">${photo.caption}</div>` : ''}
-                </div>
-              `
-                )
-                .join('')}
-            </div>
-          `
-              : ''
-          }
-        </div>
-      `
-        )
-        .join('')}
-    </div>
-  `
-    )
-    .join('')}
-
-  <!-- All Photos Section -->
-  ${
-    data.photos && data.photos.length > 0
-      ? `
-    <div class="section">
-      <div class="section-header">Photos</div>
-      <div class="photos-grid">
-        ${data.photos
-          .map(
-            (photo) => `
-          <div class="photo-container">
-            <img src="${photo.photo_url}" alt="${photo.caption || ''}" class="photo">
-            <div class="photo-caption">
-              ${photo.photo_type ? `<strong>${photo.photo_type}:</strong> ` : ''}
-              ${photo.caption || ''}
-            </div>
-          </div>
-        `
-          )
-          .join('')}
-      </div>
-    </div>
-  `
-      : ''
+  if (template.description) {
+    const descLines = wrapText(template.description, 495, 10, regularFont)
+    descLines.forEach((line) => {
+      page.drawText(line, {
+        x: 50,
+        y: yPosition,
+        size: 10,
+        font: regularFont,
+        color: lightGray,
+      })
+      yPosition -= 13
+    })
   }
 
-  <!-- Signatures -->
-  <div class="signatures">
-    <div class="signature-box">
-      <div class="signature-label">Technician Signature</div>
-      ${
-        data.form.technician_signature_url
-          ? `<img src="${data.form.technician_signature_url}" alt="Technician Signature" class="signature-image">`
-          : '<div class="signature-line"></div>'
-      }
-      <div class="signature-name">${data.completedBy.full_name}</div>
-      <div class="signature-date">${completedDate}</div>
-    </div>
+  yPosition -= 20
 
-    ${
-      data.form.client_signature_url
-        ? `
-      <div class="signature-box">
-        <div class="signature-label">Client Signature</div>
-        <img src="${data.form.client_signature_url}" alt="Client Signature" class="signature-image">
-        <div class="signature-name">${clientName}</div>
-        <div class="signature-date">${completedDate}</div>
-      </div>
-    `
-        : ''
+  // Groups and Questions
+  for (const group of groups) {
+    // Check if we need a new page
+    if (yPosition < 150) {
+      page = pdfDoc.addPage([595, 842])
+      yPosition = height - 50
     }
-  </div>
 
-  <!-- Footer -->
-  <div class="footer">
-    <p>This report was generated automatically by ${data.organization.name}</p>
-    <p>Report ID: ${data.form.id}</p>
-  </div>
-</body>
-</html>
-  `
-}
+    // Group header
+    page.drawRectangle({
+      x: 50,
+      y: yPosition - 5,
+      width: 495,
+      height: 25,
+      color: veryLightGray,
+    })
 
-function formatAnswer(question: any): string {
-  if (!question.answer || question.answer === '') {
-    return '<div class="answer no-answer">No response provided</div>'
+    page.drawText(group.group_name, {
+      x: 55,
+      y: yPosition + 3,
+      size: 11,
+      font: boldFont,
+      color: primaryColor,
+    })
+    yPosition -= 30
+
+    // Questions
+    for (const question of group.questions) {
+      // Check if we need a new page
+      if (yPosition < 100) {
+        page = pdfDoc.addPage([595, 842])
+        yPosition = height - 50
+      }
+
+      // Question text
+      const questionLines = wrapText(question.question_text, 490, 10, boldFont)
+      questionLines.forEach((line) => {
+        page.drawText(line, {
+          x: 55,
+          y: yPosition,
+          size: 10,
+          font: boldFont,
+          color: textColor,
+        })
+        yPosition -= 15
+      })
+
+      // Answer
+      const answerText = question.answer ? String(question.answer) : 'N/A'
+      const answerLines = wrapText(answerText, 490, 9, regularFont)
+      answerLines.forEach((line) => {
+        page.drawText(line, {
+          x: 65,
+          y: yPosition,
+          size: 9,
+          font: regularFont,
+          color: lightGray,
+        })
+        yPosition -= 14
+      })
+
+      yPosition -= 5
+    }
+
+    yPosition -= 10
   }
 
-  switch (question.field_type) {
-    case 'text':
-    case 'textarea':
-    case 'number':
-    case 'date':
-    case 'time':
-      return `<div class="answer">${question.answer}</div>`
-
-    case 'radio':
-    case 'dropdown':
-      return `<div class="answer">${question.answer}</div>`
-
-    case 'checkbox':
-      if (typeof question.answer === 'boolean') {
-        return question.answer
-          ? '<div class="answer-checkbox checked"><span class="checkbox-icon"></span> Yes</div>'
-          : '<div class="answer">No</div>'
-      }
-      // Multiple checkboxes
-      if (Array.isArray(question.answer)) {
-        return `
-          <div>
-            ${question.answer.map((item: any) => `<div class="answer-checkbox checked"><span class="checkbox-icon"></span> ${item}</div>`).join('')}
-          </div>
-        `
-      }
-      return `<div class="answer">${question.answer}</div>`
-
-    default:
-      return `<div class="answer">${JSON.stringify(question.answer)}</div>`
+  // Technician signature section
+  if (yPosition < 100) {
+    page = pdfDoc.addPage([595, 842])
+    yPosition = height - 50
   }
+
+  yPosition -= 20
+  page.drawText('COMPLETED BY', {
+    x: 50,
+    y: yPosition,
+    size: 12,
+    font: boldFont,
+    color: primaryColor,
+  })
+  yPosition -= 20
+
+  page.drawText(completedBy.full_name, {
+    x: 50,
+    y: yPosition,
+    size: 10,
+    font: boldFont,
+    color: textColor,
+  })
+  yPosition -= 15
+
+  if (completedBy.email) {
+    page.drawText(completedBy.email, {
+      x: 50,
+      y: yPosition,
+      size: 10,
+      font: regularFont,
+      color: lightGray,
+    })
+    yPosition -= 20
+  }
+
+  // Technician signature
+  if (form.technician_signature_url) {
+    try {
+      const sigResponse = await fetch(form.technician_signature_url)
+      const sigBytes = await sigResponse.arrayBuffer()
+      const sigImage = await pdfDoc.embedPng(sigBytes)
+      const sigDims = sigImage.scale(0.2)
+
+      page.drawImage(sigImage, {
+        x: 50,
+        y: yPosition - sigDims.height,
+        width: Math.min(sigDims.width, 150),
+        height: Math.min(sigDims.height, 50),
+      })
+      yPosition -= 60
+    } catch (error) {
+      console.error('Failed to load technician signature:', error)
+      page.drawText('Signature on file', {
+        x: 50,
+        y: yPosition,
+        size: 9,
+        font: regularFont,
+        color: lightGray,
+      })
+      yPosition -= 20
+    }
+  }
+
+  page.drawText(formatDate(form.completed_date), {
+    x: 50,
+    y: yPosition,
+    size: 9,
+    font: regularFont,
+    color: lightGray,
+  })
+
+  // Footer
+  const footerText = `Generated on ${formatDate(new Date().toISOString())}`
+  const footerWidth = regularFont.widthOfTextAtSize(footerText, 8)
+  page.drawText(footerText, {
+    x: (width - footerWidth) / 2,
+    y: 30,
+    size: 8,
+    font: regularFont,
+    color: lightGray,
+  })
+
+  // Serialize the PDF to bytes
+  const pdfBytes = await pdfDoc.save()
+  return Buffer.from(pdfBytes)
 }

@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",
+    "pdf-lib": "^1.17.1",
     "resend": "^6.4.1"
   }
 }
