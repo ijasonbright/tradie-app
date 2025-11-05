@@ -388,6 +388,229 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
       })
 
       yPosition -= 5
+
+      // Add photos for this question if any
+      if (question.photos && question.photos.length > 0) {
+        yPosition -= 10
+
+        for (const photo of question.photos) {
+          try {
+            // Check if we need a new page
+            if (yPosition < 200) {
+              page = pdfDoc.addPage([595, 842])
+              yPosition = height - 50
+            }
+
+            console.log('[PDF Generator] Loading question photo from:', photo.photo_url)
+            const photoResponse = await fetch(photo.photo_url)
+            if (!photoResponse.ok) {
+              console.error('[PDF Generator] Failed to fetch photo:', photoResponse.status)
+              continue
+            }
+
+            const photoBytes = await photoResponse.arrayBuffer()
+            const photoExt = photo.photo_url.toLowerCase()
+
+            let photoImage
+            if (photoExt.includes('.png')) {
+              photoImage = await pdfDoc.embedPng(photoBytes)
+            } else if (photoExt.includes('.jpg') || photoExt.includes('.jpeg')) {
+              photoImage = await pdfDoc.embedJpg(photoBytes)
+            } else {
+              // Try JPG first for photos
+              try {
+                photoImage = await pdfDoc.embedJpg(photoBytes)
+              } catch {
+                photoImage = await pdfDoc.embedPng(photoBytes)
+              }
+            }
+
+            // Scale photo to fit (max width 400, max height 150)
+            const photoDims = photoImage.scale(1)
+            const maxWidth = 400
+            const maxHeight = 150
+            let photoWidth = photoDims.width
+            let photoHeight = photoDims.height
+
+            // Scale down if too large
+            if (photoWidth > maxWidth) {
+              const scale = maxWidth / photoWidth
+              photoWidth = maxWidth
+              photoHeight = photoHeight * scale
+            }
+            if (photoHeight > maxHeight) {
+              const scale = maxHeight / photoHeight
+              photoHeight = maxHeight
+              photoWidth = photoWidth * scale
+            }
+
+            // Draw photo
+            page.drawImage(photoImage, {
+              x: 65,
+              y: yPosition - photoHeight,
+              width: photoWidth,
+              height: photoHeight,
+            })
+
+            // Draw caption if exists
+            if (photo.caption) {
+              page.drawText(photo.caption, {
+                x: 65,
+                y: yPosition - photoHeight - 15,
+                size: 8,
+                font: regularFont,
+                color: lightGray,
+              })
+              yPosition -= photoHeight + 25
+            } else {
+              yPosition -= photoHeight + 10
+            }
+
+            console.log('[PDF Generator] Photo added successfully')
+          } catch (error) {
+            console.error('[PDF Generator] Failed to load question photo:', error)
+          }
+        }
+
+        yPosition -= 10
+      }
+    }
+
+    // Add group photos section if there are any photos in this group
+    const groupPhotos = group.questions
+      .flatMap(q => q.photos || [])
+
+    if (groupPhotos.length > 0) {
+      // Check if we need a new page
+      if (yPosition < 150) {
+        page = pdfDoc.addPage([595, 842])
+        yPosition = height - 50
+      }
+
+      yPosition -= 20
+
+      // Photos section header with orange background (like your example)
+      const orangeColor = rgb(0.95, 0.55, 0.2) // Orange #F28C33
+      page.drawRectangle({
+        x: 50,
+        y: yPosition - 5,
+        width: 495,
+        height: 25,
+        color: orangeColor,
+      })
+
+      page.drawText(`${group.group_name} - Photos`, {
+        x: 55,
+        y: yPosition + 3,
+        size: 11,
+        font: boldFont,
+        color: rgb(1, 1, 1), // White text
+      })
+      yPosition -= 35
+
+      // Draw photos in a grid (2 per row)
+      let photosInRow = 0
+      let currentRowY = yPosition
+      const photoSpacing = 250 // Space between photos horizontally
+      const photoMaxWidth = 230
+      const photoMaxHeight = 150
+
+      for (const photo of groupPhotos) {
+        try {
+          // Check if we need a new page
+          if (currentRowY < 200) {
+            page = pdfDoc.addPage([595, 842])
+            yPosition = height - 50
+            currentRowY = yPosition
+            photosInRow = 0
+          }
+
+          console.log('[PDF Generator] Loading group photo from:', photo.photo_url)
+          const photoResponse = await fetch(photo.photo_url)
+          if (!photoResponse.ok) {
+            console.error('[PDF Generator] Failed to fetch photo:', photoResponse.status)
+            continue
+          }
+
+          const photoBytes = await photoResponse.arrayBuffer()
+          const photoExt = photo.photo_url.toLowerCase()
+
+          let photoImage
+          if (photoExt.includes('.png')) {
+            photoImage = await pdfDoc.embedPng(photoBytes)
+          } else if (photoExt.includes('.jpg') || photoExt.includes('.jpeg')) {
+            photoImage = await pdfDoc.embedJpg(photoBytes)
+          } else {
+            try {
+              photoImage = await pdfDoc.embedJpg(photoBytes)
+            } catch {
+              photoImage = await pdfDoc.embedPng(photoBytes)
+            }
+          }
+
+          // Scale photo to fit
+          const photoDims = photoImage.scale(1)
+          let photoWidth = photoDims.width
+          let photoHeight = photoDims.height
+
+          if (photoWidth > photoMaxWidth) {
+            const scale = photoMaxWidth / photoWidth
+            photoWidth = photoMaxWidth
+            photoHeight = photoHeight * scale
+          }
+          if (photoHeight > photoMaxHeight) {
+            const scale = photoMaxHeight / photoHeight
+            photoHeight = photoMaxHeight
+            photoWidth = photoWidth * scale
+          }
+
+          // Calculate X position based on which photo in the row
+          const xPosition = 55 + (photosInRow * photoSpacing)
+
+          // Draw photo
+          page.drawImage(photoImage, {
+            x: xPosition,
+            y: currentRowY - photoHeight,
+            width: photoWidth,
+            height: photoHeight,
+          })
+
+          // Draw caption if exists
+          if (photo.caption) {
+            const captionLines = wrapText(photo.caption, photoMaxWidth - 10, 8, regularFont)
+            let captionY = currentRowY - photoHeight - 15
+            captionLines.forEach(line => {
+              page.drawText(line, {
+                x: xPosition,
+                y: captionY,
+                size: 8,
+                font: regularFont,
+                color: lightGray,
+              })
+              captionY -= 12
+            })
+          }
+
+          photosInRow++
+
+          // Move to next row after 2 photos
+          if (photosInRow >= 2) {
+            const maxPhotoHeightInRow = photoMaxHeight // Simplified for now
+            currentRowY -= maxPhotoHeightInRow + (photo.caption ? 35 : 20)
+            photosInRow = 0
+          }
+
+          console.log('[PDF Generator] Group photo added successfully')
+        } catch (error) {
+          console.error('[PDF Generator] Failed to load group photo:', error)
+        }
+      }
+
+      // Adjust yPosition after all photos
+      if (photosInRow > 0) {
+        currentRowY -= photoMaxHeight + 20
+      }
+      yPosition = currentRowY - 20
     }
 
     yPosition -= 10
