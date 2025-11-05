@@ -153,11 +153,48 @@ export async function GET(
       ORDER BY sort_order ASC, uploaded_at ASC
     `
 
+    // Get template structure (groups and questions)
+    const groups = await sql`
+      SELECT
+        g.id,
+        g.name as group_name,
+        g.description as group_description,
+        g.sort_order as group_order,
+        g.is_collapsible
+      FROM completion_form_template_groups g
+      WHERE g.template_id = ${form.template_id}
+      ORDER BY g.sort_order ASC
+    `
+
+    // Get questions for all groups
+    const questions = await sql`
+      SELECT
+        q.id,
+        q.group_id,
+        q.question_text,
+        q.field_type,
+        q.is_required,
+        q.help_text,
+        q.answer_options,
+        q.placeholder,
+        q.sort_order as question_order
+      FROM completion_form_template_questions q
+      WHERE q.template_id = ${form.template_id}
+      ORDER BY q.sort_order ASC
+    `
+
+    // Organize questions by group
+    const groupsWithQuestions = groups.map((group: any) => ({
+      ...group,
+      questions: questions.filter((q: any) => q.group_id === group.id),
+    }))
+
     return NextResponse.json({
       job,
       form: {
         ...form,
         photos,
+        groups: groupsWithQuestions,
       },
     })
   } catch (error) {
