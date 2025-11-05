@@ -2,6 +2,16 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "functions": {
+    "apps/web/app/api/jobs/*/completion-form/pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "apps/web/app/api/jobs/*/completion-form/send-report/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/check-reminders",

@@ -86,7 +86,7 @@ export async function generateCompletionFormPDF(data: CompletionFormData): Promi
       const executablePath = await chromium.executablePath()
 
       launchOptions = {
-        args: chromium.args,
+        args: [...chromium.args, '--single-process', '--no-zygote', '--no-sandbox'],
         defaultViewport: chromium.defaultViewport,
         executablePath,
         headless: chromium.headless,
