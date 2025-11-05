@@ -888,6 +888,18 @@ class ApiClient {
       }
     )
   }
+
+  /**
+   * Send a test push notification to current user
+   */
+  async sendTestPushNotification() {
+    return this.request<{ success: boolean; message: string; tickets: any[] }>(
+      '/push/test',
+      {
+        method: 'POST',
+      }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()
