@@ -74,7 +74,7 @@ interface CompletionFormData {
 export async function generateCompletionFormPDF(data: CompletionFormData): Promise<Buffer> {
   try {
     console.log('[PDF Generator] Starting PDF generation')
-    const { form, job, client, organization, template, groups, completedBy } = data
+    const { form, job, client, organization, template, groups, completedBy, photos } = data
 
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create()
