@@ -1,15 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { View, StyleSheet, Animated, Easing, Image } from 'react-native'
+import { View, StyleSheet, Animated, Easing, Image, Text } from 'react-native'
 import { useAuth } from '../lib/auth'
 import { useRouter } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { useTheme } from '../context/ThemeContext'
+
+// Default Taskforce logo
+const DEFAULT_LOGO = require('../assets/default-logo.png')
 
 export default function Index() {
   const { isLoaded, isSignedIn } = useAuth()
   const { brandColor, logoUrl, loading: themeLoading } = useTheme()
   const router = useRouter()
   const [showSplash, setShowSplash] = useState(true)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('[Splash Screen] Brand Color:', brandColor)
+    console.log('[Splash Screen] Logo URL:', logoUrl)
+    console.log('[Splash Screen] Theme Loading:', themeLoading)
+  }, [brandColor, logoUrl, themeLoading])
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current
@@ -82,22 +92,23 @@ export default function Index() {
     <View style={[styles.container, { backgroundColor: brandColor }]}>
       <StatusBar style="light" />
 
-      {logoUrl ? (
-        <Animated.View style={[styles.logoContainer, animatedStyle]}>
+      <Animated.View style={[styles.logoContainer, animatedStyle]}>
+        {logoUrl ? (
+          // Organization's custom logo from database
           <Image
             source={{ uri: logoUrl }}
             style={styles.logo}
             resizeMode="contain"
           />
-        </Animated.View>
-      ) : (
-        <Animated.View style={[styles.logoContainer, animatedStyle]}>
-          <View style={styles.placeholderLogo}>
-            {/* Fallback: Simple animated circle if no logo */}
-            <View style={styles.circle} />
-          </View>
-        </Animated.View>
-      )}
+        ) : (
+          // Default Taskforce logo
+          <Image
+            source={DEFAULT_LOGO}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        )}
+      </Animated.View>
     </View>
   )
 }
@@ -113,21 +124,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    width: 200,
-    height: 200,
-  },
-  placeholderLogo: {
-    width: 120,
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  circle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.8)',
+    width: 250,
+    height: 150,
   },
 })
