@@ -67,7 +67,7 @@ export default function Index() {
   useEffect(() => {
     if (!isLoaded || themeLoading) return
 
-    // Show splash for at least 1.5 seconds for smooth experience
+    // Show splash for at least 3 seconds for smooth experience
     const minSplashTime = setTimeout(() => {
       setShowSplash(false)
 
@@ -76,7 +76,7 @@ export default function Index() {
       } else {
         router.replace('/(auth)/sign-in')
       }
-    }, 1500)
+    }, 3000)
 
     return () => clearTimeout(minSplashTime)
   }, [isLoaded, isSignedIn, themeLoading])
