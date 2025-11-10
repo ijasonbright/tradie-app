@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Tradie App",
+    "name": "Taskforce",
     "slug": "tradie-app",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "owner": "ijasonbright",
@@ -10,10 +10,13 @@
     "splash": {
       "backgroundColor": "#2563eb"
     },
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradieapp",
+      "bundleIdentifier": "com.taskforceaustralia.tradieapp",
+      "buildNumber": "1",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to share it with your team for better job coordination.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
         "NSLocationAlwaysUsageDescription": "This app needs background location access to keep your team updated on your location even when the app is closed.",
@@ -52,9 +55,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Tradie App to use your location to share it with your team for better job coordination.",
-          "locationAlwaysPermission": "Allow Tradie App to track your location in the background to keep your team updated.",
-          "locationWhenInUsePermission": "Allow Tradie App to use your location while using the app.",
+          "locationAlwaysAndWhenInUsePermission": "Allow Taskforce to use your location to share it with your team for better job coordination.",
+          "locationAlwaysPermission": "Allow Taskforce to track your location in the background to keep your team updated.",
+          "locationWhenInUsePermission": "Allow Taskforce to use your location while using the app.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
