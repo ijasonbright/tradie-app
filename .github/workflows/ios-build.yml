@@ -42,8 +42,5 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Submit to TestFlight
-        working-directory: apps/mobile
-        run: eas submit --platform ios --latest --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Build complete
+        run: echo "Build completed! Download the .ipa from Expo dashboard or submit manually with 'eas submit --platform ios --latest'"
