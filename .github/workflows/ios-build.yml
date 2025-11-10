@@ -29,6 +29,13 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Initialize git in mobile directory (isolate from monorepo)
+        working-directory: apps/mobile
+        run: |
+          git init
+          git add .
+          git commit -m "Mobile app for EAS build"
+
       - name: Build iOS app with EAS
         working-directory: apps/mobile
         run: eas build --platform ios --profile testflight --non-interactive
