@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 13.2.0"
+    "version": ">= 13.2.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -18,6 +19,14 @@
     },
     "production": {
       "autoIncrement": true,
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_dGFsZW50ZWQtc3RvcmstMTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
+        "EXPO_PUBLIC_API_URL": "https://tradie-app-web.vercel.app/api"
+      }
+    },
+    "testflight": {
+      "distribution": "store",
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_dGFsZW50ZWQtc3RvcmstMTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
         "EXPO_PUBLIC_API_URL": "https://tradie-app-web.vercel.app/api"
