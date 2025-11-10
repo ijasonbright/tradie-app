@@ -27,9 +27,6 @@
     },
     "testflight": {
       "distribution": "store",
-      "ios": {
-        "bundleIdentifier": "com.taskforceaustralia.tradieapp"
-      },
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_dGFsZW50ZWQtc3RvcmstMTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
         "EXPO_PUBLIC_API_URL": "https://tradie-app-web.vercel.app/api"
