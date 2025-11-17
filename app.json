@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "4c31386c-3e21-455f-b7e4-02c657a5971e"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.ijasonbright.tradieapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}
