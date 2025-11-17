@@ -26,6 +26,7 @@
       }
     },
     "testflight": {
+      "autoIncrement": true,
       "distribution": "store",
       "env": {
         "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_dGFsZW50ZWQtc3RvcmstMTAuY2xlcmsuYWNjb3VudHMuZGV2JA",
