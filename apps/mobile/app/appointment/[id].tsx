@@ -71,6 +71,11 @@ export default function EditAppointmentScreen() {
 
       // Populate form with appointment data
       const appt = appointmentResponse.appointment
+      if (!appt) {
+        Alert.alert('Error', 'Appointment not found')
+        router.back()
+        return
+      }
       setAppointment(appt)
       setTitle(appt.title || '')
       setDescription(appt.description || '')
@@ -78,8 +83,14 @@ export default function EditAppointmentScreen() {
       setClientId(appt.client_id || '')
       setJobId(appt.job_id || '')
       setLocationAddress(appt.location_address || '')
-      setStartDate(new Date(appt.start_time))
-      setEndDate(new Date(appt.end_time))
+
+      // Safely parse dates with fallback to current time
+      const parsedStartDate = appt.start_time ? new Date(appt.start_time) : new Date()
+      const parsedEndDate = appt.end_time ? new Date(appt.end_time) : new Date(Date.now() + 60 * 60 * 1000)
+
+      // Validate that dates are valid before setting
+      setStartDate(isNaN(parsedStartDate.getTime()) ? new Date() : parsedStartDate)
+      setEndDate(isNaN(parsedEndDate.getTime()) ? new Date(Date.now() + 60 * 60 * 1000) : parsedEndDate)
     } catch (err: any) {
       console.error('Failed to fetch data:', err)
       Alert.alert('Error', 'Failed to load appointment data')
