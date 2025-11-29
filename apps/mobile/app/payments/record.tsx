@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Keyboard } from 'react-native'
 import { useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/api-client'
@@ -13,6 +13,7 @@ export default function RecordPaymentScreen() {
   const [invoices, setInvoices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
 
   // Form fields
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
@@ -26,6 +27,23 @@ export default function RecordPaymentScreen() {
 
   useEffect(() => {
     fetchOutstandingInvoices()
+  }, [])
+
+  // Listen for keyboard events
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    )
+    const hideSubscription = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    )
+
+    return () => {
+      showSubscription.remove()
+      hideSubscription.remove()
+    }
   }, [])
 
   const fetchOutstandingInvoices = async () => {
@@ -55,6 +73,9 @@ export default function RecordPaymentScreen() {
   }
 
   const handleSubmit = async () => {
+    // Dismiss keyboard first
+    Keyboard.dismiss()
+
     // Validation
     if (!selectedInvoice) {
       Alert.alert('Invoice Required', 'Please select an invoice')
@@ -153,14 +174,18 @@ export default function RecordPaymentScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <Stack.Screen options={{ title: 'Record Payment' }} />
 
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          // Add padding at bottom when keyboard is NOT visible to make room for fixed footer
+          !keyboardVisible && { paddingBottom: 100 }
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Invoice Selection */}
@@ -323,28 +348,30 @@ export default function RecordPaymentScreen() {
                 numberOfLines={4}
               />
             </View>
-
-            {/* Action Buttons - Inside ScrollView */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => router.back()}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: brandColor }]}
-                onPress={handleSubmit}
-                disabled={submitting}
-              >
-                <Text style={styles.submitButtonText}>
-                  {submitting ? 'Recording...' : 'Record Payment'}
-                </Text>
-              </TouchableOpacity>
-            </View>
           </>
         )}
       </ScrollView>
+
+      {/* Fixed Footer with Action Buttons - moves above keyboard */}
+      {selectedInvoice && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.submitButton, { backgroundColor: brandColor }]}
+            onPress={handleSubmit}
+            disabled={submitting}
+          >
+            <Text style={styles.submitButtonText}>
+              {submitting ? 'Recording...' : 'Record Payment'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -366,14 +393,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 0,
-    paddingBottom: 40,
   },
-  buttonContainer: {
+  footer: {
     flexDirection: 'row',
     padding: 16,
     gap: 12,
     backgroundColor: '#fff',
-    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
   },
   loadingText: {
     marginTop: 16,

@@ -206,6 +206,25 @@ class ApiClient {
     )
   }
 
+  async addInvoiceLineItem(invoiceId: string, data: { itemType: string; description: string; quantity: number; unitPrice: number }) {
+    return this.request<{ lineItem: any }>(
+      `/invoices/${invoiceId}/line-items`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  async deleteInvoiceLineItem(invoiceId: string, lineItemId: string) {
+    return this.request<{ success: boolean }>(
+      `/invoices/${invoiceId}/line-items?lineItemId=${lineItemId}`,
+      {
+        method: 'DELETE',
+      }
+    )
+  }
+
   async updateInvoice(id: string, data: any) {
     return this.request<{ invoice: any }>(
       `/invoices/${id}`,
