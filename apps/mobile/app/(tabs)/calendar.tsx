@@ -218,19 +218,35 @@ export default function CalendarScreen() {
   }
 
   const renderAppointment = (appointment: any) => {
-    // Format times from database
-    const formatTime = (dateStr: string) => {
-      if (!dateStr) return ''
-      const date = new Date(dateStr)
-      return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+    // Safety check - skip rendering if appointment is null/undefined or missing id
+    if (!appointment || !appointment.id) {
+      console.warn('Skipping invalid appointment:', appointment)
+      return null
     }
 
-    // Build client name
-    const clientName = appointment.is_company
-      ? appointment.company_name
-      : `${appointment.first_name || ''} ${appointment.last_name || ''}`.trim()
+    // Format times from database
+    const formatTime = (dateStr: string | null | undefined) => {
+      if (!dateStr) return ''
+      try {
+        const date = new Date(dateStr)
+        if (isNaN(date.getTime())) return ''
+        return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+      } catch (e) {
+        return ''
+      }
+    }
 
-    // Get appointment type
+    // Build client name - safely handle null/undefined values
+    let clientName = ''
+    if (appointment.is_company && appointment.company_name) {
+      clientName = appointment.company_name
+    } else {
+      const firstName = appointment.first_name || ''
+      const lastName = appointment.last_name || ''
+      clientName = `${firstName} ${lastName}`.trim()
+    }
+
+    // Get appointment type with fallback
     const appointmentType = appointment.appointment_type || 'job'
 
     const startTime = formatTime(appointment.start_time)
@@ -239,23 +255,28 @@ export default function CalendarScreen() {
     // Format the date for week view - safely handle null/invalid dates
     let dateLabel = ''
     if (appointment.start_time) {
-      const appointmentDate = new Date(appointment.start_time)
-      if (!isNaN(appointmentDate.getTime())) {
-        dateLabel = appointmentDate.toLocaleDateString('en-AU', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short'
-        })
+      try {
+        const appointmentDate = new Date(appointment.start_time)
+        if (!isNaN(appointmentDate.getTime())) {
+          dateLabel = appointmentDate.toLocaleDateString('en-AU', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short'
+          })
+        }
+      } catch (e) {
+        // Ignore date parsing errors
       }
     }
 
     // Get phone number from client data
-    const clientPhone = appointment.client_phone || appointment.client_mobile
+    const clientPhone = appointment.client_phone || appointment.client_mobile || null
 
     // Determine if this is a job or an appointment
     // If job_id equals id, then this row came from the jobs UNION query
-    const isJob = appointment.job_id === appointment.id
+    const isJob = appointment.job_id && appointment.job_id === appointment.id
     const handlePress = () => {
+      if (!appointment.id) return // Safety check
       if (isJob) {
         router.push(`/jobs/${appointment.id}`)
       } else {
@@ -292,7 +313,7 @@ export default function CalendarScreen() {
               ]}
             >
               <Text style={styles.chipText}>
-                {appointmentType.replace('_', ' ').toUpperCase()}
+                {(appointmentType || 'job').replace('_', ' ').toUpperCase()}
               </Text>
             </View>
           </View>

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, SafeAreaView } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from 'react-native'
 import { useRouter, Stack } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/api-client'
@@ -151,19 +151,14 @@ export default function RecordPaymentScreen() {
     : 0
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <Stack.Screen options={{ title: 'Record Payment' }} />
+    <View style={styles.container}>
+      <Stack.Screen options={{ title: 'Record Payment' }} />
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
-          keyboardShouldPersistTaps="handled"
-        >
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Invoice Selection */}
         <View style={styles.section}>
           <Text style={styles.inputLabel}>Select Invoice *</Text>
@@ -325,29 +320,31 @@ export default function RecordPaymentScreen() {
               />
             </View>
 
-            {/* Action Buttons - Inside ScrollView so they scroll with keyboard */}
-            <View style={styles.actionButtonsInline}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => router.back()}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: brandColor }]}
-                onPress={handleSubmit}
-                disabled={submitting}
-              >
-                <Text style={styles.submitButtonText}>
-                  {submitting ? 'Recording...' : 'Record Payment'}
-                </Text>
-              </TouchableOpacity>
-            </View>
           </>
         )}
       </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+      {/* Footer - Absolute positioned to stay above keyboard */}
+      {selectedInvoice && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.submitButton, { backgroundColor: brandColor }]}
+            onPress={handleSubmit}
+            disabled={submitting}
+          >
+            <Text style={styles.submitButtonText}>
+              {submitting ? 'Recording...' : 'Record Payment'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   )
 }
 
@@ -355,9 +352,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  keyboardView: {
-    flex: 1,
   },
   centerContainer: {
     flex: 1,
@@ -369,14 +363,21 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {
-    paddingBottom: 40,
+  scrollContent: {
+    padding: 0,
+    paddingBottom: 100,
   },
-  actionButtonsInline: {
-    flexDirection: 'row',
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
     padding: 16,
+    flexDirection: 'row',
     gap: 12,
-    marginTop: 8,
   },
   loadingText: {
     marginTop: 16,
@@ -600,14 +601,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginLeft: 8,
     fontWeight: '500',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    gap: 12,
   },
   cancelButton: {
     flex: 1,
