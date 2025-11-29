@@ -47,15 +47,15 @@ export default function PaymentsTab() {
 
     const todayTotal = paymentsList
       .filter((p) => new Date(p.payment_date) >= startOfToday)
-      .reduce((sum, p) => sum + (p.amount || 0), 0)
+      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
 
     const weekTotal = paymentsList
       .filter((p) => new Date(p.payment_date) >= startOfWeek)
-      .reduce((sum, p) => sum + (p.amount || 0), 0)
+      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
 
     const monthTotal = paymentsList
       .filter((p) => new Date(p.payment_date) >= startOfMonth)
-      .reduce((sum, p) => sum + (p.amount || 0), 0)
+      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
 
     setStats({
       today: todayTotal,
