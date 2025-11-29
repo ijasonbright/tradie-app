@@ -36,11 +36,11 @@ jobs:
           git add .
           git commit -m "Mobile app for EAS build"
 
-      - name: Build iOS app with EAS
+      - name: Build and Submit iOS app to TestFlight
         working-directory: apps/mobile
-        run: eas build --platform ios --profile testflight --non-interactive
+        run: eas build --platform ios --profile production --non-interactive --auto-submit
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build complete
-        run: echo "Build completed! Download the .ipa from Expo dashboard or submit manually with 'eas submit --platform ios --latest'"
+        run: echo "Build submitted to TestFlight! Check App Store Connect for the new build."
