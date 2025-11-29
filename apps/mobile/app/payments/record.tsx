@@ -324,30 +324,27 @@ export default function RecordPaymentScreen() {
               />
             </View>
 
+            {/* Action Buttons - Inside ScrollView */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitButton, { backgroundColor: brandColor }]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                <Text style={styles.submitButtonText}>
+                  {submitting ? 'Recording...' : 'Record Payment'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </ScrollView>
-
-      {/* Footer - Absolute positioned to stay above keyboard */}
-      {selectedInvoice && (
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.submitButton, { backgroundColor: brandColor }]}
-            onPress={handleSubmit}
-            disabled={submitting}
-          >
-            <Text style={styles.submitButtonText}>
-              {submitting ? 'Recording...' : 'Record Payment'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </KeyboardAvoidingView>
   )
 }
@@ -369,19 +366,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 0,
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5e5',
-    padding: 16,
+  buttonContainer: {
     flexDirection: 'row',
+    padding: 16,
     gap: 12,
+    backgroundColor: '#fff',
+    marginTop: 8,
   },
   loadingText: {
     marginTop: 16,
