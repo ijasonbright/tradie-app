@@ -236,13 +236,18 @@ export default function CalendarScreen() {
     const startTime = formatTime(appointment.start_time)
     const endTime = formatTime(appointment.end_time)
 
-    // Format the date for week view
-    const appointmentDate = new Date(appointment.start_time)
-    const dateLabel = appointmentDate.toLocaleDateString('en-AU', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short'
-    })
+    // Format the date for week view - safely handle null/invalid dates
+    let dateLabel = ''
+    if (appointment.start_time) {
+      const appointmentDate = new Date(appointment.start_time)
+      if (!isNaN(appointmentDate.getTime())) {
+        dateLabel = appointmentDate.toLocaleDateString('en-AU', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short'
+        })
+      }
+    }
 
     // Get phone number from client data
     const clientPhone = appointment.client_phone || appointment.client_mobile

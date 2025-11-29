@@ -324,30 +324,28 @@ export default function RecordPaymentScreen() {
                 numberOfLines={4}
               />
             </View>
+
+            {/* Action Buttons - Inside ScrollView so they scroll with keyboard */}
+            <View style={styles.actionButtonsInline}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => router.back()}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.submitButton, { backgroundColor: brandColor }]}
+                onPress={handleSubmit}
+                disabled={submitting}
+              >
+                <Text style={styles.submitButtonText}>
+                  {submitting ? 'Recording...' : 'Record Payment'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </ScrollView>
-
-        {/* Action Buttons */}
-        {selectedInvoice && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => router.back()}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: brandColor }]}
-              onPress={handleSubmit}
-              disabled={submitting}
-            >
-              <Text style={styles.submitButtonText}>
-                {submitting ? 'Recording...' : 'Record Payment'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   )
@@ -372,7 +370,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollViewContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
+  },
+  actionButtonsInline: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    marginTop: 8,
   },
   loadingText: {
     marginTop: 16,
