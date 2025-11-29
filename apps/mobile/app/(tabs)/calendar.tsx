@@ -278,7 +278,7 @@ export default function CalendarScreen() {
     const handlePress = () => {
       if (!appointment.id) return // Safety check
       if (isJob) {
-        router.push(`/jobs/${appointment.id}`)
+        router.push(`/job/${appointment.id}`)
       } else {
         router.push(`/appointment/${appointment.id}`)
       }
