@@ -45,6 +45,7 @@ export default function DashboardLayout({
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard', icon: '🏠' },
     { href: '/dashboard/clients', label: 'Clients', icon: '👥' },
+    { href: '/dashboard/properties', label: 'Properties', icon: '🏘️' },
     { href: '/dashboard/jobs', label: 'Jobs', icon: '🔨' },
     { href: '/dashboard/completion-forms', label: 'Completion Forms', icon: '📝' },
     { href: '/dashboard/form-builder', label: 'Form Builder', icon: '🔧' },

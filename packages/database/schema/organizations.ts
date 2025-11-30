@@ -30,6 +30,10 @@ export const organizations = pgTable('organizations', {
   // Business rates
   defaultHourlyRate: decimal('default_hourly_rate', { precision: 10, scale: 2 }).default('0'),
   defaultEmployeeCost: decimal('default_employee_cost', { precision: 10, scale: 2 }).default('0'),
+  // External integration (Property Pal)
+  externalAgencyId: integer('external_agency_id'),
+  externalSource: varchar('external_source', { length: 50 }), // 'property_pal'
+  externalSyncedAt: timestamp('external_synced_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

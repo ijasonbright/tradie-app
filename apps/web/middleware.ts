@@ -37,6 +37,8 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/reminders(.*)',
   '/api/form-builder(.*)', // Form builder question updates
   '/api/completion-forms(.*)', // Form templates and completion forms
+  '/api/properties(.*)', // Properties for asset register
+  '/api/assets(.*)', // Assets for asset register
   // Note: Mobile completion forms use /api/jobs/[id]/completion-form (covered by /api/jobs)
 ])
 

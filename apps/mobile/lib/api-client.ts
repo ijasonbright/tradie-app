@@ -1048,6 +1048,207 @@ class ApiClient {
 
     return await response.json()
   }
+
+  // ==================== PROPERTIES API ====================
+
+  /**
+   * Get all properties for user's organizations
+   */
+  async getProperties(params?: { organization_id?: string }) {
+    const queryParams = new URLSearchParams()
+    if (params?.organization_id) queryParams.append('organization_id', params.organization_id)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/properties?${query}` : '/properties'
+
+    return this.request<{ properties: any[] }>(endpoint)
+  }
+
+  /**
+   * Get a single property by ID
+   */
+  async getProperty(id: string) {
+    return this.request<{ property: any }>(`/properties/${id}`)
+  }
+
+  /**
+   * Create a new property
+   */
+  async createProperty(data: {
+    organization_id: string
+    external_property_id: number
+    address_street?: string
+    address_suburb?: string
+    address_state?: string
+    address_postcode?: string
+    property_type?: string
+    bedrooms?: number
+    bathrooms?: number
+    owner_name?: string
+    owner_phone?: string
+    owner_email?: string
+    tenant_name?: string
+    tenant_phone?: string
+    tenant_email?: string
+    access_instructions?: string
+    notes?: string
+  }) {
+    return this.request<{ success: boolean; property: any }>(
+      '/properties',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Update a property
+   */
+  async updateProperty(id: string, data: any) {
+    return this.request<{ success: boolean; property: any }>(
+      `/properties/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  // ==================== ASSETS API ====================
+
+  /**
+   * Get assets (optionally filtered by property or organization)
+   */
+  async getAssets(params?: {
+    property_id?: string
+    organization_id?: string
+    category?: string
+    condition?: string
+    room?: string
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.property_id) queryParams.append('property_id', params.property_id)
+    if (params?.organization_id) queryParams.append('organization_id', params.organization_id)
+    if (params?.category) queryParams.append('category', params.category)
+    if (params?.condition) queryParams.append('condition', params.condition)
+    if (params?.room) queryParams.append('room', params.room)
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/assets?${query}` : '/assets'
+
+    return this.request<{ assets: any[] }>(endpoint)
+  }
+
+  /**
+   * Get a single asset by ID with photos
+   */
+  async getAsset(id: string) {
+    return this.request<{ asset: any }>(`/assets/${id}`)
+  }
+
+  /**
+   * Create a new asset
+   */
+  async createAsset(data: {
+    property_id: string
+    name: string
+    category?: string
+    brand?: string
+    model?: string
+    serial_number?: string
+    room?: string
+    location?: string
+    condition?: string
+    estimated_age?: number
+    warranty_status?: string
+    warranty_expiry?: string
+    maintenance_required?: string
+    current_value?: number
+    replacement_cost?: number
+    expected_lifespan_years?: number
+    notes?: string
+  }) {
+    return this.request<{ success: boolean; asset: any }>(
+      '/assets',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Update an asset
+   */
+  async updateAsset(id: string, data: any) {
+    return this.request<{ success: boolean; asset: any }>(
+      `/assets/${id}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Delete an asset
+   */
+  async deleteAsset(id: string) {
+    return this.request<{ success: boolean }>(
+      `/assets/${id}`,
+      { method: 'DELETE' }
+    )
+  }
+
+  /**
+   * Get photos for an asset
+   */
+  async getAssetPhotos(assetId: string) {
+    return this.request<{ photos: any[] }>(`/assets/${assetId}/photos`)
+  }
+
+  /**
+   * Upload photo to an asset
+   */
+  async uploadAssetPhoto(assetId: string, imageUri: string, caption: string, photoType: string = 'general') {
+    const formData = new FormData()
+
+    // Create file from URI
+    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('file', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('caption', caption || '')
+    formData.append('photo_type', photoType)
+
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/assets/${assetId}/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let the browser set it with boundary
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
 }
 
 export const apiClient = new ApiClient()

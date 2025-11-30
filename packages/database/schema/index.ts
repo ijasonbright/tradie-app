@@ -18,5 +18,7 @@ export * from './payment-requests'
 export * from './team-locations'
 export * from './reminder-settings'
 export * from './completion-forms'
+export * from './properties'
+export * from './assets'
 // Temporarily disable relations to fix build
 // export * from './relations'
