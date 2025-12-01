@@ -239,7 +239,7 @@ export async function POST(req: Request) {
         ${body.category + ': ' + (body.description.substring(0, 100))},
         ${body.description},
         ${jobType},
-        'quoted',
+        'pending',
         ${priorityMap[body.priority] || 'medium'},
         'time_and_materials',
         ${body.address_line1 || body.property_address || null},
