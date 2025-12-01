@@ -9,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/users/count',
   '/api/webhooks/(.*)',
   '/api/mobile-auth/(.*)',
+  '/api/integrations/(.*)', // Property Pal integration endpoints (API key protected)
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/accept-invitation(.*)',
