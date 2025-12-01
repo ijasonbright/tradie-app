@@ -106,12 +106,12 @@ export async function POST(req: Request) {
             first_name,
             email,
             phone,
-            address_line1,
-            address_city,
-            address_state,
-            address_postcode,
+            site_address_line1,
+            site_city,
+            site_state,
+            site_postcode,
             notes,
-            source,
+            client_type,
             is_company,
             created_at,
             updated_at
@@ -125,7 +125,7 @@ export async function POST(req: Request) {
             ${body.address_state || null},
             ${body.address_postcode || null},
             ${'Auto-created from Property Pal work order ' + body.work_order_id},
-            'property_pal',
+            'residential',
             false,
             NOW(),
             NOW()
@@ -139,8 +139,8 @@ export async function POST(req: Request) {
       const genericClients = await sql`
         SELECT id FROM clients
         WHERE organization_id = ${body.organization_id}
-        AND source = 'property_pal'
         AND first_name = 'Property Pal Client'
+        AND notes LIKE '%Property Pal%'
         LIMIT 1
       `
 
@@ -152,7 +152,7 @@ export async function POST(req: Request) {
             organization_id,
             first_name,
             notes,
-            source,
+            client_type,
             is_company,
             created_at,
             updated_at
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
             ${body.organization_id},
             'Property Pal Client',
             'Generic client for Property Pal work orders',
-            'property_pal',
+            'residential',
             false,
             NOW(),
             NOW()
