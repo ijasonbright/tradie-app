@@ -102,3 +102,4 @@ export async function GET(request: NextRequest) {
     message: 'API is running',
   })
 }
+// Integration endpoints added Mon Dec  1 21:35:45 AEDT 2025
