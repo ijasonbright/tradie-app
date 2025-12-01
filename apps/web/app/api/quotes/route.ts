@@ -253,8 +253,10 @@ export async function POST(req: Request) {
     const depositAmount = body.deposit_amount || null
 
     // Set valid_until_date - default to 30 days from now if not provided
-    const validUntilDate = body.valid_until_date
-      ? new Date(body.valid_until_date)
+    // Accept both snake_case and camelCase from the request
+    const validUntilDateInput = body.valid_until_date || body.validUntilDate
+    const validUntilDate = validUntilDateInput
+      ? new Date(validUntilDateInput)
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
 
     // Generate unique public token for sharing
