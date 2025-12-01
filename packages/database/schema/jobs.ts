@@ -47,6 +47,11 @@ export const jobs = pgTable('jobs', {
   quoteId: uuid('quote_id'),
   invoiceId: uuid('invoice_id'),
   xeroQuoteId: varchar('xero_quote_id', { length: 255 }),
+  // External System Integration (Property Pal)
+  externalWorkOrderId: varchar('external_work_order_id', { length: 100 }), // Property Pal work order ID
+  externalSource: varchar('external_source', { length: 50 }), // 'property_pal'
+  externalSyncedAt: timestamp('external_synced_at'),
+  externalPropertyId: varchar('external_property_id', { length: 100 }), // Property Pal property ID
   // Metadata
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
