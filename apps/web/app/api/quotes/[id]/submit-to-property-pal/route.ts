@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 
 const PROPERTY_PAL_API_URL = process.env.PROPERTY_PAL_API_URL || 'https://property-pal.vercel.app'
 const PROPERTY_PAL_WEBHOOK_SECRET = process.env.PROPERTY_PAL_WEBHOOK_SECRET || ''
+const PROPERTY_PAL_BYPASS_TOKEN = process.env.PROPERTY_PAL_BYPASS_TOKEN || ''
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -108,7 +109,11 @@ export async function POST(req: Request, context: RouteContext) {
     }
 
     // Send to Property Pal webhook endpoint
-    const webhookUrl = `${PROPERTY_PAL_API_URL}/api/webhooks/tradieapp/quotes`
+    // Include bypass token for Vercel deployment protection if configured
+    let webhookUrl = `${PROPERTY_PAL_API_URL}/api/webhooks/tradieapp/quotes`
+    if (PROPERTY_PAL_BYPASS_TOKEN) {
+      webhookUrl += `?x-vercel-protection-bypass=${PROPERTY_PAL_BYPASS_TOKEN}`
+    }
 
     console.log('Sending quote to Property Pal:', webhookUrl)
     console.log('Payload:', JSON.stringify(webhookPayload, null, 2))
@@ -118,6 +123,7 @@ export async function POST(req: Request, context: RouteContext) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': PROPERTY_PAL_WEBHOOK_SECRET,
+        ...(PROPERTY_PAL_BYPASS_TOKEN && { 'x-vercel-protection-bypass': PROPERTY_PAL_BYPASS_TOKEN }),
       },
       body: JSON.stringify(webhookPayload),
     })
