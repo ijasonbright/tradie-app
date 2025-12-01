@@ -252,6 +252,11 @@ export async function POST(req: Request) {
     const depositPercentage = body.deposit_percentage || null
     const depositAmount = body.deposit_amount || null
 
+    // Set valid_until_date - default to 30 days from now if not provided
+    const validUntilDate = body.valid_until_date
+      ? new Date(body.valid_until_date)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+
     // Generate unique public token for sharing
     const publicToken = randomBytes(16).toString('base64url')
 
@@ -275,7 +280,7 @@ export async function POST(req: Request) {
         ${subtotal},
         ${gstAmount},
         ${totalAmount},
-        ${body.valid_until_date || null},
+        ${validUntilDate},
         ${body.notes || null},
         ${depositRequired},
         ${depositPercentage},
