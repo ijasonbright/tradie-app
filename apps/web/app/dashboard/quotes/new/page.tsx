@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 interface Organization {
@@ -26,11 +26,32 @@ interface LineItem {
   lineTotal: number
 }
 
+interface Job {
+  id: string
+  job_number: string
+  title: string
+  description: string | null
+  client_id: string
+  company_name: string | null
+  first_name: string | null
+  last_name: string | null
+  is_company: boolean
+  external_work_order_id: string | null
+  external_source: string | null
+}
+
 export default function NewQuotePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const jobIdParam = searchParams.get('job_id')
+
   const [organizations, setOrganizations] = useState<Organization[]>([])
   const [clients, setClients] = useState<Client[]>([])
+  const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(false)
+  const [linkedJob, setLinkedJob] = useState<Job | null>(null)
+  const [loadingJob, setLoadingJob] = useState(!!jobIdParam)
+  const [selectedJobId, setSelectedJobId] = useState<string>('')
 
   // Calculate default valid until date (30 days from today)
   const getDefaultValidUntilDate = () => {
@@ -65,9 +86,45 @@ export default function NewQuotePage() {
   useEffect(() => {
     if (formData.organizationId) {
       fetchClients()
+      fetchJobs()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.organizationId])
+
+  // Fetch job data if job_id is provided
+  useEffect(() => {
+    if (jobIdParam) {
+      fetchJobData(jobIdParam)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobIdParam])
+
+  const fetchJobData = async (jobId: string) => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`)
+      if (res.ok) {
+        const data = await res.json()
+        const job = data.job
+        setLinkedJob(job)
+
+        // Pre-populate form with job data
+        const clientName = job.is_company && job.company_name
+          ? job.company_name
+          : [job.first_name, job.last_name].filter(Boolean).join(' ')
+
+        setFormData(prev => ({
+          ...prev,
+          clientId: job.client_id,
+          title: `Quote for ${job.title || job.job_number}`,
+          description: job.description || '',
+        }))
+      }
+    } catch (error) {
+      console.error('Error fetching job:', error)
+    } finally {
+      setLoadingJob(false)
+    }
+  }
 
   const fetchOrganizations = async () => {
     try {
@@ -91,6 +148,38 @@ export default function NewQuotePage() {
       setClients(data.clients || [])
     } catch (error) {
       console.error('Error fetching clients:', error)
+    }
+  }
+
+  const fetchJobs = async () => {
+    try {
+      // Fetch jobs that don't already have a quote linked (pending status)
+      const res = await fetch(`/api/jobs?status=pending`)
+      if (res.ok) {
+        const data = await res.json()
+        setJobs(data.jobs || [])
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+    }
+  }
+
+  const handleJobSelect = (jobId: string) => {
+    setSelectedJobId(jobId)
+    if (jobId) {
+      const selectedJob = jobs.find(j => j.id === jobId)
+      if (selectedJob) {
+        setLinkedJob(selectedJob)
+        // Pre-populate form with job data
+        setFormData(prev => ({
+          ...prev,
+          clientId: selectedJob.client_id,
+          title: `Quote for ${selectedJob.title || selectedJob.job_number}`,
+          description: selectedJob.description || prev.description,
+        }))
+      }
+    } else {
+      setLinkedJob(null)
     }
   }
 
@@ -180,13 +269,14 @@ export default function NewQuotePage() {
         depositAmount: null,
       }
 
-      // Create quote with deposit data
+      // Create quote with deposit data and optional job_id
       const quoteRes = await fetch('/api/quotes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           ...depositData,
+          job_id: linkedJob?.id || null,
           subtotal: totals.subtotal.toFixed(2),
           gstAmount: totals.gst.toFixed(2),
           status: 'draft',
@@ -221,20 +311,55 @@ export default function NewQuotePage() {
   const totals = calculateTotals()
   const depositAmountValue = calculateDepositAmount()
 
+  if (loadingJob) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading job details...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <Link
-            href="/dashboard/quotes"
+            href={linkedJob ? `/dashboard/jobs/${linkedJob.id}` : '/dashboard/quotes'}
             className="text-sm text-blue-600 hover:text-blue-700"
           >
-            ← Back to Quotes
+            ← {linkedJob ? `Back to Job ${linkedJob.job_number}` : 'Back to Quotes'}
           </Link>
         </div>
 
+        {/* Linked Job Banner */}
+        {linkedJob && (
+          <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="font-semibold text-orange-900">Creating Quote for Job</h3>
+                <p className="text-sm text-orange-800 mt-1">
+                  <strong>{linkedJob.job_number}:</strong> {linkedJob.title}
+                </p>
+                {linkedJob.external_source === 'property_pal' && linkedJob.external_work_order_id && (
+                  <p className="text-xs text-orange-700 mt-1">
+                    Property Pal Work Order #{linkedJob.external_work_order_id}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Create New Quote</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">
+            {linkedJob ? `Create Quote for ${linkedJob.job_number}` : 'Create New Quote'}
+          </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Organization & Client */}
@@ -278,6 +403,31 @@ export default function NewQuotePage() {
                 </select>
               </div>
             </div>
+
+            {/* Link to Job (optional) - only show if not already linked via URL */}
+            {!jobIdParam && jobs.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Link to Job (optional)
+                </label>
+                <select
+                  value={selectedJobId}
+                  onChange={(e) => handleJobSelect(e.target.value)}
+                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  <option value="">No job - standalone quote</option>
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.job_number}: {job.title}
+                      {job.external_source === 'property_pal' && ' (Property Pal)'}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Link this quote to an existing job to pre-populate details and track progress
+                </p>
+              </div>
+            )}
 
             {/* Title & Valid Until */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

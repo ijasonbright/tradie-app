@@ -955,58 +955,75 @@ export default function JobDetailPage() {
         </div>
 
         {/* Linked Quote & Invoice */}
-        {(quote || invoice) && (
-          <div className="mt-4 pt-4 border-t">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Related Documents</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {quote && (
-                <Link
-                  href={`/dashboard/quotes/${quote.id}`}
-                  className="block p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-blue-600 uppercase">Quote</span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {quote.status}
-                    </span>
-                  </div>
-                  <p className="font-bold text-gray-900">{quote.quote_number}</p>
-                  <p className="text-sm text-gray-600 mt-1">{quote.title}</p>
-                  <p className="text-lg font-bold text-blue-600 mt-2">{formatCurrency(quote.total_amount)}</p>
-                </Link>
-              )}
-              {invoice && (
-                <Link
-                  href={`/dashboard/invoices/${invoice.id}`}
-                  className="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-green-600 uppercase">Invoice</span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
-                      invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-                      invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                  <p className="font-bold text-gray-900">{invoice.invoice_number}</p>
-                  <p className="text-lg font-bold text-green-600 mt-2">{formatCurrency(invoice.total_amount)}</p>
-                  {parseFloat(invoice.paid_amount) > 0 && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Paid: {formatCurrency(invoice.paid_amount)}
-                    </p>
-                  )}
-                </Link>
-              )}
-            </div>
+        <div className="mt-4 pt-4 border-t">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Related Documents</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {quote ? (
+              <Link
+                href={`/dashboard/quotes/${quote.id}`}
+                className="block p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-blue-600 uppercase">Quote</span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                    quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {quote.status}
+                  </span>
+                </div>
+                <p className="font-bold text-gray-900">{quote.quote_number}</p>
+                <p className="text-sm text-gray-600 mt-1">{quote.title}</p>
+                <p className="text-lg font-bold text-blue-600 mt-2">{formatCurrency(quote.total_amount)}</p>
+              </Link>
+            ) : (
+              <Link
+                href={`/dashboard/quotes/new?job_id=${job.id}`}
+                className="block p-4 bg-orange-50 border-2 border-dashed border-orange-300 rounded-lg hover:bg-orange-100 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-orange-600 uppercase">Quote</span>
+                  <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                    Not Created
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-4">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span className="font-semibold text-orange-700">Create Quote</span>
+                </div>
+                <p className="text-sm text-orange-600 mt-2">Click to create a quote for this job</p>
+              </Link>
+            )}
+            {invoice && (
+              <Link
+                href={`/dashboard/invoices/${invoice.id}`}
+                className="block p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-green-600 uppercase">Invoice</span>
+                  <span className={`px-2 py-1 text-xs rounded-full ${
+                    invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+                    invoice.status === 'overdue' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {invoice.status}
+                  </span>
+                </div>
+                <p className="font-bold text-gray-900">{invoice.invoice_number}</p>
+                <p className="text-lg font-bold text-green-600 mt-2">{formatCurrency(invoice.total_amount)}</p>
+                {parseFloat(invoice.paid_amount) > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Paid: {formatCurrency(invoice.paid_amount)}
+                  </p>
+                )}
+              </Link>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -1030,6 +1047,17 @@ export default function JobDetailPage() {
           >
             Edit Job
           </Link>
+          {!quote && (
+            <Link
+              href={`/dashboard/quotes/new?job_id=${job.id}`}
+              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Create Quote
+            </Link>
+          )}
           {!invoice && job.status === 'completed' && (
             <Link
               href={`/dashboard/invoices/new?jobId=${params.id}&clientId=${job.client_id}`}

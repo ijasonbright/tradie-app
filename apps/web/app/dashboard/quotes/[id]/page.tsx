@@ -29,6 +29,15 @@ interface Quote {
   created_by_name: string
   converted_to_job_id: string | null
   public_token: string
+  // Job linking fields
+  job_id: string | null
+  job_number: string | null
+  external_work_order_id: string | null
+  external_source: string | null
+  // Property Pal approval fields
+  approval_response_at: string | null
+  approval_response_by: string | null
+  rejection_reason: string | null
 }
 
 interface LineItem {
@@ -50,6 +59,7 @@ export default function QuoteDetailPage() {
   const [loading, setLoading] = useState(true)
   const [converting, setConverting] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [submittingToPropertyPal, setSubmittingToPropertyPal] = useState(false)
 
   // Send modal state
   const [showSendModal, setShowSendModal] = useState(false)
@@ -103,8 +113,10 @@ export default function QuoteDetailPage() {
       case 'sent':
         return 'bg-blue-100 text-blue-800'
       case 'accepted':
+      case 'approved':
         return 'bg-green-100 text-green-800'
       case 'rejected':
+      case 'declined':
         return 'bg-red-100 text-red-800'
       case 'expired':
         return 'bg-orange-100 text-orange-800'
@@ -364,6 +376,35 @@ export default function QuoteDetailPage() {
     }
   }
 
+  const handleSubmitToPropertyPal = async () => {
+    if (!quote) return
+
+    if (!confirm('Submit this quote to Property Pal for approval? The property manager will be notified.')) return
+
+    setSubmittingToPropertyPal(true)
+
+    try {
+      const res = await fetch(`/api/quotes/${params.id}/submit-to-property-pal`, {
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to submit quote to Property Pal')
+      }
+
+      alert('Quote submitted to Property Pal successfully! The property manager has been notified.')
+      fetchQuote() // Refresh to show updated status
+    } catch (error) {
+      console.error('Error submitting to Property Pal:', error)
+      alert(error instanceof Error ? error.message : 'Failed to submit quote to Property Pal')
+    } finally {
+      setSubmittingToPropertyPal(false)
+    }
+  }
+
+  const isPropertyPalJob = quote?.external_source === 'property_pal' && quote?.external_work_order_id
+
   const smsCharCount = smsMessage.length
   const smsCredits = Math.ceil(smsCharCount / 160)
 
@@ -434,6 +475,78 @@ export default function QuoteDetailPage() {
             <div className="mt-4 pt-4 border-t">
               <p className="text-sm text-gray-600">Description</p>
               <p className="text-sm text-gray-900 mt-1">{quote.description}</p>
+            </div>
+          )}
+
+          {/* Property Pal Job Link Banner */}
+          {isPropertyPalJob && (
+            <div className="mt-4 pt-4 border-t">
+              <div className={`border rounded-lg p-4 ${
+                quote.status === 'approved' ? 'bg-green-50 border-green-200' :
+                quote.status === 'declined' ? 'bg-red-50 border-red-200' :
+                'bg-purple-50 border-purple-200'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <svg className={`w-5 h-5 mt-0.5 ${
+                    quote.status === 'approved' ? 'text-green-600' :
+                    quote.status === 'declined' ? 'text-red-600' :
+                    'text-purple-600'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {quote.status === 'approved' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    ) : quote.status === 'declined' ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    )}
+                  </svg>
+                  <div className="flex-1">
+                    <h3 className={`font-semibold ${
+                      quote.status === 'approved' ? 'text-green-900' :
+                      quote.status === 'declined' ? 'text-red-900' :
+                      'text-purple-900'
+                    }`}>
+                      {quote.status === 'approved' ? 'Approved by Property Pal' :
+                       quote.status === 'declined' ? 'Declined by Property Pal' :
+                       'Linked to Property Pal'}
+                    </h3>
+                    <p className={`text-sm mt-1 ${
+                      quote.status === 'approved' ? 'text-green-800' :
+                      quote.status === 'declined' ? 'text-red-800' :
+                      'text-purple-800'
+                    }`}>
+                      Work Order #{quote.external_work_order_id}
+                    </p>
+                    {quote.status === 'approved' && quote.approval_response_at && (
+                      <p className="text-xs text-green-700 mt-2">
+                        Approved by {quote.approval_response_by || 'Property Manager'} on {formatDate(quote.approval_response_at)}
+                      </p>
+                    )}
+                    {quote.status === 'declined' && (
+                      <div className="mt-2">
+                        <p className="text-xs text-red-700">
+                          Declined on {quote.approval_response_at ? formatDate(quote.approval_response_at) : 'N/A'}
+                        </p>
+                        {quote.rejection_reason && (
+                          <p className="text-sm text-red-800 mt-1">
+                            Reason: {quote.rejection_reason}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {quote.status === 'draft' && (
+                      <p className="text-xs text-purple-700 mt-2">
+                        Submit this quote to Property Pal for approval by the property manager.
+                      </p>
+                    )}
+                    {quote.status === 'sent' && (
+                      <p className="text-xs text-purple-700 mt-2">
+                        Quote has been submitted to Property Pal and is awaiting approval from the property manager.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -519,6 +632,20 @@ export default function QuoteDetailPage() {
             >
               Send Quote
             </button>
+
+            {/* Submit to Property Pal button - only show for Property Pal linked quotes in draft status */}
+            {isPropertyPalJob && quote.status === 'draft' && (
+              <button
+                onClick={handleSubmitToPropertyPal}
+                disabled={submittingToPropertyPal}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 font-medium disabled:opacity-50 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {submittingToPropertyPal ? 'Submitting...' : 'Submit to Property Pal'}
+              </button>
+            )}
 
             {quote.status === 'draft' && (
               <button

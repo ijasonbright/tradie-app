@@ -21,7 +21,12 @@ export const quotes = pgTable('quotes', {
   acceptedAt: timestamp('accepted_at'),
   rejectedAt: timestamp('rejected_at'),
   rejectionReason: text('rejection_reason'),
+  // Property Pal approval response fields
+  approvalResponseAt: timestamp('approval_response_at'),
+  approvalResponseBy: varchar('approval_response_by', { length: 100 }),
   convertedToJobId: uuid('converted_to_job_id').references(() => jobs.id),
+  // Job this quote was created for (opposite direction of convertedToJobId)
+  jobId: uuid('job_id').references(() => jobs.id),
   notes: text('notes'),
   xeroQuoteId: varchar('xero_quote_id', { length: 255 }),
   // Deposit fields

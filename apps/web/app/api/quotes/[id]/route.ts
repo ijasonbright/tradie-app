@@ -60,7 +60,7 @@ export async function GET(
     }
     const user = users[0]
 
-    // Get quote with organization check
+    // Get quote with organization check and job link info
     const quotes = await sql`
       SELECT
         q.id, q.organization_id, q.client_id, q.quote_number, q.title, q.description,
@@ -68,15 +68,19 @@ export async function GET(
         q.sent_at, q.accepted_at, q.rejected_at, q.rejection_reason,
         q.converted_to_job_id, q.notes, q.created_at, q.updated_at,
         q.deposit_required, q.deposit_percentage, q.deposit_amount, q.deposit_paid,
-        q.public_token,
+        q.public_token, q.job_id,
+        q.approval_response_at, q.approval_response_by,
         o.name as organization_name,
         c.company_name, c.first_name, c.last_name, c.is_company, c.email as client_email,
-        u.full_name as created_by_name
+        c.phone as client_phone, c.mobile as client_mobile,
+        u.full_name as created_by_name,
+        j.job_number, j.external_work_order_id, j.external_source
       FROM quotes q
       INNER JOIN organizations o ON q.organization_id = o.id
       INNER JOIN organization_members om ON o.id = om.organization_id
       INNER JOIN clients c ON q.client_id = c.id
       LEFT JOIN users u ON q.created_by_user_id = u.id
+      LEFT JOIN jobs j ON q.job_id = j.id
       WHERE q.id = ${id}
       AND om.user_id = ${user.id}
       AND om.status = 'active'

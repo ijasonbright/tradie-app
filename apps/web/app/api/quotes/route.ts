@@ -161,6 +161,33 @@ export async function POST(req: Request) {
 
     const body = await req.json()
 
+    // If job_id is provided, fetch job data to pre-populate quote
+    let jobData = null
+    if (body.job_id) {
+      const jobs = await sql`
+        SELECT j.*, c.id as client_id, c.first_name, c.last_name, c.company_name,
+               j.external_work_order_id, j.external_source
+        FROM jobs j
+        LEFT JOIN clients c ON j.client_id = c.id
+        WHERE j.id = ${body.job_id}
+        LIMIT 1
+      `
+      if (jobs.length > 0) {
+        jobData = jobs[0]
+        // Use job's client if not provided
+        if (!body.client_id) {
+          body.client_id = jobData.client_id
+        }
+        // Use job's title/description if not provided
+        if (!body.title) {
+          body.title = `Quote for ${jobData.title || 'Job ' + jobData.job_number}`
+        }
+        if (!body.description && jobData.description) {
+          body.description = jobData.description
+        }
+      }
+    }
+
     // Validate required fields
     if (!body.client_id || !body.title) {
       return NextResponse.json(
@@ -228,14 +255,14 @@ export async function POST(req: Request) {
     // Generate unique public token for sharing
     const publicToken = randomBytes(16).toString('base64url')
 
-    // Create quote with deposit fields
+    // Create quote with deposit fields and optional job link
     const quotes = await sql`
       INSERT INTO quotes (
         organization_id, quote_number, client_id, created_by_user_id,
         title, description, status, subtotal, gst_amount, total_amount,
         valid_until_date, notes,
         deposit_required, deposit_percentage, deposit_amount,
-        public_token,
+        public_token, job_id,
         created_at, updated_at
       ) VALUES (
         ${organizationId},
@@ -254,6 +281,7 @@ export async function POST(req: Request) {
         ${depositPercentage},
         ${depositAmount},
         ${publicToken},
+        ${body.job_id || null},
         NOW(),
         NOW()
       ) RETURNING *
