@@ -64,6 +64,13 @@
       "when": 1762340911756,
       "tag": "0008_exotic_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1764664319962,
+      "tag": "0009_cold_chameleon",
+      "breakpoints": true
     }
   ]
 }
