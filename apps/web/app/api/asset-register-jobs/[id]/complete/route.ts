@@ -123,7 +123,7 @@ export async function POST(
     // Send webhook to PropertyPal if this job has an external request ID
     if (completedJob.external_request_id) {
       try {
-        const webhookUrl = process.env.PROPERTYPAL_WEBHOOK_URL || 'https://propertypal.vercel.app/api/webhooks/tradieapp/asset-register'
+        const webhookUrl = process.env.PROPERTYPAL_WEBHOOK_URL || 'https://property-pal-git-staging-jason-brights-projects.vercel.app/api/webhooks/tradieapp/asset-register'
         const webhookSecret = process.env.PROPERTYPAL_WEBHOOK_SECRET
 
         const webhookPayload = {
