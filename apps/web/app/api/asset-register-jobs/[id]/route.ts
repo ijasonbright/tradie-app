@@ -170,7 +170,7 @@ export async function PATCH(
 
     // Verify user has access to this job's organization
     const jobs = await sql`
-      SELECT arj.*, om.role, om.can_manage_jobs
+      SELECT arj.*, om.role
       FROM asset_register_jobs arj
       INNER JOIN organization_members om ON arj.organization_id = om.organization_id
       WHERE arj.id = ${id}
