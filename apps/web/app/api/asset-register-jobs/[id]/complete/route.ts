@@ -124,7 +124,7 @@ export async function POST(
     if (completedJob.external_request_id) {
       try {
         const webhookUrl = process.env.PROPERTYPAL_WEBHOOK_URL || 'https://property-pal-git-staging-jason-brights-projects.vercel.app/api/webhooks/tradieapp/asset-register'
-        const webhookSecret = process.env.PROPERTYPAL_WEBHOOK_SECRET
+        const webhookSecret = process.env.PROPERTY_PAL_WEBHOOK_SECRET
 
         const webhookPayload = {
           event: 'asset_register.completed',
