@@ -26,6 +26,9 @@ export const organizationMembers = pgTable('organization_members', {
   canApproveExpenses: boolean('can_approve_expenses').default(false),
   canApproveTimesheets: boolean('can_approve_timesheets').default(false),
   joinedAt: timestamp('joined_at'),
+  // External integration (Property Pal supplier link)
+  externalSupplierId: varchar('external_supplier_id', { length: 50 }), // Property Pal supplier_id
+  externalSource: varchar('external_source', { length: 50 }), // 'property_pal'
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })

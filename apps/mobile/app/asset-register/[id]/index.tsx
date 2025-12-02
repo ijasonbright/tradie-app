@@ -3,7 +3,7 @@ import { Button, Card, Divider } from 'react-native-paper'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
-import { apiClient } from '../../lib/api-client'
+import { apiClient } from '../../../lib/api-client'
 
 const STATUS_COLORS: Record<string, string> = {
   CREATED: '#9333ea',
