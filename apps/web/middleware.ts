@@ -40,6 +40,7 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/completion-forms(.*)', // Form templates and completion forms
   '/api/properties(.*)', // Properties for asset register
   '/api/assets(.*)', // Assets for asset register
+  '/api/asset-register-jobs(.*)', // Asset register jobs for mobile
   // Note: Mobile completion forms use /api/jobs/[id]/completion-form (covered by /api/jobs)
 ])
 
