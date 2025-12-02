@@ -5,7 +5,7 @@
  * for jobs that originated from Property Pal work orders.
  */
 
-const PROPERTY_PAL_WEBHOOK_URL = process.env.PROPERTY_PAL_WEBHOOK_URL || 'https://property-pal-sigma.vercel.app'
+const PROPERTY_PAL_WEBHOOK_URL = process.env.PROPERTY_PAL_WEBHOOK_URL || 'https://propertypal.vercel.app'
 const PROPERTY_PAL_API_KEY = process.env.PROPERTY_PAL_API_KEY || ''
 
 type WebhookEvent =
