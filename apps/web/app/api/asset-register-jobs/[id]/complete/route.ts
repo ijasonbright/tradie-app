@@ -150,7 +150,7 @@ export async function POST(
           webhookHeaders['x-api-key'] = webhookSecret
         }
         // Add Vercel protection bypass header for staging deployments
-        const vercelBypassSecret = process.env.PROPERTYPAL_VERCEL_BYPASS_SECRET
+        const vercelBypassSecret = process.env.PROPERTY_PAL_BYPASS_TOKEN
         if (vercelBypassSecret) {
           webhookHeaders['x-vercel-protection-bypass'] = vercelBypassSecret
         }
