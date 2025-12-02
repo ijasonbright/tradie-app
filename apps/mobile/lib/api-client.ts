@@ -1249,6 +1249,146 @@ class ApiClient {
 
     return await response.json()
   }
+
+  // ==================== ASSET REGISTER JOBS API ====================
+
+  /**
+   * Get asset register jobs for user's organizations
+   */
+  async getAssetRegisterJobs(params?: { status?: string; assignedToMe?: boolean }) {
+    const queryParams = new URLSearchParams()
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.assignedToMe) queryParams.append('assignedToMe', 'true')
+
+    const query = queryParams.toString()
+    const endpoint = query ? `/asset-register-jobs?${query}` : '/asset-register-jobs'
+
+    return this.request<{ jobs: any[] }>(endpoint)
+  }
+
+  /**
+   * Get a single asset register job by ID with all related data
+   */
+  async getAssetRegisterJob(id: string) {
+    return this.request<{
+      job: any
+      photos: any[]
+      notes: any[]
+      completionForms: any[]
+    }>(`/asset-register-jobs/${id}`)
+  }
+
+  /**
+   * Update an asset register job
+   */
+  async updateAssetRegisterJob(id: string, data: {
+    status?: string
+    priority?: string
+    scheduled_date?: string
+    assigned_to_user_id?: string
+    notes?: string
+    completion_notes?: string
+  }) {
+    return this.request<{ success: boolean; job: any }>(
+      `/asset-register-jobs/${id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Start an asset register job (set status to IN_PROGRESS)
+   */
+  async startAssetRegisterJob(id: string) {
+    return this.updateAssetRegisterJob(id, { status: 'IN_PROGRESS' })
+  }
+
+  /**
+   * Complete an asset register job with form data
+   */
+  async completeAssetRegisterJob(id: string, data: {
+    template_id?: string
+    form_data?: any
+    completion_notes?: string
+    report_data?: any
+    client_signature_url?: string
+    technician_signature_url?: string
+    client_name?: string
+    technician_name?: string
+  }) {
+    return this.request<{ success: boolean; job: any; completionForm: any }>(
+      `/asset-register-jobs/${id}/complete`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Add a note to an asset register job
+   */
+  async addAssetRegisterJobNote(jobId: string, data: { note_text: string; note_type?: string }) {
+    return this.request<{ success: boolean; note: any }>(
+      `/asset-register-jobs/${jobId}/notes`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Upload photo to an asset register job
+   */
+  async uploadAssetRegisterJobPhoto(
+    jobId: string,
+    imageUri: string,
+    caption: string,
+    photoType: string = 'general',
+    room?: string,
+    item?: string
+  ) {
+    const formData = new FormData()
+
+    // Create file from URI
+    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('file', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('caption', caption || '')
+    formData.append('photo_type', photoType)
+    if (room) formData.append('room', room)
+    if (item) formData.append('item', item)
+
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/asset-register-jobs/${jobId}/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
 }
 
 export const apiClient = new ApiClient()
