@@ -81,6 +81,31 @@ export default function AssetRegisterJobDetailScreen() {
     router.push(`/asset-register/${id}/complete`)
   }
 
+  const handleReopenJob = async () => {
+    Alert.alert(
+      'Reopen Asset Register',
+      'Are you sure you want to reopen this completed asset register? This will allow you to make edits.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reopen',
+          onPress: async () => {
+            try {
+              setActionLoading(true)
+              await apiClient.reopenAssetRegisterJob(id!)
+              await fetchJobDetails()
+              Alert.alert('Success', 'Job has been reopened')
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to reopen job')
+            } finally {
+              setActionLoading(false)
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const openMaps = () => {
     if (!job) return
 
@@ -351,10 +376,22 @@ export default function AssetRegisterJobDetailScreen() {
           )}
 
           {status === 'COMPLETED' && (
-            <View style={styles.completedBanner}>
-              <MaterialCommunityIcons name="check-circle" size={24} color="#16a34a" />
-              <Text style={styles.completedText}>This asset register has been completed</Text>
-            </View>
+            <>
+              <View style={styles.completedBanner}>
+                <MaterialCommunityIcons name="check-circle" size={24} color="#16a34a" />
+                <Text style={styles.completedText}>This asset register has been completed</Text>
+              </View>
+              <Button
+                mode="outlined"
+                onPress={handleReopenJob}
+                loading={actionLoading}
+                disabled={actionLoading}
+                style={styles.reopenButton}
+                icon="pencil"
+              >
+                Reopen to Make Edits
+              </Button>
+            </>
           )}
         </View>
 
@@ -516,6 +553,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#16a34a',
+  },
+  reopenButton: {
+    borderColor: '#ea580c',
+    marginTop: 8,
   },
   bottomSpacer: {
     height: 32,

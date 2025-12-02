@@ -1328,6 +1328,18 @@ class ApiClient {
   }
 
   /**
+   * Reopen a completed asset register job to allow edits
+   */
+  async reopenAssetRegisterJob(id: string) {
+    return this.request<{ success: boolean; job: any }>(
+      `/asset-register-jobs/${id}/reopen`,
+      {
+        method: 'POST',
+      }
+    )
+  }
+
+  /**
    * Add a note to an asset register job
    */
   async addAssetRegisterJobNote(jobId: string, data: { note_text: string; note_type?: string }) {

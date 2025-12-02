@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList } from 'react-native'
 import { Button, Card, Divider, Menu } from 'react-native-paper'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { apiClient } from '../../../lib/api-client'
@@ -83,6 +83,26 @@ const CATEGORIES = {
   },
 }
 
+// Room-specific category filtering - only show relevant categories for each room
+const ROOM_CATEGORIES: Record<string, string[]> = {
+  kitchen: ['appliance', 'hvac', 'plumbing', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  living: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  dining: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  master_bed: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  bed_2: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  bed_3: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  bed_4: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  bathroom_1: ['plumbing', 'hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  bathroom_2: ['plumbing', 'hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  ensuite: ['plumbing', 'hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  laundry: ['appliance', 'plumbing', 'hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  garage: ['appliance', 'hvac', 'plumbing', 'electrical', 'flooring', 'paint', 'doors_windows', 'other'],
+  outdoor: ['hvac', 'plumbing', 'electrical', 'other'],
+  hallway: ['electrical', 'flooring', 'paint', 'doors_windows', 'other'],
+  study: ['hvac', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+  other: ['appliance', 'hvac', 'plumbing', 'electrical', 'flooring', 'paint', 'curtains', 'doors_windows', 'other'],
+}
+
 const CONDITION_OPTIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Needs Repair', 'Not Working']
 const MAINTENANCE_OPTIONS = ['None Required', 'Minor Maintenance', 'Major Repair Needed', 'Replacement Recommended']
 const FLOORING_TYPES = ['Carpet', 'Tiles', 'Hardwood', 'Laminate', 'Vinyl/Lino', 'Polished Concrete', 'Other']
@@ -104,6 +124,7 @@ export default function AssetRegisterCompleteScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const roomsScrollRef = useRef<FlatList>(null)
+  const mainScrollRef = useRef<ScrollView>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [currentRoomIndex, setCurrentRoomIndex] = useState(0)
@@ -112,17 +133,35 @@ export default function AssetRegisterCompleteScreen() {
   const [currentItemData, setCurrentItemData] = useState<Record<string, any>>({})
   const [assets, setAssets] = useState<AssetItem[]>([])
   const [showSubcategoryMenu, setShowSubcategoryMenu] = useState(false)
-  const [technicianName, setTechnicianName] = useState('')
+  const [inspectorName, setInspectorName] = useState('')
   const [completionNotes, setCompletionNotes] = useState('')
 
   const currentRoom = ROOMS[currentRoomIndex]
   const currentCategory = selectedCategory ? CATEGORIES[selectedCategory as keyof typeof CATEGORIES] : null
+
+  // Get available categories for current room
+  const availableCategories = ROOM_CATEGORIES[currentRoom.id] || Object.keys(CATEGORIES)
 
   // Get items for current room
   const roomItems = assets.filter(a => a.room_id === currentRoom.id)
 
   // Get rooms with items (completed rooms)
   const roomsWithItems = new Set(assets.map(a => a.room_id))
+
+  // Load current user on mount to auto-populate inspector name
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await apiClient.getCurrentUser()
+        if (response.user?.full_name) {
+          setInspectorName(response.user.full_name)
+        }
+      } catch (err) {
+        console.error('Failed to load user:', err)
+      }
+    }
+    loadUser()
+  }, [])
 
   const updateField = (fieldId: string, value: any) => {
     setCurrentItemData(prev => ({ ...prev, [fieldId]: value }))
@@ -178,11 +217,15 @@ export default function AssetRegisterCompleteScreen() {
 
     setAssets(prev => [...prev, newItem])
 
-    // Reset form for next item
+    // Reset form data but keep category selected for adding more of same type
     setCurrentItemData({})
     setSelectedSubcategory(null)
+    // Don't reset selectedCategory - allows user to easily add more of same category
 
-    Alert.alert('Item Added', `${selectedSubcategory || category.name} added to ${currentRoom.name}`)
+    // Scroll down to show the newly added item and keep form visible
+    setTimeout(() => {
+      mainScrollRef.current?.scrollToEnd({ animated: true })
+    }, 100)
   }
 
   const handleRemoveItem = (itemId: string) => {
@@ -215,7 +258,7 @@ export default function AssetRegisterCompleteScreen() {
   }
 
   const handleSubmit = async () => {
-    if (!technicianName.trim()) {
+    if (!inspectorName.trim()) {
       Alert.alert('Required', 'Please enter your name')
       return
     }
@@ -251,7 +294,7 @@ export default function AssetRegisterCompleteScreen() {
                   rooms_completed: Array.from(roomsWithItems),
                 },
                 completion_notes: completionNotes,
-                technician_name: technicianName,
+                technician_name: inspectorName,
                 report_data: {
                   total_items: assets.length,
                   rooms_completed: roomsWithItems.size,
@@ -744,7 +787,7 @@ export default function AssetRegisterCompleteScreen() {
           />
         </View>
 
-        <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
+        <ScrollView ref={mainScrollRef} style={styles.scrollView} keyboardShouldPersistTaps="handled">
           {/* Current Room Header */}
           <View style={styles.roomHeader}>
             <MaterialCommunityIcons name={currentRoom.icon as any} size={32} color="#2563eb" />
@@ -763,7 +806,9 @@ export default function AssetRegisterCompleteScreen() {
             <Card.Content>
               <Text style={styles.fieldLabel}>Category *</Text>
               <View style={styles.categoryGrid}>
-                {Object.entries(CATEGORIES).map(([key, cat]) => (
+                {availableCategories.map((key) => {
+                  const cat = CATEGORIES[key as keyof typeof CATEGORIES]
+                  return (
                   <TouchableOpacity
                     key={key}
                     style={[
@@ -786,7 +831,8 @@ export default function AssetRegisterCompleteScreen() {
                       {cat.name}
                     </Text>
                   </TouchableOpacity>
-                ))}
+                  )
+                })}
               </View>
 
               {/* Category-specific fields */}
@@ -808,8 +854,8 @@ export default function AssetRegisterCompleteScreen() {
                     style={styles.textInput}
                     placeholder="Enter your name"
                     placeholderTextColor="#999"
-                    value={technicianName}
-                    onChangeText={setTechnicianName}
+                    value={inspectorName}
+                    onChangeText={setInspectorName}
                   />
                 </View>
 

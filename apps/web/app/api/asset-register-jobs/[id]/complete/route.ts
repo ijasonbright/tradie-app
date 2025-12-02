@@ -118,9 +118,58 @@ export async function POST(
       RETURNING *
     `
 
+    const completedJob = updatedJob[0]
+
+    // Send webhook to PropertyPal if this job has an external request ID
+    if (completedJob.external_request_id) {
+      try {
+        const webhookUrl = process.env.PROPERTYPAL_WEBHOOK_URL || 'https://propertypal.app/api/webhooks/tradieapp/asset-register'
+        const webhookSecret = process.env.PROPERTYPAL_WEBHOOK_SECRET
+
+        const webhookPayload = {
+          event: 'asset_register.completed',
+          asset_register_job_id: completedJob.id,
+          external_request_id: completedJob.external_request_id,
+          status: 'COMPLETED',
+          completed_at: new Date().toISOString(),
+          completion_notes: body.completion_notes || null,
+          inspector_name: body.technician_name || user.full_name,
+          report_data: body.report_data ? {
+            total_items: body.report_data.total_items || 0,
+            rooms_completed: body.report_data.rooms_completed || 0,
+            rooms_data: body.report_data.rooms_data || {},
+            completed_at: new Date().toISOString(),
+            inspector_name: body.technician_name || user.full_name,
+          } : null,
+        }
+
+        const webhookHeaders: Record<string, string> = {
+          'Content-Type': 'application/json',
+        }
+        if (webhookSecret) {
+          webhookHeaders['x-api-key'] = webhookSecret
+        }
+
+        const webhookResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: webhookHeaders,
+          body: JSON.stringify(webhookPayload),
+        })
+
+        if (!webhookResponse.ok) {
+          console.error('PropertyPal webhook failed:', await webhookResponse.text())
+        } else {
+          console.log('PropertyPal webhook sent successfully for job:', completedJob.id)
+        }
+      } catch (webhookError) {
+        // Log but don't fail the request if webhook fails
+        console.error('Error sending PropertyPal webhook:', webhookError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      job: updatedJob[0],
+      job: completedJob,
       completionForm: completionForms[0],
     })
   } catch (error) {
