@@ -233,7 +233,6 @@ export async function GET(req: Request) {
           LEFT JOIN users u ON arj.assigned_to_user_id = u.id
           WHERE om.user_id = ${user.id}
           AND om.status = 'active'
-          AND arj.status != 'COMPLETED'
           AND arj.status != 'CANCELLED'
           ORDER BY arj.created_at DESC
         `
