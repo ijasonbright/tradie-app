@@ -141,13 +141,12 @@ export async function GET(req: Request) {
               NULL as last_name,
               false as is_company,
               NULL as created_by_name,
-              s_contact.company_name as assigned_to_name
+              u.full_name as assigned_to_name
             FROM asset_register_jobs arj
             INNER JOIN organizations o ON arj.organization_id = o.id
             INNER JOIN organization_members om ON o.id = om.organization_id
-            LEFT JOIN properties p ON arj.property_id = p.property_id
-            LEFT JOIN suppliers s ON arj.assigned_supplier_id = s.supplier_id
-            LEFT JOIN contacts s_contact ON s.contact_id = s_contact.contact_id
+            LEFT JOIN properties p ON arj.property_id = p.id
+            LEFT JOIN users u ON arj.assigned_to_user_id = u.id
             WHERE om.user_id = ${user.id}
             AND om.status = 'active'
             AND arj.status = ANY(${arStatuses})
@@ -226,13 +225,12 @@ export async function GET(req: Request) {
             NULL as last_name,
             false as is_company,
             NULL as created_by_name,
-            s_contact.company_name as assigned_to_name
+            u.full_name as assigned_to_name
           FROM asset_register_jobs arj
           INNER JOIN organizations o ON arj.organization_id = o.id
           INNER JOIN organization_members om ON o.id = om.organization_id
-          LEFT JOIN properties p ON arj.property_id = p.property_id
-          LEFT JOIN suppliers s ON arj.assigned_supplier_id = s.supplier_id
-          LEFT JOIN contacts s_contact ON s.contact_id = s_contact.contact_id
+          LEFT JOIN properties p ON arj.property_id = p.id
+          LEFT JOIN users u ON arj.assigned_to_user_id = u.id
           WHERE om.user_id = ${user.id}
           AND om.status = 'active'
           AND arj.status != 'COMPLETED'
