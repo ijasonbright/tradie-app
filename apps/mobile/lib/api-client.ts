@@ -254,16 +254,6 @@ class ApiClient {
     )
   }
 
-  async updateInvoice(id: string, data: any) {
-    return this.request<{ invoice: any }>(
-      `/invoices/${id}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      }
-    )
-  }
-
   async sendInvoiceEmail(id: string, data: { email: string; subject: string; message: string }) {
     return this.request<{ success: boolean }>(
       `/invoices/${id}/send`,
@@ -1320,6 +1310,23 @@ class ApiClient {
   }) {
     return this.request<{ success: boolean; job: any; completionForm: any }>(
       `/asset-register-jobs/${id}/complete`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
+   * Save asset register progress without completing (to prevent data loss)
+   */
+  async saveAssetRegisterProgress(id: string, data: {
+    form_data?: any
+    technician_name?: string
+    report_data?: any
+  }) {
+    return this.request<{ success: boolean }>(
+      `/asset-register-jobs/${id}/save-progress`,
       {
         method: 'POST',
         body: JSON.stringify(data),

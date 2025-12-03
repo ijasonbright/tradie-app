@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList } from 'react-native'
-import { Button, Card, Divider, Menu } from 'react-native-paper'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator } from 'react-native'
+import { Button, Card, Divider } from 'react-native-paper'
 import { useState, useRef, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
@@ -126,13 +126,14 @@ export default function AssetRegisterCompleteScreen() {
   const roomsScrollRef = useRef<FlatList>(null)
   const mainScrollRef = useRef<ScrollView>(null)
 
+  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [currentRoomIndex, setCurrentRoomIndex] = useState(0)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
   const [currentItemData, setCurrentItemData] = useState<Record<string, any>>({})
   const [assets, setAssets] = useState<AssetItem[]>([])
-  const [showSubcategoryMenu, setShowSubcategoryMenu] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [inspectorName, setInspectorName] = useState('')
   const [completionNotes, setCompletionNotes] = useState('')
 
@@ -148,20 +149,50 @@ export default function AssetRegisterCompleteScreen() {
   // Get rooms with items (completed rooms)
   const roomsWithItems = new Set(assets.map(a => a.room_id))
 
-  // Load current user on mount to auto-populate inspector name
+  // Load job data and user on mount
   useEffect(() => {
-    const loadUser = async () => {
+    const loadData = async () => {
       try {
-        const response = await apiClient.getCurrentUser()
-        if (response.user?.full_name) {
-          setInspectorName(response.user.full_name)
+        setLoading(true)
+
+        // Load user data for inspector name
+        const userResponse = await apiClient.getCurrentUser()
+        if (userResponse.user?.full_name) {
+          setInspectorName(userResponse.user.full_name)
+        }
+
+        // Load existing job data including any previous completion form data
+        if (id) {
+          const jobResponse = await apiClient.getAssetRegisterJob(id)
+
+          // If there are completion forms, load the most recent one's data
+          if (jobResponse.completionForms && jobResponse.completionForms.length > 0) {
+            const latestForm = jobResponse.completionForms[0]
+
+            // Load previous assets if available
+            if (latestForm.form_data?.assets && Array.isArray(latestForm.form_data.assets)) {
+              setAssets(latestForm.form_data.assets)
+            }
+
+            // Override inspector name if saved from previous submission
+            if (latestForm.technician_name) {
+              setInspectorName(latestForm.technician_name)
+            }
+          }
+
+          // Load completion notes from the job itself
+          if (jobResponse.job?.completion_notes) {
+            setCompletionNotes(jobResponse.job.completion_notes)
+          }
         }
       } catch (err) {
-        console.error('Failed to load user:', err)
+        console.error('Failed to load data:', err)
+      } finally {
+        setLoading(false)
       }
     }
-    loadUser()
-  }, [])
+    loadData()
+  }, [id])
 
   const updateField = (fieldId: string, value: any) => {
     setCurrentItemData(prev => ({ ...prev, [fieldId]: value }))
@@ -185,10 +216,48 @@ export default function AssetRegisterCompleteScreen() {
 
   const handleSelectSubcategory = (subcategory: string) => {
     setSelectedSubcategory(subcategory)
-    setShowSubcategoryMenu(false)
   }
 
-  const handleAddItem = () => {
+  // Save assets to database (called after each add to prevent data loss)
+  const saveAssetsToDatabase = async (updatedAssets: AssetItem[]) => {
+    try {
+      setSaving(true)
+      const roomsData: Record<string, AssetItem[]> = {}
+      updatedAssets.forEach(asset => {
+        if (!roomsData[asset.room_id]) {
+          roomsData[asset.room_id] = []
+        }
+        roomsData[asset.room_id].push(asset)
+      })
+      const roomsWithItemsSet = new Set(updatedAssets.map(a => a.room_id))
+
+      await apiClient.updateAssetRegisterJob(id!, {
+        status: 'IN_PROGRESS',
+        completion_notes: completionNotes,
+      })
+
+      // Save form data via a partial completion (not final submit)
+      await apiClient.saveAssetRegisterProgress(id!, {
+        form_data: {
+          assets: updatedAssets,
+          rooms_completed: Array.from(roomsWithItemsSet),
+        },
+        technician_name: inspectorName,
+        report_data: {
+          total_items: updatedAssets.length,
+          rooms_completed: roomsWithItemsSet.size,
+          rooms_data: roomsData,
+        },
+      })
+    } catch (err) {
+      console.error('Failed to save assets:', err)
+      // Don't show error to user - silent save in background
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleAddItem = async () => {
     if (!selectedCategory) {
       Alert.alert('Select Category', 'Please select a category first')
       return
@@ -215,17 +284,21 @@ export default function AssetRegisterCompleteScreen() {
       created_at: new Date().toISOString(),
     }
 
-    setAssets(prev => [...prev, newItem])
+    const updatedAssets = [...assets, newItem]
+    setAssets(updatedAssets)
 
-    // Reset form data but keep category selected for adding more of same type
+    // Reset form completely - scroll to top to select next category
     setCurrentItemData({})
     setSelectedSubcategory(null)
-    // Don't reset selectedCategory - allows user to easily add more of same category
+    setSelectedCategory(null)
 
-    // Scroll down to show the newly added item and keep form visible
+    // Scroll to top to select next category
     setTimeout(() => {
-      mainScrollRef.current?.scrollToEnd({ animated: true })
+      mainScrollRef.current?.scrollTo({ y: 0, animated: true })
     }, 100)
+
+    // Save to database in background to prevent data loss
+    saveAssetsToDatabase(updatedAssets)
   }
 
   const handleRemoveItem = (itemId: string) => {
@@ -238,7 +311,10 @@ export default function AssetRegisterCompleteScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            setAssets(prev => prev.filter(a => a.id !== itemId))
+            const updatedAssets = assets.filter(a => a.id !== itemId)
+            setAssets(updatedAssets)
+            // Save to database after removal
+            saveAssetsToDatabase(updatedAssets)
           },
         },
       ]
@@ -258,70 +334,82 @@ export default function AssetRegisterCompleteScreen() {
   }
 
   const handleSubmit = async () => {
-    if (!inspectorName.trim()) {
-      Alert.alert('Required', 'Please enter your name')
-      return
-    }
-
     if (assets.length === 0) {
-      Alert.alert('No Items', 'Please add at least one item before submitting')
+      Alert.alert('No Items', 'Please add at least one item before completing the asset register.')
       return
     }
 
+    // First confirmation
     Alert.alert(
-      'Submit Asset Register',
-      `You have recorded ${assets.length} items across ${roomsWithItems.size} rooms. Submit this asset register?`,
+      'Complete Asset Register',
+      `You have recorded ${assets.length} items across ${roomsWithItems.size} rooms.\n\nThis will submit all results to PropertyPal. Are you sure you want to complete this asset register?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Submit',
-          onPress: async () => {
-            try {
-              setSubmitting(true)
-
-              // Organize assets by room for report
-              const roomsData: Record<string, AssetItem[]> = {}
-              assets.forEach(asset => {
-                if (!roomsData[asset.room_id]) {
-                  roomsData[asset.room_id] = []
-                }
-                roomsData[asset.room_id].push(asset)
-              })
-
-              await apiClient.completeAssetRegisterJob(id!, {
-                form_data: {
-                  assets,
-                  rooms_completed: Array.from(roomsWithItems),
+          text: 'Yes, Complete',
+          onPress: () => {
+            // Second confirmation
+            Alert.alert(
+              'Confirm Submission',
+              'Once submitted, the asset register will be marked as complete and sent to the property manager.\n\nDo you want to proceed?',
+              [
+                { text: 'Go Back', style: 'cancel' },
+                {
+                  text: 'Submit Now',
+                  style: 'destructive',
+                  onPress: performSubmit,
                 },
-                completion_notes: completionNotes,
-                technician_name: inspectorName,
-                report_data: {
-                  total_items: assets.length,
-                  rooms_completed: roomsWithItems.size,
-                  rooms_data: roomsData,
-                  completed_at: new Date().toISOString(),
-                },
-              })
-
-              Alert.alert(
-                'Success',
-                'Asset register has been submitted successfully!',
-                [
-                  {
-                    text: 'OK',
-                    onPress: () => router.replace('/asset-register'),
-                  },
-                ]
-              )
-            } catch (err: any) {
-              Alert.alert('Error', err.message || 'Failed to submit asset register')
-            } finally {
-              setSubmitting(false)
-            }
+              ]
+            )
           },
         },
       ]
     )
+  }
+
+  const performSubmit = async () => {
+    try {
+      setSubmitting(true)
+
+      // Organize assets by room for report
+      const roomsData: Record<string, AssetItem[]> = {}
+      assets.forEach(asset => {
+        if (!roomsData[asset.room_id]) {
+          roomsData[asset.room_id] = []
+        }
+        roomsData[asset.room_id].push(asset)
+      })
+
+      await apiClient.completeAssetRegisterJob(id!, {
+        form_data: {
+          assets,
+          rooms_completed: Array.from(roomsWithItems),
+        },
+        completion_notes: completionNotes,
+        technician_name: inspectorName,
+        report_data: {
+          total_items: assets.length,
+          rooms_completed: roomsWithItems.size,
+          rooms_data: roomsData,
+          completed_at: new Date().toISOString(),
+        },
+      })
+
+      Alert.alert(
+        'Success',
+        'Asset register has been submitted successfully!',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/asset-register'),
+          },
+        ]
+      )
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to submit asset register')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const renderRoomChip = ({ item, index }: { item: typeof ROOMS[0], index: number }) => {
@@ -371,33 +459,32 @@ export default function AssetRegisterCompleteScreen() {
 
     return (
       <View style={styles.fieldsContainer}>
-        {/* Subcategory selector for categories that have them */}
+        {/* Subcategory selector as tiles for categories that have them */}
         {currentCategory.subcategories && (
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Type *</Text>
-            <Menu
-              visible={showSubcategoryMenu}
-              onDismiss={() => setShowSubcategoryMenu(false)}
-              anchor={
-                <TouchableOpacity
-                  style={styles.dropdown}
-                  onPress={() => setShowSubcategoryMenu(true)}
-                >
-                  <Text style={selectedSubcategory ? styles.dropdownText : styles.dropdownPlaceholder}>
-                    {selectedSubcategory || 'Select type...'}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={20} color="#666" />
-                </TouchableOpacity>
-              }
-            >
+            <View style={styles.subcategoryGrid}>
               {currentCategory.subcategories.map((sub) => (
-                <Menu.Item
+                <TouchableOpacity
                   key={sub}
+                  style={[
+                    styles.subcategoryButton,
+                    selectedSubcategory === sub && styles.subcategoryButtonSelected,
+                  ]}
                   onPress={() => handleSelectSubcategory(sub)}
-                  title={sub}
-                />
+                >
+                  <Text
+                    style={[
+                      styles.subcategoryButtonText,
+                      selectedSubcategory === sub && styles.subcategoryButtonTextSelected,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {sub}
+                  </Text>
+                </TouchableOpacity>
               ))}
-            </Menu>
+            </View>
           </View>
         )}
 
@@ -684,14 +771,16 @@ export default function AssetRegisterCompleteScreen() {
           </View>
         )}
 
-        {/* Add Item Button */}
+        {/* Save Item Button */}
         <Button
           mode="contained"
           onPress={handleAddItem}
           style={styles.addItemButton}
-          icon="plus"
+          icon="content-save"
+          loading={saving}
+          disabled={saving}
         >
-          Add {selectedSubcategory || currentCategory.name}
+          Save
         </Button>
       </View>
     )
@@ -752,6 +841,18 @@ export default function AssetRegisterCompleteScreen() {
     )
   }
 
+  if (loading) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Asset Register' }} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2563eb" />
+          <Text style={styles.loadingText}>Loading asset data...</Text>
+        </View>
+      </>
+    )
+  }
+
   return (
     <>
       <Stack.Screen
@@ -794,10 +895,7 @@ export default function AssetRegisterCompleteScreen() {
             <Text style={styles.roomTitle}>{currentRoom.name}</Text>
           </View>
 
-          {/* Items already in this room */}
-          {renderRoomItems()}
-
-          {/* Category selector */}
+          {/* Category selector - Add new item form */}
           <Card style={styles.card}>
             <Card.Title
               title="Add New Item"
@@ -840,63 +938,20 @@ export default function AssetRegisterCompleteScreen() {
             </Card.Content>
           </Card>
 
-          {/* Completion section - show when there are items */}
-          {assets.length > 0 && (
-            <Card style={styles.card}>
-              <Card.Title
-                title="Complete Asset Register"
-                left={(props) => <MaterialCommunityIcons {...props} name="check-circle" size={24} color="#16a34a" />}
-              />
-              <Card.Content>
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Your Name *</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    placeholder="Enter your name"
-                    placeholderTextColor="#999"
-                    value={inspectorName}
-                    onChangeText={setInspectorName}
-                  />
-                </View>
-
-                <View style={styles.fieldGroup}>
-                  <Text style={styles.fieldLabel}>Completion Notes</Text>
-                  <TextInput
-                    style={[styles.textInput, styles.textArea]}
-                    placeholder="Any final notes or observations..."
-                    placeholderTextColor="#999"
-                    value={completionNotes}
-                    onChangeText={setCompletionNotes}
-                    multiline
-                    numberOfLines={4}
-                  />
-                </View>
-
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit}
-                  loading={submitting}
-                  disabled={submitting}
-                  style={styles.submitButton}
-                  icon="check"
-                >
-                  Submit Asset Register ({assets.length} items)
-                </Button>
-              </Card.Content>
-            </Card>
-          )}
+          {/* Items already in this room - shown below the add form */}
+          {renderRoomItems()}
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
 
-        {/* Bottom navigation */}
+        {/* Bottom navigation - 3 buttons */}
         <View style={styles.navigationContainer}>
           <Button
             mode="outlined"
             onPress={handlePreviousRoom}
             disabled={currentRoomIndex === 0}
-            style={styles.navButton}
-            icon="chevron-left"
+            style={styles.navButtonSmall}
+            compact
           >
             Previous
           </Button>
@@ -904,11 +959,21 @@ export default function AssetRegisterCompleteScreen() {
             mode="contained"
             onPress={handleNextRoom}
             disabled={currentRoomIndex === ROOMS.length - 1}
-            style={styles.navButton}
-            icon="chevron-right"
-            contentStyle={{ flexDirection: 'row-reverse' }}
+            style={styles.navButtonSmall}
+            compact
           >
             Next Room
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            disabled={submitting || assets.length === 0}
+            loading={submitting}
+            style={styles.completeButton}
+            buttonColor="#16a34a"
+            compact
+          >
+            Complete
           </Button>
         </View>
       </KeyboardAvoidingView>
@@ -917,6 +982,17 @@ export default function AssetRegisterCompleteScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -1029,24 +1105,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
-  },
-  dropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#fff',
-  },
-  dropdownText: {
-    fontSize: 16,
-    color: '#111',
-  },
-  dropdownPlaceholder: {
-    fontSize: 16,
-    color: '#999',
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -1176,6 +1234,42 @@ const styles = StyleSheet.create({
   },
   navButton: {
     flex: 1,
+  },
+  navButtonSmall: {
+    flex: 1,
+  },
+  completeButton: {
+    flex: 1,
+  },
+  subcategoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  subcategoryButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    minWidth: '30%',
+    flexGrow: 1,
+  },
+  subcategoryButtonSelected: {
+    backgroundColor: '#2563eb',
+    borderColor: '#2563eb',
+  },
+  subcategoryButtonText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+  },
+  subcategoryButtonTextSelected: {
+    color: '#fff',
   },
   headerBadge: {
     backgroundColor: '#2563eb',
