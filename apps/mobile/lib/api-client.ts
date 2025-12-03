@@ -1257,6 +1257,32 @@ class ApiClient {
   }
 
   /**
+   * Get asset register jobs for a specific property
+   */
+  async getAssetRegisterJobsForProperty(propertyId: string) {
+    return this.request<{ jobs: any[] }>(`/asset-register-jobs?property_id=${propertyId}`)
+  }
+
+  /**
+   * Create a new asset register job
+   */
+  async createAssetRegisterJob(data: {
+    property_id: number
+    organization_id?: number
+    scheduled_date?: string
+    priority?: string
+    notes?: string
+  }) {
+    return this.request<{ success: boolean; job: any }>(
+      '/asset-register-jobs',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
+
+  /**
    * Get a single asset register job by ID with all related data
    */
   async getAssetRegisterJob(id: string) {

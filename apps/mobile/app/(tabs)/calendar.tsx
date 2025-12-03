@@ -45,6 +45,7 @@ const TYPE_COLORS: Record<string, string> = {
   quote: '#9333ea',
   meeting: '#0891b2',
   site_visit: '#ea580c',
+  asset_register: '#16a34a',
 }
 
 type ViewMode = 'day' | 'week' | 'month'
@@ -272,12 +273,16 @@ export default function CalendarScreen() {
     // Get phone number from client data
     const clientPhone = appointment.client_phone || appointment.client_mobile || null
 
-    // Determine if this is a job or an appointment
+    // Determine what type of item this is
+    // If appointment_type is 'asset_register', navigate to asset register screen
     // If job_id equals id, then this row came from the jobs UNION query
+    const isAssetRegister = appointment.appointment_type === 'asset_register'
     const isJob = appointment.job_id && appointment.job_id === appointment.id
     const handlePress = () => {
       if (!appointment.id) return // Safety check
-      if (isJob) {
+      if (isAssetRegister) {
+        router.push(`/asset-register/${appointment.id}`)
+      } else if (isJob) {
         router.push(`/job/${appointment.id}`)
       } else {
         router.push(`/appointment/${appointment.id}`)

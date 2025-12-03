@@ -169,14 +169,6 @@ export default function MoreScreen() {
         />
 
         <List.Item
-          title="Asset Register"
-          description="Property inspections and asset tracking"
-          left={(props) => <List.Icon {...props} icon="clipboard-list" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => router.push('/asset-register')}
-        />
-
-        <List.Item
           title="SMS & Messaging"
           description="Purchase credits and send messages"
           left={(props) => <List.Icon {...props} icon="message-text" />}

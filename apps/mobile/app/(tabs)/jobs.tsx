@@ -47,6 +47,13 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: '#ea580c',
   completed: '#16a34a',
   invoiced: '#0891b2',
+  // Asset register statuses
+  CREATED: '#9333ea',
+  ASSIGNED: '#2563eb',
+  SCHEDULED: '#2563eb',
+  IN_PROGRESS: '#ea580c',
+  COMPLETED: '#16a34a',
+  CANCELLED: '#64748b',
 }
 
 const PRIORITY_COLORS: Record<string, string> = {
@@ -54,6 +61,10 @@ const PRIORITY_COLORS: Record<string, string> = {
   medium: '#f59e0b',
   high: '#ef4444',
   urgent: '#dc2626',
+  // Asset register priorities (uppercase)
+  LOW: '#64748b',
+  MEDIUM: '#f59e0b',
+  HIGH: '#ef4444',
 }
 
 const STORAGE_KEY = '@jobs_filter_status'
@@ -140,11 +151,29 @@ export default function JobsScreen() {
     fetchJobs()
   }
 
+  // Map asset register status to job status for filtering
+  const mapArStatusToJobStatus = (arStatus: string): string => {
+    const mapping: Record<string, string> = {
+      'CREATED': 'quoted',
+      'ASSIGNED': 'quoted',
+      'SCHEDULED': 'scheduled',
+      'IN_PROGRESS': 'in_progress',
+      'COMPLETED': 'completed',
+    }
+    return mapping[arStatus] || arStatus.toLowerCase()
+  }
+
   const filteredJobs = jobs
     .filter((job) => {
       // Filter by status - if no statuses selected, show all
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(job.status)) {
-        return false
+      if (selectedStatuses.length > 0) {
+        // For asset register jobs, map status to job equivalent
+        const effectiveStatus = job.record_type === 'asset_register'
+          ? mapArStatusToJobStatus(job.status)
+          : job.status
+        if (!selectedStatuses.includes(effectiveStatus)) {
+          return false
+        }
       }
 
       // Filter by search query
@@ -155,10 +184,14 @@ export default function JobsScreen() {
         ? job.company_name
         : `${job.first_name || ''} ${job.last_name || ''}`.trim()
 
+      // For asset register, also search address
+      const address = `${job.site_address_line1 || ''} ${job.site_city || ''} ${job.site_state || ''}`.toLowerCase()
+
       return (
         job.title?.toLowerCase().includes(query) ||
         job.job_number?.toLowerCase().includes(query) ||
-        clientName?.toLowerCase().includes(query)
+        clientName?.toLowerCase().includes(query) ||
+        address.includes(query)
       )
     })
     .sort((a, b) => {
@@ -170,6 +203,8 @@ export default function JobsScreen() {
     })
 
   const renderJobCard = ({ item }: { item: any }) => {
+    const isAssetRegister = item.record_type === 'asset_register'
+
     // Build client name from database fields
     const clientName = item.is_company
       ? item.company_name
@@ -215,39 +250,69 @@ export default function JobsScreen() {
     const priority = (item.priority || 'medium') as keyof typeof PRIORITY_COLORS
     const status = (item.status || 'quoted') as keyof typeof STATUS_COLORS
 
+    // Route to asset register detail for asset register jobs
+    const handlePress = () => {
+      if (isAssetRegister) {
+        router.push(`/asset-register/${item.id}`)
+      } else {
+        router.push(`/job/${item.id}`)
+      }
+    }
+
     return (
       <TouchableOpacity
-        style={styles.card}
-        onPress={() => router.push(`/job/${item.id}`)}
+        style={[styles.card, isAssetRegister && styles.assetRegisterCard]}
+        onPress={handlePress}
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             <Text style={styles.jobNumber}>{item.job_number || 'N/A'}</Text>
-            <View style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[priority] }]}>
-              <Text style={styles.chipText}>{priority.toUpperCase()}</Text>
+            {isAssetRegister && (
+              <View style={styles.assetRegisterBadge}>
+                <MaterialCommunityIcons name="clipboard-list" size={12} color="#fff" />
+              </View>
+            )}
+            <View style={[styles.priorityChip, { backgroundColor: PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium }]}>
+              <Text style={styles.chipText}>{String(priority).toUpperCase()}</Text>
             </View>
           </View>
-          <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[status] }]}>
-            <Text style={styles.chipText}>{status.replace('_', ' ').toUpperCase()}</Text>
+          <View style={[styles.statusChip, { backgroundColor: STATUS_COLORS[status] || STATUS_COLORS.quoted }]}>
+            <Text style={styles.chipText}>{String(status).replace('_', ' ').toUpperCase()}</Text>
           </View>
         </View>
 
-        <Text style={styles.title}>{item.title || 'Untitled Job'}</Text>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="account" size={16} color="#666" />
-          <Text style={styles.info}>{clientName || 'No client'}</Text>
+        <View style={styles.titleRow}>
+          {isAssetRegister && (
+            <MaterialCommunityIcons name="clipboard-list" size={20} color="#16a34a" style={{ marginRight: 8 }} />
+          )}
+          <Text style={[styles.title, isAssetRegister && styles.assetRegisterTitle]}>
+            {item.title || 'Untitled Job'}
+          </Text>
         </View>
 
         <View style={styles.row}>
-          <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
-          <Text style={styles.info}>{address}</Text>
+          <MaterialCommunityIcons name={isAssetRegister ? "home" : "account"} size={16} color="#666" />
+          <Text style={styles.info}>{isAssetRegister ? address : (clientName || 'No client')}</Text>
         </View>
+
+        {!isAssetRegister && (
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="map-marker" size={16} color="#666" />
+            <Text style={styles.info}>{address}</Text>
+          </View>
+        )}
 
         <View style={styles.row}>
           <MaterialCommunityIcons name="calendar" size={16} color="#666" />
           <Text style={styles.info}>{scheduledDateTime}</Text>
         </View>
+
+        {item.assigned_to_name && (
+          <View style={styles.row}>
+            <MaterialCommunityIcons name="account-check" size={16} color="#666" />
+            <Text style={styles.info}>Assigned: {item.assigned_to_name}</Text>
+          </View>
+        )}
       </TouchableOpacity>
     )
   }
@@ -458,10 +523,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#111',
+    flex: 1,
     marginBottom: 8,
   },
   row: {
@@ -494,5 +565,18 @@ const styles = StyleSheet.create({
     right: 16,
     bottom: 16,
     backgroundColor: '#2563eb',
+  },
+  assetRegisterCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#16a34a',
+  },
+  assetRegisterBadge: {
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  assetRegisterTitle: {
+    color: '#16a34a',
   },
 })

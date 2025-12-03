@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, RefreshControl } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Linking, RefreshControl, Alert } from 'react-native'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
@@ -9,19 +9,23 @@ export default function PropertyDetailScreen() {
   const router = useRouter()
   const [property, setProperty] = useState<any>(null)
   const [assets, setAssets] = useState<any[]>([])
+  const [assetRegisterJobs, setAssetRegisterJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [creatingAssetRegister, setCreatingAssetRegister] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchData = async () => {
     try {
       setError(null)
-      const [propertyRes, assetsRes] = await Promise.all([
+      const [propertyRes, assetsRes, arJobsRes] = await Promise.all([
         apiClient.getProperty(id),
-        apiClient.getAssets({ property_id: id })
+        apiClient.getAssets({ property_id: id }),
+        apiClient.getAssetRegisterJobsForProperty(id)
       ])
       setProperty(propertyRes.property)
       setAssets(assetsRes.assets || [])
+      setAssetRegisterJobs(arJobsRes.jobs || [])
     } catch (err: any) {
       console.error('Failed to fetch property:', err)
       setError(err.message || 'Failed to load property')
@@ -46,6 +50,47 @@ export default function PropertyDetailScreen() {
 
   const handleEmail = (email: string) => {
     Linking.openURL(`mailto:${email}`)
+  }
+
+  // Check for active/in-progress asset register job
+  const activeAssetRegisterJob = assetRegisterJobs.find(
+    job => ['CREATED', 'ASSIGNED', 'SCHEDULED', 'IN_PROGRESS'].includes(job.status)
+  )
+
+  const handleStartAssetRegister = async () => {
+    if (activeAssetRegisterJob) {
+      // Navigate to existing job
+      router.push(`/asset-register/${activeAssetRegisterJob.id}`)
+      return
+    }
+
+    // Confirm creation of new asset register
+    Alert.alert(
+      'Start Asset Register',
+      'This will create a new asset register for this property. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Start',
+          onPress: async () => {
+            try {
+              setCreatingAssetRegister(true)
+              const result = await apiClient.createAssetRegisterJob({
+                property_id: parseInt(id),
+                organization_id: property.organization_id,
+                notes: `Asset register for ${property.address_street}`,
+              })
+              // Navigate to the new asset register job
+              router.push(`/asset-register/${result.job.id}`)
+            } catch (err: any) {
+              Alert.alert('Error', err.message || 'Failed to create asset register')
+            } finally {
+              setCreatingAssetRegister(false)
+            }
+          },
+        },
+      ]
+    )
   }
 
   if (loading) {
@@ -115,24 +160,38 @@ export default function PropertyDetailScreen() {
           </View>
         </View>
 
-        {/* Quick Actions */}
+        {/* Asset Register Action */}
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => router.push(`/property/${id}/assets`)}
+            style={[
+              styles.assetRegisterButton,
+              activeAssetRegisterJob ? styles.assetRegisterButtonActive : null
+            ]}
+            onPress={handleStartAssetRegister}
+            disabled={creatingAssetRegister}
           >
-            <MaterialCommunityIcons name="clipboard-list" size={24} color="#2563eb" />
-            <Text style={styles.actionButtonText}>View Assets</Text>
-            <View style={styles.assetCount}>
-              <Text style={styles.assetCountText}>{assets.length}</Text>
-            </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.addAssetButton]}
-            onPress={() => router.push(`/property/${id}/assets/capture`)}
-          >
-            <MaterialCommunityIcons name="plus-circle" size={24} color="#fff" />
-            <Text style={[styles.actionButtonText, { color: '#fff' }]}>Add Asset</Text>
+            {creatingAssetRegister ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <MaterialCommunityIcons
+                  name={activeAssetRegisterJob ? "clipboard-text-clock" : "clipboard-text-play"}
+                  size={24}
+                  color="#fff"
+                />
+                <View style={styles.assetRegisterContent}>
+                  <Text style={styles.assetRegisterButtonText}>
+                    {activeAssetRegisterJob ? 'Continue Asset Register' : 'Start Asset Register'}
+                  </Text>
+                  {activeAssetRegisterJob && (
+                    <Text style={styles.assetRegisterStatus}>
+                      Status: {activeAssetRegisterJob.status.replace('_', ' ')}
+                    </Text>
+                  )}
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color="#fff" />
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -312,41 +371,35 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
     padding: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e5e5',
   },
-  actionButton: {
-    flex: 1,
+  assetRegisterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 10,
-    backgroundColor: '#eff6ff',
+    gap: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#2563eb',
   },
-  addAssetButton: {
+  assetRegisterButtonActive: {
     backgroundColor: '#16a34a',
   },
-  actionButtonText: {
-    fontSize: 14,
+  assetRegisterContent: {
+    flex: 1,
+  },
+  assetRegisterButtonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#2563eb',
-  },
-  assetCount: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  assetCountText: {
     color: '#fff',
+  },
+  assetRegisterStatus: {
     fontSize: 12,
-    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
   },
   section: {
     padding: 16,

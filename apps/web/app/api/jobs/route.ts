@@ -5,7 +5,7 @@ import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 
 export const dynamic = 'force-dynamic'
 
-// GET - List all jobs for user's organizations
+// GET - List all jobs for user's organizations (including asset register jobs)
 export async function GET(req: Request) {
   try {
     // Try to get auth from Clerk (web) first
@@ -39,6 +39,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
     const clientId = searchParams.get('clientId')
+    const includeAssetRegister = searchParams.get('includeAssetRegister') !== 'false' // Include by default
 
     // Get user from database
     const users = await sql`
@@ -51,13 +52,27 @@ export async function GET(req: Request) {
 
     const user = users[0]
 
-    // Build query with optional filters
+    // Build query with optional filters - now using UNION to include asset register jobs
     let jobs
+
+    // Map asset register status to job status for filtering
+    const mapAssetRegisterStatus = (jobStatus: string) => {
+      // Asset register uses: CREATED, ASSIGNED, SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED
+      // Jobs use: quoted, scheduled, in_progress, completed, invoiced
+      const mapping: Record<string, string[]> = {
+        'quoted': ['CREATED', 'ASSIGNED'],
+        'scheduled': ['SCHEDULED'],
+        'in_progress': ['IN_PROGRESS'],
+        'completed': ['COMPLETED'],
+      }
+      return mapping[jobStatus] || []
+    }
 
     if (status && clientId) {
       jobs = await sql`
         SELECT
           j.*,
+          'job' as record_type,
           o.name as organization_name,
           c.company_name, c.first_name, c.last_name, c.is_company,
           u.full_name as created_by_name,
@@ -75,9 +90,11 @@ export async function GET(req: Request) {
         ORDER BY j.created_at DESC
       `
     } else if (status) {
-      jobs = await sql`
+      // Get regular jobs
+      const regularJobs = await sql`
         SELECT
           j.*,
+          'job' as record_type,
           o.name as organization_name,
           c.company_name, c.first_name, c.last_name, c.is_company,
           u.full_name as created_by_name,
@@ -93,10 +110,58 @@ export async function GET(req: Request) {
         AND j.status = ${status}
         ORDER BY j.created_at DESC
       `
+
+      // Get asset register jobs with matching status if included
+      let assetRegisterJobs: any[] = []
+      if (includeAssetRegister) {
+        const arStatuses = mapAssetRegisterStatus(status)
+        if (arStatuses.length > 0) {
+          assetRegisterJobs = await sql`
+            SELECT
+              arj.id,
+              arj.organization_id,
+              arj.property_id,
+              arj.assigned_supplier_id,
+              arj.status,
+              arj.priority,
+              arj.scheduled_date,
+              arj.notes as description,
+              arj.created_at,
+              arj.updated_at,
+              'asset_register' as record_type,
+              'Asset Register' as title,
+              CONCAT('AR-', LPAD(arj.id::text, 5, '0')) as job_number,
+              o.name as organization_name,
+              p.address_street as site_address_line1,
+              p.address_suburb as site_city,
+              p.address_state as site_state,
+              p.address_postcode as site_postcode,
+              NULL as company_name,
+              p.owner_name as first_name,
+              NULL as last_name,
+              false as is_company,
+              NULL as created_by_name,
+              s_contact.company_name as assigned_to_name
+            FROM asset_register_jobs arj
+            INNER JOIN organizations o ON arj.organization_id = o.id
+            INNER JOIN organization_members om ON o.id = om.organization_id
+            LEFT JOIN properties p ON arj.property_id = p.property_id
+            LEFT JOIN suppliers s ON arj.assigned_supplier_id = s.supplier_id
+            LEFT JOIN contacts s_contact ON s.contact_id = s_contact.contact_id
+            WHERE om.user_id = ${user.id}
+            AND om.status = 'active'
+            AND arj.status = ANY(${arStatuses})
+            ORDER BY arj.created_at DESC
+          `
+        }
+      }
+
+      jobs = [...regularJobs, ...assetRegisterJobs]
     } else if (clientId) {
       jobs = await sql`
         SELECT
           j.*,
+          'job' as record_type,
           o.name as organization_name,
           c.company_name, c.first_name, c.last_name, c.is_company,
           u.full_name as created_by_name,
@@ -113,9 +178,11 @@ export async function GET(req: Request) {
         ORDER BY j.created_at DESC
       `
     } else {
-      jobs = await sql`
+      // Get all jobs (regular + asset register)
+      const regularJobs = await sql`
         SELECT
           j.*,
+          'job' as record_type,
           o.name as organization_name,
           c.company_name, c.first_name, c.last_name, c.is_company,
           u.full_name as created_by_name,
@@ -130,7 +197,62 @@ export async function GET(req: Request) {
         AND om.status = 'active'
         ORDER BY j.created_at DESC
       `
+
+      // Get asset register jobs if included
+      let assetRegisterJobs: any[] = []
+      if (includeAssetRegister) {
+        assetRegisterJobs = await sql`
+          SELECT
+            arj.id,
+            arj.organization_id,
+            arj.property_id,
+            arj.assigned_supplier_id,
+            arj.status,
+            arj.priority,
+            arj.scheduled_date,
+            arj.notes as description,
+            arj.created_at,
+            arj.updated_at,
+            'asset_register' as record_type,
+            'Asset Register' as title,
+            CONCAT('AR-', LPAD(arj.id::text, 5, '0')) as job_number,
+            o.name as organization_name,
+            p.address_street as site_address_line1,
+            p.address_suburb as site_city,
+            p.address_state as site_state,
+            p.address_postcode as site_postcode,
+            NULL as company_name,
+            p.owner_name as first_name,
+            NULL as last_name,
+            false as is_company,
+            NULL as created_by_name,
+            s_contact.company_name as assigned_to_name
+          FROM asset_register_jobs arj
+          INNER JOIN organizations o ON arj.organization_id = o.id
+          INNER JOIN organization_members om ON o.id = om.organization_id
+          LEFT JOIN properties p ON arj.property_id = p.property_id
+          LEFT JOIN suppliers s ON arj.assigned_supplier_id = s.supplier_id
+          LEFT JOIN contacts s_contact ON s.contact_id = s_contact.contact_id
+          WHERE om.user_id = ${user.id}
+          AND om.status = 'active'
+          AND arj.status != 'COMPLETED'
+          AND arj.status != 'CANCELLED'
+          ORDER BY arj.created_at DESC
+        `
+      }
+
+      jobs = [...regularJobs, ...assetRegisterJobs]
     }
+
+    // Sort combined results by scheduled_date (earliest first), then by created_at
+    jobs.sort((a: any, b: any) => {
+      if (!a.scheduled_date && !b.scheduled_date) {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      }
+      if (!a.scheduled_date) return 1
+      if (!b.scheduled_date) return -1
+      return new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime()
+    })
 
     return NextResponse.json({
       jobs,

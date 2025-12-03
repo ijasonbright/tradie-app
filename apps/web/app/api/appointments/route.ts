@@ -128,6 +128,36 @@ export async function GET(req: Request) {
       ${dateCondition.replace(/start_time/g, 'scheduled_start_time').replace(/end_time/g, 'scheduled_end_time')}
       ${assignedCondition}
 
+      UNION ALL
+
+      SELECT
+        arj.id,
+        arj.organization_id,
+        CONCAT('Asset Register - ', p.address_street) as title,
+        arj.notes as description,
+        'asset_register' as appointment_type,
+        arj.scheduled_date::timestamp as start_time,
+        (arj.scheduled_date::timestamp + interval '2 hours') as end_time,
+        CONCAT_WS(', ', p.address_street, p.address_suburb, p.address_state, p.address_postcode) as location_address,
+        NULL as job_id,
+        NULL as client_id,
+        arj.assigned_to_user_id,
+        u1.full_name as assigned_to_name,
+        NULL as created_by_name,
+        NULL as company_name, p.owner_name as first_name, NULL as last_name, false as is_company, p.owner_phone as client_phone, p.owner_phone as client_mobile,
+        CONCAT('AR-', LPAD(arj.id::text, 5, '0')) as job_number, 'Asset Register' as job_title
+      FROM asset_register_jobs arj
+      INNER JOIN organizations o ON arj.organization_id = o.id
+      INNER JOIN organization_members om ON o.id = om.organization_id
+      LEFT JOIN properties p ON arj.property_id = p.id
+      LEFT JOIN users u1 ON arj.assigned_to_user_id = u1.id
+      WHERE om.user_id = $1
+      AND om.status = 'active'
+      AND arj.scheduled_date IS NOT NULL
+      AND arj.status NOT IN ('COMPLETED', 'CANCELLED')
+      ${dateCondition.replace(/start_time/g, 'arj.scheduled_date::timestamp')}
+      ${assignedCondition}
+
       ORDER BY start_time ASC
     `
 

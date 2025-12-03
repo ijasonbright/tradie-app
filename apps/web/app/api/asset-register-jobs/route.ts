@@ -39,6 +39,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
     const assignedToMe = searchParams.get('assignedToMe') === 'true'
+    const propertyId = searchParams.get('property_id')
 
     // Get user from database
     const users = await sql`
@@ -54,7 +55,27 @@ export async function GET(req: Request) {
     // Build query - asset register jobs for user's organizations
     let jobs
 
-    if (assignedToMe) {
+    // If filtering by property, get jobs for that specific property
+    if (propertyId) {
+      jobs = await sql`
+        SELECT
+          arj.*,
+          o.name as organization_name,
+          p.address_street, p.address_suburb, p.address_state, p.address_postcode,
+          p.owner_name, p.tenant_name,
+          u.full_name as assigned_to_name
+        FROM asset_register_jobs arj
+        INNER JOIN organizations o ON arj.organization_id = o.id
+        INNER JOIN organization_members om ON o.id = om.organization_id
+        INNER JOIN properties p ON arj.property_id = p.id
+        LEFT JOIN users u ON arj.assigned_to_user_id = u.id
+        WHERE om.user_id = ${user.id}
+        AND om.status = 'active'
+        AND arj.property_id = ${propertyId}
+        ORDER BY
+          arj.created_at DESC
+      `
+    } else if (assignedToMe) {
       // Get jobs assigned to this user specifically
       if (status) {
         jobs = await sql`
@@ -234,6 +255,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Access denied to this organization' }, { status: 403 })
     }
 
+    // Get property external_property_id (for syncing back to PropertyPal)
+    const properties = await sql`
+      SELECT * FROM properties WHERE id = ${body.property_id} LIMIT 1
+    `
+    const property = properties.length > 0 ? properties[0] : null
+    const externalPropertyId = property?.external_property_id || body.external_property_id
+
     // Create asset register job
     const jobs = await sql`
       INSERT INTO asset_register_jobs (
@@ -250,17 +278,65 @@ export async function POST(req: Request) {
         ${body.scheduled_date || null},
         ${body.notes || null},
         ${body.external_request_id || null},
-        ${body.external_source || 'property_pal'},
-        ${body.external_property_id || null},
+        ${body.external_source || 'tradie_app'},
+        ${externalPropertyId || null},
         NOW(),
         NOW()
       )
       RETURNING *
     `
 
+    const job = jobs[0]
+
+    // Sync to PropertyPal if the property has an external_property_id
+    // and this job doesn't already have an external_request_id (not from PropertyPal)
+    if (externalPropertyId && !body.external_request_id) {
+      try {
+        const propertyPalWebhookUrl = process.env.PROPERTY_PAL_WEBHOOK_URL || 'https://propertypal.vercel.app/api/webhooks/tradieapp/asset-register'
+        const webhookSecret = process.env.TRADIEAPP_WEBHOOK_SECRET || ''
+
+        const webhookResponse = await fetch(propertyPalWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': webhookSecret,
+          },
+          body: JSON.stringify({
+            event: 'asset_register.created',
+            asset_register_job_id: String(job.id),
+            external_property_id: externalPropertyId,
+            status: job.status,
+            priority: job.priority,
+            scheduled_date: job.scheduled_date,
+            notes: job.notes,
+          }),
+        })
+
+        if (webhookResponse.ok) {
+          const webhookResult = await webhookResponse.json()
+          // Update the job with the external_request_id from PropertyPal
+          if (webhookResult.asset_register_request_id) {
+            await sql`
+              UPDATE asset_register_jobs
+              SET external_request_id = ${webhookResult.asset_register_request_id},
+                  external_source = 'tradie_app',
+                  updated_at = NOW()
+              WHERE id = ${job.id}
+            `
+            job.external_request_id = webhookResult.asset_register_request_id
+          }
+        } else {
+          console.error('Failed to sync to PropertyPal:', await webhookResponse.text())
+        }
+      } catch (syncError) {
+        // Don't fail the job creation if sync fails
+        console.error('Error syncing to PropertyPal:', syncError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      job: jobs[0],
+      job,
     })
   } catch (error) {
     console.error('Error creating asset register job:', error)
