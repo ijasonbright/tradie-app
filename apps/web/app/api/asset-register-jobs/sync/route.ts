@@ -51,6 +51,9 @@ export async function POST(req: Request) {
       tenant_name,
       tenant_phone,
       tenant_email,
+      property_manager_name,
+      property_manager_phone,
+      property_manager_email,
       access_instructions,
       // Assignment (optional)
       assigned_supplier_external_id,
@@ -96,6 +99,7 @@ export async function POST(req: Request) {
           property_type, bedrooms, bathrooms,
           owner_name, owner_phone, owner_email,
           tenant_name, tenant_phone, tenant_email,
+          property_manager_name, property_manager_phone, property_manager_email,
           access_instructions, synced_at,
           created_at, updated_at
         ) VALUES (
@@ -105,6 +109,7 @@ export async function POST(req: Request) {
           ${property_type || null}, ${bedrooms || null}, ${bathrooms || null},
           ${owner_name || null}, ${owner_phone || null}, ${owner_email || null},
           ${tenant_name || null}, ${tenant_phone || null}, ${tenant_email || null},
+          ${property_manager_name || null}, ${property_manager_phone || null}, ${property_manager_email || null},
           ${access_instructions || null}, NOW(),
           NOW(), NOW()
         )
@@ -128,6 +133,9 @@ export async function POST(req: Request) {
           tenant_name = ${tenant_name || null},
           tenant_phone = ${tenant_phone || null},
           tenant_email = ${tenant_email || null},
+          property_manager_name = ${property_manager_name || null},
+          property_manager_phone = ${property_manager_phone || null},
+          property_manager_email = ${property_manager_email || null},
           access_instructions = ${access_instructions || null},
           synced_at = NOW(),
           updated_at = NOW()

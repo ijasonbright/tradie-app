@@ -62,6 +62,7 @@ export async function GET(
         p.property_type, p.bedrooms, p.bathrooms,
         p.owner_name, p.owner_phone, p.owner_email,
         p.tenant_name, p.tenant_phone, p.tenant_email,
+        p.property_manager_name, p.property_manager_phone, p.property_manager_email,
         p.access_instructions, p.notes as property_notes,
         u.full_name as assigned_to_name, u.email as assigned_to_email, u.phone as assigned_to_phone
       FROM asset_register_jobs arj

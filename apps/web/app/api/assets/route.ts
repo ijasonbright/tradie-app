@@ -50,8 +50,10 @@ export async function GET(req: Request) {
 
     // Get query params
     const { searchParams } = new URL(req.url)
-    const propertyId = searchParams.get('property_id')
-    const organizationId = searchParams.get('organization_id')
+    const propertyIdParam = searchParams.get('property_id')
+    const propertyId = propertyIdParam ? parseInt(propertyIdParam, 10) : null
+    const organizationIdParam = searchParams.get('organization_id')
+    const organizationId = organizationIdParam ? parseInt(organizationIdParam, 10) : null
     const category = searchParams.get('category')
     const condition = searchParams.get('condition')
     const room = searchParams.get('room')

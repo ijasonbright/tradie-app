@@ -4,6 +4,18 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+interface AssetRegisterJob {
+  id: string
+  status: string
+  priority: string
+  scheduled_date: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  completed_date: string | null
+  assigned_to_name: string | null
+}
+
 interface Property {
   id: string
   organization_id: string
@@ -28,56 +40,32 @@ interface Property {
   created_at: string
 }
 
-interface Asset {
-  id: string
-  property_id: string
-  name: string
-  category: string
-  brand: string | null
-  model: string | null
-  serial_number: string | null
-  room: string | null
-  condition: string
-  estimated_age: string | null
-  current_value: string | null
-  replacement_cost: string | null
-  warranty_status: string | null
-  maintenance_required: boolean
-  notes: string | null
-  photo_count: number
-  created_at: string
+const STATUS_COLORS: Record<string, string> = {
+  CREATED: 'bg-purple-100 text-purple-800',
+  ASSIGNED: 'bg-blue-100 text-blue-800',
+  SCHEDULED: 'bg-cyan-100 text-cyan-800',
+  IN_PROGRESS: 'bg-orange-100 text-orange-800',
+  COMPLETED: 'bg-green-100 text-green-800',
+  CANCELLED: 'bg-gray-100 text-gray-800',
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  hvac: '🌡️',
-  plumbing: '🚿',
-  electrical: '⚡',
-  appliance: '🔌',
-  fixture: '💡',
-  structural: '🏗️',
-  safety: '🔥',
-  outdoor: '🌳',
-  other: '📦',
-}
-
-const CONDITION_COLORS: Record<string, string> = {
-  excellent: 'bg-green-100 text-green-800',
-  good: 'bg-blue-100 text-blue-800',
-  fair: 'bg-yellow-100 text-yellow-800',
-  poor: 'bg-orange-100 text-orange-800',
-  critical: 'bg-red-100 text-red-800',
+const STATUS_LABELS: Record<string, string> = {
+  CREATED: 'Created',
+  ASSIGNED: 'Assigned',
+  SCHEDULED: 'Scheduled',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
 }
 
 export default function PropertyDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [property, setProperty] = useState<Property | null>(null)
-  const [assets, setAssets] = useState<Asset[]>([])
+  const [assetRegisterJobs, setAssetRegisterJobs] = useState<AssetRegisterJob[]>([])
   const [loading, setLoading] = useState(true)
-  const [assetsLoading, setAssetsLoading] = useState(true)
-  const [filterCategory, setFilterCategory] = useState('')
-  const [filterRoom, setFilterRoom] = useState('')
-  const [filterCondition, setFilterCondition] = useState('')
+  const [jobsLoading, setJobsLoading] = useState(true)
+  const [creatingJob, setCreatingJob] = useState(false)
 
   const fetchProperty = async () => {
     try {
@@ -96,65 +84,63 @@ export default function PropertyDetailPage() {
     }
   }
 
-  const fetchAssets = async () => {
+  const fetchAssetRegisterJobs = async () => {
     if (!params.id) return
 
     try {
-      const res = await fetch(`/api/assets?property_id=${params.id}`)
+      const res = await fetch(`/api/asset-register-jobs?property_id=${params.id}`)
       if (res.ok) {
         const data = await res.json()
-        setAssets(data.assets || [])
+        setAssetRegisterJobs(data.jobs || [])
       }
     } catch (error) {
-      console.error('Error fetching assets:', error)
+      console.error('Error fetching asset register jobs:', error)
     } finally {
-      setAssetsLoading(false)
+      setJobsLoading(false)
     }
   }
 
   useEffect(() => {
     if (params.id) {
       fetchProperty()
-      fetchAssets()
+      fetchAssetRegisterJobs()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
 
-  const formatAddress = () => {
-    if (!property) return ''
-    const parts = [
-      property.address_street,
-      property.address_suburb,
-      property.address_state,
-      property.address_postcode,
-    ].filter(Boolean)
-    return parts.join(', ')
+  const handleCreateAssetRegister = async () => {
+    if (!property) return
+
+    setCreatingJob(true)
+    try {
+      const res = await fetch('/api/asset-register-jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          organization_id: property.organization_id,
+          property_id: property.id,
+          priority: 'MEDIUM',
+          notes: `Asset register for ${property.address_street}`,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        // Refresh the list
+        await fetchAssetRegisterJobs()
+        // Navigate to the new job
+        router.push(`/dashboard/jobs/asset-register/${data.job.id}`)
+      } else {
+        const error = await res.json()
+        alert(error.error || 'Failed to create asset register job')
+      }
+    } catch (error) {
+      console.error('Error creating asset register job:', error)
+      alert('Failed to create asset register job')
+    } finally {
+      setCreatingJob(false)
+    }
   }
-
-  const uniqueCategories = Array.from(
-    new Set(assets.map((a) => a.category).filter(Boolean))
-  )
-  const uniqueRooms = Array.from(
-    new Set(assets.map((a) => a.room).filter(Boolean))
-  )
-  const uniqueConditions = Array.from(
-    new Set(assets.map((a) => a.condition).filter(Boolean))
-  )
-
-  const filteredAssets = assets.filter((asset) => {
-    const matchesCategory = !filterCategory || asset.category === filterCategory
-    const matchesRoom = !filterRoom || asset.room === filterRoom
-    const matchesCondition = !filterCondition || asset.condition === filterCondition
-    return matchesCategory && matchesRoom && matchesCondition
-  })
-
-  // Group assets by room
-  const assetsByRoom = filteredAssets.reduce((acc, asset) => {
-    const room = asset.room || 'Other'
-    if (!acc[room]) acc[room] = []
-    acc[room].push(asset)
-    return acc
-  }, {} as Record<string, Asset[]>)
 
   if (loading) {
     return (
@@ -171,6 +157,12 @@ export default function PropertyDetailPage() {
       </div>
     )
   }
+
+  // Check if there's an active (non-completed, non-cancelled) asset register job
+  const activeJob = assetRegisterJobs.find(
+    (job) => job.status !== 'COMPLETED' && job.status !== 'CANCELLED'
+  )
+  const completedJobs = assetRegisterJobs.filter((job) => job.status === 'COMPLETED')
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -298,123 +290,103 @@ export default function PropertyDetailPage() {
         )}
       </div>
 
-      {/* Assets Section */}
+      {/* Asset Register Section */}
       <div className="mt-8">
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-xl font-semibold">Assets ({assets.length})</h3>
-          <Link
-            href={`/dashboard/properties/${property.id}/assets/new`}
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Add Asset
-          </Link>
+          <h3 className="text-xl font-semibold">Asset Register</h3>
+          {!activeJob && (
+            <button
+              onClick={handleCreateAssetRegister}
+              disabled={creatingJob}
+              className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {creatingJob ? 'Creating...' : 'Start Asset Register'}
+            </button>
+          )}
         </div>
 
-        {/* Filters */}
-        <div className="mb-4 flex flex-wrap gap-4">
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Categories</option>
-            {uniqueCategories.map((cat) => (
-              <option key={cat} value={cat}>
-                {CATEGORY_ICONS[cat] || '📦'} {cat}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterRoom}
-            onChange={(e) => setFilterRoom(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Rooms</option>
-            {uniqueRooms.map((room) => (
-              <option key={room} value={room!}>
-                {room}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterCondition}
-            onChange={(e) => setFilterCondition(e.target.value)}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">All Conditions</option>
-            {uniqueConditions.map((cond) => (
-              <option key={cond} value={cond}>
-                {cond}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {assetsLoading ? (
-          <p className="text-gray-500">Loading assets...</p>
-        ) : filteredAssets.length === 0 ? (
+        {jobsLoading ? (
+          <p className="text-gray-500">Loading asset register jobs...</p>
+        ) : assetRegisterJobs.length === 0 ? (
           <div className="rounded-lg bg-white p-12 text-center shadow">
-            <h3 className="text-lg font-medium text-gray-900">
-              {assets.length === 0 ? 'No assets yet' : 'No matching assets'}
-            </h3>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900">No Asset Register Yet</h3>
             <p className="mt-2 text-sm text-gray-600">
-              {assets.length === 0
-                ? 'Start by adding assets to this property'
-                : 'Try adjusting your filters'}
+              Start an asset register to capture all assets in this property.
             </p>
+            <button
+              onClick={handleCreateAssetRegister}
+              disabled={creatingJob}
+              className="mt-4 rounded bg-green-600 px-6 py-2 text-white hover:bg-green-700 disabled:opacity-50"
+            >
+              {creatingJob ? 'Creating...' : 'Start Asset Register'}
+            </button>
           </div>
         ) : (
-          <div className="space-y-6">
-            {Object.entries(assetsByRoom).map(([room, roomAssets]) => (
-              <div key={room} className="rounded-lg bg-white shadow">
+          <div className="space-y-4">
+            {/* Active Job */}
+            {activeJob && (
+              <div className="rounded-lg border-2 border-green-500 bg-white p-6 shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h4 className="text-lg font-semibold">Active Asset Register</h4>
+                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[activeJob.status]}`}>
+                        {STATUS_LABELS[activeJob.status]}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-600">
+                      Created: {new Date(activeJob.created_at).toLocaleDateString()}
+                      {activeJob.assigned_to_name && ` • Assigned to: ${activeJob.assigned_to_name}`}
+                    </p>
+                    {activeJob.scheduled_date && (
+                      <p className="mt-1 text-sm text-gray-600">
+                        Scheduled: {new Date(activeJob.scheduled_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/dashboard/jobs/asset-register/${activeJob.id}`}
+                    className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                  >
+                    {activeJob.status === 'IN_PROGRESS' ? 'Continue' : 'View'}
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Completed Jobs */}
+            {completedJobs.length > 0 && (
+              <div className="rounded-lg bg-white shadow">
                 <div className="border-b px-6 py-4">
-                  <h4 className="text-lg font-medium text-gray-900">{room}</h4>
-                  <p className="text-sm text-gray-500">{roomAssets.length} assets</p>
+                  <h4 className="text-lg font-medium text-gray-900">Completed Asset Registers</h4>
                 </div>
                 <div className="divide-y">
-                  {roomAssets.map((asset) => (
-                    <Link
-                      key={asset.id}
-                      href={`/dashboard/properties/${property.id}/assets/${asset.id}`}
-                      className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl">
-                          {CATEGORY_ICONS[asset.category] || '📦'}
-                        </span>
-                        <div>
-                          <p className="font-medium text-gray-900">{asset.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {asset.brand && `${asset.brand} `}
-                            {asset.model && `${asset.model}`}
-                            {!asset.brand && !asset.model && asset.category}
-                          </p>
-                        </div>
+                  {completedJobs.map((job) => (
+                    <div key={job.id} className="flex items-center justify-between px-6 py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          Completed: {job.completed_date ? new Date(job.completed_date).toLocaleDateString() : 'N/A'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {job.assigned_to_name && `By: ${job.assigned_to_name}`}
+                        </p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        {asset.maintenance_required && (
-                          <span className="inline-flex rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
-                            Maintenance
-                          </span>
-                        )}
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                            CONDITION_COLORS[asset.condition] || 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {asset.condition}
-                        </span>
-                        {asset.photo_count > 0 && (
-                          <span className="text-sm text-gray-500">
-                            {asset.photo_count} photo{asset.photo_count !== 1 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
+                      <Link
+                        href={`/dashboard/jobs/asset-register/${job.id}`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        View Report →
+                      </Link>
+                    </div>
                   ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>

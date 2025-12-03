@@ -270,6 +270,33 @@ export default function AssetRegisterJobDetailScreen() {
           </Card>
         )}
 
+        {/* Property Manager Contact Card */}
+        {job.property_manager_name && (
+          <Card style={styles.card}>
+            <Card.Title
+              title="Property Manager"
+              left={(props) => <MaterialCommunityIcons {...props} name="badge-account" size={24} color="#9333ea" />}
+            />
+            <Card.Content>
+              <Text style={styles.contactName}>{job.property_manager_name}</Text>
+
+              {job.property_manager_phone && (
+                <TouchableOpacity onPress={() => callPhone(job.property_manager_phone)} style={styles.contactRow}>
+                  <MaterialCommunityIcons name="phone" size={20} color="#2563eb" />
+                  <Text style={styles.contactText}>{job.property_manager_phone}</Text>
+                </TouchableOpacity>
+              )}
+
+              {job.property_manager_email && (
+                <TouchableOpacity onPress={() => sendEmail(job.property_manager_email)} style={styles.contactRow}>
+                  <MaterialCommunityIcons name="email" size={20} color="#2563eb" />
+                  <Text style={styles.contactText}>{job.property_manager_email}</Text>
+                </TouchableOpacity>
+              )}
+            </Card.Content>
+          </Card>
+        )}
+
         {/* Job Details Card */}
         <Card style={styles.card}>
           <Card.Title

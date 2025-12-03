@@ -1,8 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator, Image } from 'react-native'
 import { Button, Card, Divider } from 'react-native-paper'
 import { useState, useRef, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
+import * as ImagePicker from 'expo-image-picker'
 import { apiClient } from '../../../lib/api-client'
 
 // Room definitions
@@ -117,6 +118,7 @@ interface AssetItem {
   category: string
   subcategory?: string
   data: Record<string, any>
+  photos: string[]
   created_at: string
 }
 
@@ -136,6 +138,7 @@ export default function AssetRegisterCompleteScreen() {
   const [saving, setSaving] = useState(false)
   const [inspectorName, setInspectorName] = useState('')
   const [completionNotes, setCompletionNotes] = useState('')
+  const [currentPhotos, setCurrentPhotos] = useState<string[]>([])
 
   const currentRoom = ROOMS[currentRoomIndex]
   const currentCategory = selectedCategory ? CATEGORIES[selectedCategory as keyof typeof CATEGORIES] : null
@@ -198,11 +201,46 @@ export default function AssetRegisterCompleteScreen() {
     setCurrentItemData(prev => ({ ...prev, [fieldId]: value }))
   }
 
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera permission is required to take photos')
+      return
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsEditing: false,
+    })
+
+    if (!result.canceled && result.assets[0]) {
+      setCurrentPhotos(prev => [...prev, result.assets[0].uri])
+    }
+  }
+
+  const pickPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.8,
+      allowsMultipleSelection: true,
+    })
+
+    if (!result.canceled) {
+      setCurrentPhotos(prev => [...prev, ...result.assets.map(a => a.uri)])
+    }
+  }
+
+  const removePhoto = (index: number) => {
+    setCurrentPhotos(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSelectRoom = (index: number) => {
     setCurrentRoomIndex(index)
     setSelectedCategory(null)
     setSelectedSubcategory(null)
     setCurrentItemData({})
+    setCurrentPhotos([])
 
     // Scroll to the selected room
     roomsScrollRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.5 })
@@ -281,6 +319,7 @@ export default function AssetRegisterCompleteScreen() {
       category: selectedCategory,
       subcategory: selectedSubcategory || undefined,
       data: { ...currentItemData },
+      photos: [...currentPhotos],
       created_at: new Date().toISOString(),
     }
 
@@ -291,6 +330,7 @@ export default function AssetRegisterCompleteScreen() {
     setCurrentItemData({})
     setSelectedSubcategory(null)
     setSelectedCategory(null)
+    setCurrentPhotos([])
 
     // Scroll to top to select next category
     setTimeout(() => {
@@ -770,6 +810,35 @@ export default function AssetRegisterCompleteScreen() {
             />
           </View>
         )}
+
+        {/* Photos Section */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Photos</Text>
+          <View style={styles.photosContainer}>
+            {currentPhotos.map((uri, index) => (
+              <View key={index} style={styles.photoWrapper}>
+                <Image source={{ uri }} style={styles.photo} />
+                <TouchableOpacity
+                  style={styles.removePhotoButton}
+                  onPress={() => removePhoto(index)}
+                >
+                  <MaterialCommunityIcons name="close" size={16} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity style={styles.addPhotoButton} onPress={takePhoto}>
+              <MaterialCommunityIcons name="camera" size={24} color="#666" />
+              <Text style={styles.addPhotoText}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.addPhotoButton} onPress={pickPhoto}>
+              <MaterialCommunityIcons name="image-multiple" size={24} color="#666" />
+              <Text style={styles.addPhotoText}>Gallery</Text>
+            </TouchableOpacity>
+          </View>
+          {currentPhotos.length > 0 && (
+            <Text style={styles.photoCount}>{currentPhotos.length} photo{currentPhotos.length !== 1 ? 's' : ''} attached</Text>
+          )}
+        </View>
 
         {/* Save Item Button */}
         <Button
@@ -1282,6 +1351,51 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#fff',
+  },
+  photosContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  photoWrapper: {
+    position: 'relative',
+  },
+  photo: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#ef4444',
+    borderRadius: 12,
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addPhotoButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#ddd',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  addPhotoText: {
+    fontSize: 10,
+    color: '#666',
+  },
+  photoCount: {
+    fontSize: 12,
+    color: '#16a34a',
+    marginTop: 8,
+    fontWeight: '500',
   },
   bottomSpacer: {
     height: 32,

@@ -39,7 +39,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status')
     const assignedToMe = searchParams.get('assignedToMe') === 'true'
-    const propertyId = searchParams.get('property_id')
+    const propertyIdParam = searchParams.get('property_id')
+    const propertyId = propertyIdParam ? parseInt(propertyIdParam, 10) : null
 
     // Get user from database
     const users = await sql`

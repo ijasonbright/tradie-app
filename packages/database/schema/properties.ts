@@ -28,6 +28,11 @@ export const properties = pgTable('properties', {
   tenantPhone: varchar('tenant_phone', { length: 50 }),
   tenantEmail: varchar('tenant_email', { length: 255 }),
 
+  // Property manager info (synced from Property Pal)
+  propertyManagerName: varchar('property_manager_name', { length: 255 }),
+  propertyManagerPhone: varchar('property_manager_phone', { length: 50 }),
+  propertyManagerEmail: varchar('property_manager_email', { length: 255 }),
+
   // Notes
   accessInstructions: text('access_instructions'),
   notes: text('notes'),
