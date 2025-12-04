@@ -71,6 +71,10 @@ export async function POST(
 
     const job = jobs[0]
 
+    // Safely serialize JSON data - ensure we have valid objects
+    const formData = body.form_data && typeof body.form_data === 'object' ? body.form_data : {}
+    const formDataJson = JSON.stringify(formData)
+
     // Check if there's an existing completion form to update
     const existingForms = await sql`
       SELECT * FROM asset_register_completion_forms
@@ -80,11 +84,11 @@ export async function POST(
     `
 
     if (existingForms.length > 0) {
-      // Update existing form
+      // Update existing form - use raw SQL with cast for JSONB
       await sql`
         UPDATE asset_register_completion_forms
         SET
-          form_data = ${JSON.stringify(body.form_data || {})},
+          form_data = ${formDataJson}::jsonb,
           technician_name = ${body.technician_name || existingForms[0].technician_name},
           updated_at = NOW()
         WHERE id = ${existingForms[0].id}
@@ -105,7 +109,7 @@ export async function POST(
           ${job.organization_id},
           ${id},
           ${user.id},
-          ${JSON.stringify(body.form_data || {})},
+          ${formDataJson}::jsonb,
           ${body.technician_name || user.full_name},
           'draft',
           NOW(),
@@ -116,10 +120,11 @@ export async function POST(
 
     // Update job with report_data if provided
     if (body.report_data) {
+      const reportDataJson = JSON.stringify(body.report_data)
       await sql`
         UPDATE asset_register_jobs
         SET
-          report_data = ${JSON.stringify(body.report_data)},
+          report_data = ${reportDataJson}::jsonb,
           updated_at = NOW()
         WHERE id = ${id}
       `

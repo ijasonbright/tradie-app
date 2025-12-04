@@ -411,9 +411,12 @@ export default function AssetRegisterCompleteScreen() {
     try {
       setSubmitting(true)
 
+      // Upload all photos first and replace local URIs with cloud URLs
+      const uploadedAssets = await uploadAllPhotos(assets)
+
       // Organize assets by room for report
       const roomsData: Record<string, AssetItem[]> = {}
-      assets.forEach(asset => {
+      uploadedAssets.forEach(asset => {
         if (!roomsData[asset.room_id]) {
           roomsData[asset.room_id] = []
         }
@@ -422,13 +425,13 @@ export default function AssetRegisterCompleteScreen() {
 
       await apiClient.completeAssetRegisterJob(id!, {
         form_data: {
-          assets,
+          assets: uploadedAssets,
           rooms_completed: Array.from(roomsWithItems),
         },
         completion_notes: completionNotes,
         technician_name: inspectorName,
         report_data: {
-          total_items: assets.length,
+          total_items: uploadedAssets.length,
           rooms_completed: roomsWithItems.size,
           rooms_data: roomsData,
           completed_at: new Date().toISOString(),
@@ -450,6 +453,50 @@ export default function AssetRegisterCompleteScreen() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Upload all photos for all assets and return assets with cloud URLs
+  const uploadAllPhotos = async (assetsToUpload: AssetItem[]): Promise<AssetItem[]> => {
+    const uploadedAssets: AssetItem[] = []
+
+    for (const asset of assetsToUpload) {
+      const uploadedPhotos: string[] = []
+      const photosToUpload = asset.photos || []
+
+      for (const photoUri of photosToUpload) {
+        // Skip if already a cloud URL
+        if (photoUri.startsWith('http://') || photoUri.startsWith('https://')) {
+          uploadedPhotos.push(photoUri)
+          continue
+        }
+
+        try {
+          // Upload local photo to cloud
+          const result = await apiClient.uploadAssetRegisterJobPhoto(
+            id!,
+            photoUri,
+            `${asset.subcategory || asset.category}`,
+            'asset',
+            asset.room_id,
+            asset.subcategory || asset.category
+          )
+
+          if (result.url) {
+            uploadedPhotos.push(result.url)
+          }
+        } catch (err) {
+          console.error('Failed to upload photo:', err)
+          // Continue with other photos even if one fails
+        }
+      }
+
+      uploadedAssets.push({
+        ...asset,
+        photos: uploadedPhotos,
+      })
+    }
+
+    return uploadedAssets
   }
 
   const renderRoomChip = ({ item, index }: { item: typeof ROOMS[0], index: number }) => {
