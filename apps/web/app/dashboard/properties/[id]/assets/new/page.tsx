@@ -61,7 +61,21 @@ export default function NewAssetPage() {
   const params = useParams()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string
+    category: string
+    brand: string
+    model: string
+    serial_number: string
+    room: string
+    condition: string
+    estimated_age: number | null
+    current_value: string
+    replacement_cost: string
+    warranty_status: string
+    maintenance_required: boolean
+    notes: string
+  }>({
     name: '',
     category: 'other',
     brand: '',
@@ -69,7 +83,7 @@ export default function NewAssetPage() {
     serial_number: '',
     room: '',
     condition: 'good',
-    estimated_age: '',
+    estimated_age: null,
     current_value: '',
     replacement_cost: '',
     warranty_status: 'unknown',
@@ -93,7 +107,7 @@ export default function NewAssetPage() {
         body: JSON.stringify({
           ...form,
           property_id: params.id,
-          estimated_age: form.estimated_age ? parseInt(form.estimated_age) : null,
+          estimated_age: form.estimated_age,
           current_value: form.current_value ? parseFloat(form.current_value) : null,
           replacement_cost: form.replacement_cost ? parseFloat(form.replacement_cost) : null,
         }),
@@ -255,9 +269,9 @@ export default function NewAssetPage() {
                   <button
                     key={age.value}
                     type="button"
-                    onClick={() => setForm({ ...form, estimated_age: age.value.toString() })}
+                    onClick={() => setForm({ ...form, estimated_age: age.value })}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                      form.estimated_age === age.value.toString()
+                      String(form.estimated_age) === String(age.value)
                         ? age.color + ' ring-2 ring-offset-2'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}

@@ -397,9 +397,9 @@ export default function AssetDetailPage() {
                     <button
                       key={age.value}
                       type="button"
-                      onClick={() => setForm({ ...form, estimated_age: age.value.toString() })}
+                      onClick={() => setForm({ ...form, estimated_age: age.value })}
                       className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                        form.estimated_age === age.value.toString()
+                        String(form.estimated_age) === String(age.value)
                           ? age.color + ' ring-2 ring-offset-2'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
