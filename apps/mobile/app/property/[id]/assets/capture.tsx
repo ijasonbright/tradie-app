@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router'
 import { Picker } from '@react-native-picker/picker'
@@ -38,13 +38,37 @@ const MAINTENANCE_OPTIONS = [
   { value: 'REPLACEMENT', label: 'Replacement Required' },
 ]
 
+const ESTIMATED_AGE_OPTIONS = [
+  { value: 0, label: 'New', color: '#16a34a' },
+  { value: 2, label: '1-3 yrs', color: '#10b981' },
+  { value: 5, label: '3-5 yrs', color: '#3b82f6' },
+  { value: 8, label: '5-10 yrs', color: '#eab308' },
+  { value: 12, label: '10-15 yrs', color: '#f97316' },
+  { value: 20, label: '15+ yrs', color: '#ef4444' },
+]
+
 export default function AssetCaptureScreen() {
   const { id: propertyId } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [photos, setPhotos] = useState<string[]>([])
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string
+    category: string
+    brand: string
+    model: string
+    serial_number: string
+    room: string
+    location: string
+    condition: string
+    estimated_age: number | null
+    current_value: string
+    replacement_cost: string
+    warranty_status: string
+    maintenance_required: string
+    notes: string
+  }>({
     name: '',
     category: 'APPLIANCE',
     brand: '',
@@ -53,7 +77,7 @@ export default function AssetCaptureScreen() {
     room: '',
     location: '',
     condition: 'GOOD',
-    estimated_age: '',
+    estimated_age: null,
     current_value: '',
     replacement_cost: '',
     warranty_status: '',
@@ -61,7 +85,7 @@ export default function AssetCaptureScreen() {
     notes: '',
   })
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -148,7 +172,7 @@ export default function AssetCaptureScreen() {
             room: formData.room, // Keep same room
             location: '',
             condition: 'GOOD',
-            estimated_age: '',
+            estimated_age: null,
             current_value: '',
             replacement_cost: '',
             warranty_status: '',
@@ -346,30 +370,42 @@ export default function AssetCaptureScreen() {
               </View>
             </View>
 
-            <View style={styles.row}>
-              <View style={[styles.field, { flex: 1 }]}>
-                <Text style={styles.label}>Estimated Age (years)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={formData.estimated_age}
-                  onChangeText={(v) => updateField('estimated_age', v)}
-                  placeholder="0"
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={[styles.field, { flex: 1 }]}>
-                <Text style={styles.label}>Maintenance</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={formData.maintenance_required}
-                    onValueChange={(v) => updateField('maintenance_required', v)}
-                    style={styles.picker}
+            <View style={styles.field}>
+              <Text style={styles.label}>Estimated Age</Text>
+              <View style={styles.ageButtonRow}>
+                {ESTIMATED_AGE_OPTIONS.map((age) => (
+                  <TouchableOpacity
+                    key={age.value}
+                    style={[
+                      styles.ageButton,
+                      { borderColor: age.color },
+                      formData.estimated_age === age.value && { backgroundColor: age.color }
+                    ]}
+                    onPress={() => updateField('estimated_age', age.value)}
                   >
-                    {MAINTENANCE_OPTIONS.map(opt => (
-                      <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-                    ))}
-                  </Picker>
-                </View>
+                    <Text style={[
+                      styles.ageButtonText,
+                      { color: formData.estimated_age === age.value ? '#fff' : age.color }
+                    ]}>
+                      {age.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Maintenance</Text>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={formData.maintenance_required}
+                  onValueChange={(v) => updateField('maintenance_required', v)}
+                  style={styles.picker}
+                >
+                  {MAINTENANCE_OPTIONS.map(opt => (
+                    <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
+                  ))}
+                </Picker>
               </View>
             </View>
           </View>
@@ -585,6 +621,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   conditionButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  ageButtonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  ageButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    backgroundColor: '#fff',
+  },
+  ageButtonText: {
     fontSize: 13,
     fontWeight: '500',
   },
