@@ -828,16 +828,15 @@ export default function AssetRegisterCompleteScreen() {
               <TouchableOpacity
                 key={age.value}
                 style={[
-                  styles.ageChip,
-                  { borderColor: age.color },
-                  currentItemData.estimated_age === age.value && { backgroundColor: age.color },
+                  styles.optionChip,
+                  currentItemData.estimated_age === age.value && { backgroundColor: age.color, borderColor: age.color },
                 ]}
                 onPress={() => updateField('estimated_age', age.value)}
               >
                 <Text
                   style={[
-                    styles.ageChipText,
-                    { color: currentItemData.estimated_age === age.value ? '#fff' : age.color },
+                    styles.optionChipText,
+                    currentItemData.estimated_age === age.value && styles.optionChipTextSelected,
                   ]}
                 >
                   {age.label}
@@ -1329,17 +1328,6 @@ const styles = StyleSheet.create({
   },
   optionChipTextSelected: {
     color: '#fff',
-  },
-  ageChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 16,
-    borderWidth: 2,
-    backgroundColor: '#fff',
-  },
-  ageChipText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   addItemButton: {
     marginTop: 8,

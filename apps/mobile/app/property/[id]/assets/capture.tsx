@@ -354,14 +354,13 @@ export default function AssetCaptureScreen() {
                     key={cond.value}
                     style={[
                       styles.conditionButton,
-                      { borderColor: cond.color },
-                      formData.condition === cond.value && { backgroundColor: cond.color }
+                      formData.condition === cond.value && { backgroundColor: cond.color, borderColor: cond.color }
                     ]}
                     onPress={() => updateField('condition', cond.value)}
                   >
                     <Text style={[
                       styles.conditionButtonText,
-                      { color: formData.condition === cond.value ? '#fff' : cond.color }
+                      formData.condition === cond.value && { color: '#fff' }
                     ]}>
                       {cond.label}
                     </Text>
@@ -378,14 +377,13 @@ export default function AssetCaptureScreen() {
                     key={age.value}
                     style={[
                       styles.ageButton,
-                      { borderColor: age.color },
-                      formData.estimated_age === age.value && { backgroundColor: age.color }
+                      formData.estimated_age === age.value && { backgroundColor: age.color, borderColor: age.color }
                     ]}
                     onPress={() => updateField('estimated_age', age.value)}
                   >
                     <Text style={[
                       styles.ageButtonText,
-                      { color: formData.estimated_age === age.value ? '#fff' : age.color }
+                      formData.estimated_age === age.value && { color: '#fff' }
                     ]}>
                       {age.label}
                     </Text>
@@ -617,12 +615,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
     backgroundColor: '#fff',
   },
   conditionButtonText: {
     fontSize: 13,
     fontWeight: '500',
+    color: '#666',
   },
   ageButtonRow: {
     flexDirection: 'row',
@@ -633,12 +633,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
     backgroundColor: '#fff',
   },
   ageButtonText: {
     fontSize: 13,
     fontWeight: '500',
+    color: '#666',
   },
   pickerContainer: {
     backgroundColor: '#f8f8f8',
