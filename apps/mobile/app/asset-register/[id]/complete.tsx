@@ -106,6 +106,14 @@ const ROOM_CATEGORIES: Record<string, string[]> = {
 
 const CONDITION_OPTIONS = ['Excellent', 'Good', 'Fair', 'Poor', 'Needs Repair', 'Not Working']
 const MAINTENANCE_OPTIONS = ['None Required', 'Minor Maintenance', 'Major Repair Needed', 'Replacement Recommended']
+const ESTIMATED_AGE_OPTIONS = [
+  { value: 0, label: 'New', color: '#16a34a' },
+  { value: 2, label: '1-3 yrs', color: '#10b981' },
+  { value: 5, label: '3-5 yrs', color: '#3b82f6' },
+  { value: 8, label: '5-10 yrs', color: '#eab308' },
+  { value: 12, label: '10-15 yrs', color: '#f97316' },
+  { value: 20, label: '15+ yrs', color: '#ef4444' },
+]
 const FLOORING_TYPES = ['Carpet', 'Tiles', 'Hardwood', 'Laminate', 'Vinyl/Lino', 'Polished Concrete', 'Other']
 const PAINT_FINISHES = ['Gloss', 'Semi-Gloss', 'Satin', 'Matte', 'Flat']
 const CURTAIN_TYPES = ['Curtains', 'Blinds (Vertical)', 'Blinds (Venetian)', 'Blinds (Roller)', 'Shutters', 'Sheer', 'None']
@@ -812,6 +820,33 @@ export default function AssetRegisterCompleteScreen() {
           </View>
         )}
 
+        {/* Estimated Age - always shown */}
+        <View style={styles.fieldGroup}>
+          <Text style={styles.fieldLabel}>Estimated Age</Text>
+          <View style={styles.optionsRow}>
+            {ESTIMATED_AGE_OPTIONS.map((age) => (
+              <TouchableOpacity
+                key={age.value}
+                style={[
+                  styles.ageChip,
+                  { borderColor: age.color },
+                  currentItemData.estimated_age === age.value && { backgroundColor: age.color },
+                ]}
+                onPress={() => updateField('estimated_age', age.value)}
+              >
+                <Text
+                  style={[
+                    styles.ageChipText,
+                    { color: currentItemData.estimated_age === age.value ? '#fff' : age.color },
+                  ]}
+                >
+                  {age.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {/* Maintenance Required - always shown */}
         {fields.includes('maintenance_required') && (
           <View style={styles.fieldGroup}>
@@ -1294,6 +1329,17 @@ const styles = StyleSheet.create({
   },
   optionChipTextSelected: {
     color: '#fff',
+  },
+  ageChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 2,
+    backgroundColor: '#fff',
+  },
+  ageChipText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   addItemButton: {
     marginTop: 8,
