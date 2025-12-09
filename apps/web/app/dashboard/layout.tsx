@@ -59,6 +59,7 @@ export default function DashboardLayout({
     { href: '/dashboard/team', label: 'Team', icon: '👷' },
     { href: '/dashboard/compliance', label: 'Compliance', icon: '📄' },
     { href: '/dashboard/subcontractors', label: 'Subcontractors', icon: '🤝' },
+    { href: '/dashboard/integrations', label: 'Integrations', icon: '🔗' },
     { href: '/dashboard/settings', label: 'Settings', icon: '⚙️' },
   ]
 

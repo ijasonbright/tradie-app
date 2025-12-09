@@ -186,10 +186,10 @@ export default function MoreScreen() {
 
         <List.Item
           title="Integrations"
-          description="Xero, Stripe, and more"
+          description="TradieConnect and more"
           left={(props) => <List.Icon {...props} icon="link-variant" />}
           right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => alert('Integrations - Coming soon!')}
+          onPress={() => router.push('/integrations')}
         />
       </View>
 

@@ -1434,6 +1434,69 @@ class ApiClient {
 
     return await response.json()
   }
+  // ==================== TRADIECONNECT INTEGRATIONS ====================
+
+  /**
+   * Get TradieConnect connection status
+   */
+  async getTradieConnectStatus() {
+    return this.request<{
+      connected: boolean
+      tc_user_id?: string
+      connected_at?: string
+      last_synced_at?: string
+      error?: string
+    }>('/integrations/tradieconnect/status')
+  }
+
+  /**
+   * Get TradieConnect auth URL for SSO
+   */
+  async getTradieConnectAuthUrl() {
+    return this.request<{
+      authUrl: string
+      message: string
+    }>('/integrations/tradieconnect/connect')
+  }
+
+  /**
+   * Disconnect TradieConnect account
+   */
+  async disconnectTradieConnect() {
+    return this.request<{
+      success: boolean
+      message: string
+    }>('/integrations/tradieconnect/disconnect', {
+      method: 'POST',
+    })
+  }
+
+  /**
+   * Validate TradieConnect token
+   */
+  async validateTradieConnect() {
+    return this.request<{
+      valid: boolean
+      message?: string
+      error?: string
+      refreshed?: boolean
+      needs_reconnect?: boolean
+    }>('/integrations/tradieconnect/validate', {
+      method: 'POST',
+    })
+  }
+
+  /**
+   * Fetch a job from TradieConnect
+   */
+  async fetchTradieConnectJob(jobId: string) {
+    return this.request<{
+      success: boolean
+      job?: any
+      error?: string
+      needs_connect?: boolean
+    }>(`/integrations/tradieconnect/jobs/${jobId}`)
+  }
 }
 
 export const apiClient = new ApiClient()
