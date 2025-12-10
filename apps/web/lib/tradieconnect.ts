@@ -1,8 +1,8 @@
 import crypto from 'crypto'
 
 // Environment variables
-const TRADIECONNECT_API_URL = process.env.TRADIECONNECT_API_URL || 'https://testadmin.taskforce.com.au'
-const TRADIECONNECT_AUTH_URL = process.env.TRADIECONNECT_AUTH_URL || 'https://testauth.taskforce.com.au'
+const TRADIECONNECT_API_URL = process.env.TRADIECONNECT_API_URL || 'https://admin.taskforce.com.au'
+const TRADIECONNECT_AUTH_URL = process.env.TRADIECONNECT_AUTH_URL || 'https://auth.taskforce.com.au'
 const TRADIECONNECT_ENCRYPT_KEY = process.env.TRADIECONNECT_ENCRYPT_KEY || ''
 
 /**
