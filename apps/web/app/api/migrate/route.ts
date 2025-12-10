@@ -883,6 +883,37 @@ export async function POST() {
       `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_completion_form_id ON job_completion_form_answers(completion_form_id)`,
       `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_job_id ON job_completion_form_answers(job_id)`,
       `CREATE INDEX IF NOT EXISTS idx_job_completion_form_answers_question_id ON job_completion_form_answers(question_id)`,
+
+      // ========== TRADIECONNECT INTEGRATION ==========
+      // Create tradieconnect_connections table for per-user TradieConnect authentication
+      `CREATE TABLE IF NOT EXISTS tradieconnect_connections (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL,
+        user_id UUID NOT NULL,
+        tc_user_id VARCHAR(255) NOT NULL,
+        tc_token TEXT NOT NULL,
+        tc_refresh_token TEXT,
+        tc_token_expires_at TIMESTAMP,
+        is_active BOOLEAN DEFAULT true,
+        connected_at TIMESTAMP DEFAULT NOW(),
+        last_synced_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for tradieconnect_connections
+      `CREATE INDEX IF NOT EXISTS idx_tradieconnect_connections_user_id ON tradieconnect_connections(user_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_tradieconnect_connections_organization_id ON tradieconnect_connections(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_tradieconnect_connections_active ON tradieconnect_connections(user_id, is_active) WHERE is_active = true`,
+
+      // Add external supplier ID columns to organization_members for TradieConnect sync
+      `ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS external_supplier_id VARCHAR(50)`,
+      `ALTER TABLE organization_members ADD COLUMN IF NOT EXISTS external_source VARCHAR(50)`,
+
+      // Add property manager fields to properties for TradieConnect sync
+      `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_name VARCHAR(255)`,
+      `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_phone VARCHAR(50)`,
+      `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_email VARCHAR(255)`,
     ]
 
     const results = []
