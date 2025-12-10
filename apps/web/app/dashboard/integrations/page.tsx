@@ -17,6 +17,7 @@ export default function IntegrationsPage() {
   const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [validating, setValidating] = useState(false)
+  const [refreshingToken, setRefreshingToken] = useState(false)
   const [testJobId, setTestJobId] = useState('')
   const [testingJob, setTestingJob] = useState(false)
   const [testJobResult, setTestJobResult] = useState<any>(null)
@@ -134,6 +135,37 @@ export default function IntegrationsPage() {
       setMessage({ type: 'error', text: 'Failed to validate TradieConnect connection' })
     } finally {
       setValidating(false)
+    }
+  }
+
+  const handleTestRefresh = async () => {
+    setRefreshingToken(true)
+    try {
+      const response = await fetch('/api/integrations/tradieconnect/validate?force_refresh=true', {
+        method: 'POST',
+      })
+      const data = await response.json()
+
+      if (data.valid && data.refreshed) {
+        setMessage({
+          type: 'success',
+          text: 'Token refreshed successfully! New token has been stored.',
+        })
+        // Refresh status to show updated last_synced_at
+        fetchStatus()
+      } else if (data.needs_reconnect) {
+        setMessage({
+          type: 'error',
+          text: 'Refresh token has expired. Please reconnect to TradieConnect.',
+        })
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Token refresh failed' })
+      }
+    } catch (error) {
+      console.error('Failed to refresh token:', error)
+      setMessage({ type: 'error', text: 'Failed to refresh TradieConnect token' })
+    } finally {
+      setRefreshingToken(false)
     }
   }
 
@@ -258,6 +290,13 @@ export default function IntegrationsPage() {
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
                   >
                     {validating ? 'Validating...' : 'Test Connection'}
+                  </button>
+                  <button
+                    onClick={handleTestRefresh}
+                    disabled={refreshingToken}
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                  >
+                    {refreshingToken ? 'Refreshing...' : 'Test Refresh Token'}
                   </button>
                   <button
                     onClick={handleDisconnect}

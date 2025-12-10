@@ -16,9 +16,15 @@ export const dynamic = 'force-dynamic'
  *
  * Validates the current user's TradieConnect token.
  * If the token is invalid, attempts to refresh it.
+ *
+ * Query params:
+ * - force_refresh=true: Force a token refresh even if current token is valid (for testing)
  */
 export async function POST(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const forceRefresh = searchParams.get('force_refresh') === 'true'
+
     // Try to get auth from Clerk (web) first
     let clerkUserId: string | null = null
 
@@ -93,24 +99,29 @@ export async function POST(request: Request) {
       })
     }
 
-    // Validate the token with TradieConnect
-    const validationResult = await validateToken(connection.tc_user_id, tcToken)
+    // If force_refresh is requested, skip validation and go straight to refresh
+    if (forceRefresh) {
+      console.log('Force refresh requested, skipping token validation')
+    } else {
+      // Validate the token with TradieConnect
+      const validationResult = await validateToken(connection.tc_user_id, tcToken)
 
-    if (validationResult.valid) {
-      // Update last_synced_at timestamp
-      await sql`
-        UPDATE tradieconnect_connections
-        SET last_synced_at = NOW(), updated_at = NOW()
-        WHERE id = ${connection.id}
-      `
+      if (validationResult.valid) {
+        // Update last_synced_at timestamp
+        await sql`
+          UPDATE tradieconnect_connections
+          SET last_synced_at = NOW(), updated_at = NOW()
+          WHERE id = ${connection.id}
+        `
 
-      return NextResponse.json({
-        valid: true,
-        message: 'TradieConnect token is valid',
-      })
+        return NextResponse.json({
+          valid: true,
+          message: 'TradieConnect token is valid',
+        })
+      }
     }
 
-    // Token is invalid, try to refresh if we have a refresh token
+    // Token is invalid (or force refresh), try to refresh if we have a refresh token
     if (connection.tc_refresh_token) {
       let tcRefreshToken: string
       try {
