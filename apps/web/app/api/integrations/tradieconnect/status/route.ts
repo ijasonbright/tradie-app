@@ -83,8 +83,11 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Error fetching TradieConnect status:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    const errorStack = error instanceof Error ? error.stack : undefined
+    console.error('Error details:', { message: errorMessage, stack: errorStack })
     return NextResponse.json(
-      { error: 'Failed to fetch TradieConnect status' },
+      { error: 'Failed to fetch TradieConnect status', details: errorMessage },
       { status: 500 }
     )
   }
