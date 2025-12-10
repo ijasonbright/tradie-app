@@ -9,7 +9,8 @@ const isPublicRoute = createRouteMatcher([
   '/api/users/count',
   '/api/webhooks/(.*)',
   '/api/mobile-auth/(.*)',
-  '/api/integrations/(.*)', // Property Pal integration endpoints (API key protected)
+  '/api/integrations/propertypal/(.*)', // Property Pal integration endpoints (API key protected)
+  '/admin/secure/setauth(.*)', // TradieConnect SSO callback (handles its own auth via encrypted params)
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/accept-invitation(.*)',
@@ -41,6 +42,7 @@ const isMobileApiRoute = createRouteMatcher([
   '/api/properties(.*)', // Properties for asset register
   '/api/assets(.*)', // Assets for asset register
   '/api/asset-register-jobs(.*)', // Asset register jobs for mobile
+  '/api/integrations/tradieconnect(.*)', // TradieConnect integration endpoints
   // Note: Mobile completion forms use /api/jobs/[id]/completion-form (covered by /api/jobs)
 ])
 
