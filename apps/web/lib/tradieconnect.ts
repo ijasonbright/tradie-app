@@ -151,16 +151,26 @@ export async function refreshToken(tcUserId: string, tcRefreshToken: string): Pr
   error?: string
 }> {
   try {
-    // For refresh, we use the refresh token as the password in Basic Auth
-    const response = await tradieConnectApiRequest(
-      '/api/v2/Auth/refresh',
-      tcUserId,
-      tcRefreshToken, // Pass refresh token as the token
-      { method: 'GET' } // API uses GET for auth endpoints
-    )
+    // Build the refresh URL with query parameters
+    // Format: /api/v2/Auth/?param1=refresh&id={userid}&token={tc_refresh_token}
+    const refreshUrl = `${TRADIECONNECT_API_URL}/api/v2/Auth/?param1=refresh&id=${encodeURIComponent(tcUserId)}&token=${encodeURIComponent(tcRefreshToken)}`
+
+    console.log('Calling TradieConnect refresh API...')
+    console.log('User ID:', tcUserId)
+    console.log('Refresh URL (without token):', `${TRADIECONNECT_API_URL}/api/v2/Auth/?param1=refresh&id=${tcUserId}&token=...`)
+
+    const response = await fetch(refreshUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    console.log('TradieConnect refresh response status:', response.status)
 
     if (response.ok) {
       const data = await response.json()
+      console.log('Refresh response data keys:', Object.keys(data))
       // Response format: { token, refreshToken, userGuId, expiry, ... }
       return {
         success: true,
@@ -172,8 +182,10 @@ export async function refreshToken(tcUserId: string, tcRefreshToken: string): Pr
     }
 
     const errorText = await response.text()
+    console.log('TradieConnect refresh error response:', errorText)
     return { success: false, error: `Token refresh failed: ${response.status} - ${errorText}` }
   } catch (error) {
+    console.error('TradieConnect refresh exception:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
