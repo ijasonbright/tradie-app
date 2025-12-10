@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
-import { decryptFromStorage, fetchJob } from '@/lib/tradieconnect'
+import { fetchJob } from '@/lib/tradieconnect'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,16 +80,8 @@ export async function GET(
 
     const connection = connections[0]
 
-    // Decrypt the stored token
-    let tcToken: string
-    try {
-      tcToken = decryptFromStorage(connection.tc_token)
-    } catch (error) {
-      console.error('Failed to decrypt stored token:', error)
-      return NextResponse.json({
-        error: 'Failed to decrypt stored credentials',
-      }, { status: 500 })
-    }
+    // Tokens are stored as plain text (no decryption needed)
+    const tcToken = connection.tc_token
 
     // Fetch the job from TradieConnect
     const result = await fetchJob(jobId, connection.tc_user_id, tcToken)

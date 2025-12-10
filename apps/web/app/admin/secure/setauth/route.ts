@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
-import { decryptUrlParameter, encryptForStorage } from '@/lib/tradieconnect'
+import { decryptUrlParameter } from '@/lib/tradieconnect'
 import { auth } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
@@ -28,6 +28,14 @@ export async function GET(request: Request) {
     const encryptedUserId = searchParams.get('u')
     const encryptedToken = searchParams.get('t')
     const encryptedRefreshToken = searchParams.get('rt')
+
+    console.log('TradieConnect SSO callback received:', {
+      hasReferer: !!encryptedReferer,
+      hasSecret: !!encryptedSecret,
+      hasUserId: !!encryptedUserId,
+      hasToken: !!encryptedToken,
+      hasRefreshToken: !!encryptedRefreshToken,
+    })
 
     // Validate required parameters
     if (!encryptedUserId || !encryptedToken) {
@@ -90,10 +98,7 @@ export async function GET(request: Request) {
 
     const user = users[0]
 
-    // Encrypt tokens for storage
-    const encryptedStorageToken = encryptForStorage(tcToken)
-    const encryptedStorageRefreshToken = tcRefreshToken ? encryptForStorage(tcRefreshToken) : null
-
+    // Store tokens as plain text (no encryption needed)
     // Check if user already has a TradieConnect connection
     const existingConnections = await sql`
       SELECT id FROM tradieconnect_connections
@@ -108,8 +113,8 @@ export async function GET(request: Request) {
         UPDATE tradieconnect_connections
         SET
           tc_user_id = ${tcUserId},
-          tc_token = ${encryptedStorageToken},
-          tc_refresh_token = ${encryptedStorageRefreshToken},
+          tc_token = ${tcToken},
+          tc_refresh_token = ${tcRefreshToken},
           connected_at = NOW(),
           updated_at = NOW()
         WHERE id = ${existingConnections[0].id}
@@ -131,8 +136,8 @@ export async function GET(request: Request) {
           ${user.organization_id},
           ${user.id},
           ${tcUserId},
-          ${encryptedStorageToken},
-          ${encryptedStorageRefreshToken},
+          ${tcToken},
+          ${tcRefreshToken},
           true,
           NOW(),
           NOW(),

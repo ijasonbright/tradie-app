@@ -2,12 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
-import {
-  decryptFromStorage,
-  validateToken,
-  refreshToken,
-  encryptForStorage,
-} from '@/lib/tradieconnect'
+import { validateToken, refreshToken } from '@/lib/tradieconnect'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,21 +82,14 @@ export async function POST(request: Request) {
 
     const connection = connections[0]
 
-    // Decrypt the stored token
-    let tcToken: string
-    try {
-      tcToken = decryptFromStorage(connection.tc_token)
-    } catch (error) {
-      console.error('Failed to decrypt stored token:', error)
-      return NextResponse.json({
-        valid: false,
-        error: 'Failed to decrypt stored credentials',
-      })
-    }
+    // Tokens are stored as plain text (no decryption needed)
+    const tcToken = connection.tc_token
+    const tcRefreshToken = connection.tc_refresh_token
 
     // If force_refresh is requested, skip validation and go straight to refresh
     if (forceRefresh) {
       console.log('Force refresh requested, skipping token validation')
+      console.log('Has refresh token in database:', !!tcRefreshToken)
     } else {
       // Validate the token with TradieConnect
       const validationResult = await validateToken(connection.tc_user_id, tcToken)
@@ -122,33 +110,26 @@ export async function POST(request: Request) {
     }
 
     // Token is invalid (or force refresh), try to refresh if we have a refresh token
-    if (connection.tc_refresh_token) {
-      let tcRefreshToken: string
-      try {
-        tcRefreshToken = decryptFromStorage(connection.tc_refresh_token)
-      } catch (error) {
-        console.error('Failed to decrypt refresh token:', error)
-        return NextResponse.json({
-          valid: false,
-          error: 'Token expired and refresh token is invalid',
-          needs_reconnect: true,
-        })
-      }
-
+    if (tcRefreshToken) {
+      console.log('Attempting token refresh for user:', connection.tc_user_id)
       const refreshResult = await refreshToken(connection.tc_user_id, tcRefreshToken)
+      console.log('Refresh result:', {
+        success: refreshResult.success,
+        hasToken: !!refreshResult.token,
+        hasRefreshToken: !!refreshResult.refreshToken,
+        error: refreshResult.error,
+      })
 
       if (refreshResult.success && refreshResult.token) {
-        // Encrypt and store new tokens
-        const newEncryptedToken = encryptForStorage(refreshResult.token)
-        const newEncryptedRefreshToken = refreshResult.refreshToken
-          ? encryptForStorage(refreshResult.refreshToken)
-          : connection.tc_refresh_token
+        // Store new tokens as plain text
+        const newToken = refreshResult.token
+        const newRefreshToken = refreshResult.refreshToken || tcRefreshToken
 
         await sql`
           UPDATE tradieconnect_connections
           SET
-            tc_token = ${newEncryptedToken},
-            tc_refresh_token = ${newEncryptedRefreshToken},
+            tc_token = ${newToken},
+            tc_refresh_token = ${newRefreshToken},
             last_synced_at = NOW(),
             updated_at = NOW()
           WHERE id = ${connection.id}
@@ -163,9 +144,13 @@ export async function POST(request: Request) {
     }
 
     // Token invalid and couldn't refresh
+    // Check if we attempted a refresh and it failed
+    const noRefreshToken = !connection.tc_refresh_token
     return NextResponse.json({
       valid: false,
-      error: 'TradieConnect token is invalid and could not be refreshed',
+      error: noRefreshToken
+        ? 'No refresh token available. Please reconnect to TradieConnect.'
+        : 'TradieConnect token is invalid and could not be refreshed',
       needs_reconnect: true,
     })
   } catch (error) {

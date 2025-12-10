@@ -156,7 +156,7 @@ export default function IntegrationsPage() {
       } else if (data.needs_reconnect) {
         setMessage({
           type: 'error',
-          text: 'Refresh token has expired. Please reconnect to TradieConnect.',
+          text: data.error || 'Refresh token has expired. Please reconnect to TradieConnect.',
         })
       } else {
         setMessage({ type: 'error', text: data.error || 'Token refresh failed' })
