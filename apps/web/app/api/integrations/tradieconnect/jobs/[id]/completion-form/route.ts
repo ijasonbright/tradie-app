@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic'
 // GET - Get completion form for a TC job (if exists)
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ tcJobId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { tcJobId } = await params
+    const { id: tcJobId } = await params
 
     // Dual auth: Clerk (web) + JWT (mobile)
     let clerkUserId: string | null = null
@@ -84,10 +84,10 @@ export async function GET(
 // POST - Create or update completion form for a TC job
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ tcJobId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { tcJobId } = await params
+    const { id: tcJobId } = await params
     const body = await request.json()
     const { template_id, tc_job_code, form_data, status } = body
 
