@@ -97,11 +97,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch job details from TradieConnect
+    console.log('Fetching TC job details for jobId:', jobId)
+    console.log('Using tc_user_id:', connection.tc_user_id)
+    console.log('Token length:', tcToken?.length || 0)
+    console.log('Refresh token available:', !!tcRefreshToken)
+
     let result = await fetchTCJobDetails(
       jobId,
       connection.tc_user_id,
       tcToken
     )
+
+    console.log('Initial fetch result:', { success: result.success, error: result.error, unauthorized: result.unauthorized })
 
     // If unauthorized, try to refresh the token
     if (!result.success && result.unauthorized && tcRefreshToken) {
