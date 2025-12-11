@@ -484,7 +484,11 @@ export async function fetchJobsForDate(
   const result = await fetchProviderCalendar(tcUserId, tcToken, date, 0, 0)
 
   if (!result.success) {
-    return result
+    return {
+      success: false,
+      error: result.error,
+      unauthorized: result.unauthorized,
+    }
   }
 
   // Flatten jobs from all teams
@@ -518,7 +522,11 @@ export async function fetchProviders(
   const result = await fetchProviderCalendar(tcUserId, tcToken, date, 0, 0)
 
   if (!result.success) {
-    return result
+    return {
+      success: false,
+      error: result.error,
+      unauthorized: result.unauthorized,
+    }
   }
 
   // Flatten providers from all teams and dedupe by providerId
