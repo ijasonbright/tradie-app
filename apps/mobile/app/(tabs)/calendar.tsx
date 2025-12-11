@@ -46,6 +46,7 @@ const TYPE_COLORS: Record<string, string> = {
   meeting: '#0891b2',
   site_visit: '#ea580c',
   asset_register: '#16a34a',
+  tradieconnect: '#7c3aed', // Purple for TradieConnect jobs
 }
 
 type ViewMode = 'day' | 'week' | 'month'
@@ -274,13 +275,18 @@ export default function CalendarScreen() {
     const clientPhone = appointment.client_phone || appointment.client_mobile || null
 
     // Determine what type of item this is
+    // If appointment_type is 'tradieconnect', navigate to TC job view
     // If appointment_type is 'asset_register', navigate to asset register screen
     // If job_id equals id, then this row came from the jobs UNION query
+    const isTradieConnect = appointment.appointment_type === 'tradieconnect'
     const isAssetRegister = appointment.appointment_type === 'asset_register'
     const isJob = appointment.job_id && appointment.job_id === appointment.id
     const handlePress = () => {
       if (!appointment.id) return // Safety check
-      if (isAssetRegister) {
+      if (isTradieConnect && appointment.tc_job_id) {
+        // Navigate to TradieConnect job view
+        router.push(`/tc-job/${appointment.tc_job_id}`)
+      } else if (isAssetRegister) {
         router.push(`/asset-register/${appointment.id}`)
       } else if (isJob) {
         router.push(`/job/${appointment.id}`)

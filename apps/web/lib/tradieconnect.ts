@@ -191,7 +191,7 @@ export async function refreshToken(tcUserId: string, tcRefreshToken: string): Pr
 }
 
 /**
- * Fetches a job from TradieConnect by ID
+ * Fetches a job from TradieConnect by ID (basic version)
  */
 export async function fetchJob(
   jobId: string,
@@ -222,6 +222,138 @@ export async function fetchJob(
     }
 
     return { success: false, error: `Failed to fetch job: ${response.status}` }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+/**
+ * Fetches full job details from TradieConnect by ID
+ * Returns typed TCJobDetails with property, pricing, history, etc.
+ */
+export async function fetchTCJobDetails(
+  jobId: number | string,
+  tcUserId: string,
+  tcToken: string
+): Promise<{
+  success: boolean
+  job?: TCJobDetails
+  error?: string
+  unauthorized?: boolean
+}> {
+  try {
+    const response = await tradieConnectApiRequest(
+      `/api/v2/Job/${jobId}`,
+      tcUserId,
+      tcToken,
+      { method: 'GET' }
+    )
+
+    if (response.ok) {
+      const rawJob = await response.json()
+
+      // Map the response to our typed interface
+      const job: TCJobDetails = {
+        jobId: rawJob.property?.jobId || parseInt(String(jobId)),
+        code: rawJob.code || '',
+        calendarLink: rawJob.calendarLink || '',
+
+        lat: rawJob.lat || rawJob.latLong?.lat || 0,
+        long: rawJob.long || rawJob.lng || rawJob.latLong?.long || 0,
+        addressState: rawJob.addressState,
+        addressLocality: rawJob.addressLocality,
+        addressPostcode: rawJob.addressPostcode,
+        addressCountry: rawJob.addressCountry,
+        entryNotes: rawJob.entryNotes,
+
+        jobSourcePrettyPrint: rawJob.jobSourcePrettyPrint || '',
+        propertyMeStatus: rawJob.propertyMeStatus || '',
+        propertyMeSummary: rawJob.propertyMeSummary || '',
+        isInspection: rawJob.isInspection || false,
+        isEnergyUpgrade: rawJob.isEnergyUpgrade || false,
+        isRectification: rawJob.isRectification || false,
+        hasGas: rawJob.hasGas || false,
+
+        phone: rawJob.phone,
+        jobContactEmail: rawJob.jobContactEmail,
+        jobContactFirstName: rawJob.jobContactFirstName,
+        jobContactLastName: rawJob.jobContactLastName,
+        jobContactMobile: rawJob.jobContactMobile,
+
+        pricing: rawJob.pricing ? {
+          lotJobTypeSubscriptionId: rawJob.pricing.lotJobTypeSubscriptionId || 0,
+          jobTypeId: rawJob.pricing.jobTypeId || 0,
+          lotSubscriptionTypeId: rawJob.pricing.lotSubscriptionTypeId || 0,
+          propertyType: rawJob.pricing.propertyType || '',
+          yearly: rawJob.pricing.yearly || 0,
+          initial: rawJob.pricing.initial || 0,
+          currentJobCost: rawJob.pricing.currentJobCost || 0,
+          jobTypeName: rawJob.pricing.jobTypeName || '',
+          initialWithGst: rawJob.pricing.initialWithGst || 0,
+        } : null,
+
+        questions: rawJob.questions || [],
+        files: rawJob.files || [],
+        history: (rawJob.history || []).map((h: any) => ({
+          id: h.id,
+          jobId: h.jobId,
+          description: h.description,
+          timestamp: h.timestamp,
+          statusId: h.statusId,
+          statusName: h.statusName,
+          fullname: h.fullname,
+          firstname: h.firstname,
+          lastname: h.lastname,
+          mobile: h.mobile,
+        })),
+
+        property: rawJob.property ? {
+          id: rawJob.property.id || 0,
+          address: rawJob.property.address,
+          unit: rawJob.property.unit,
+          number: rawJob.property.number,
+          street: rawJob.property.street,
+          suburb: rawJob.property.suburb,
+          state: rawJob.property.state,
+          postCode: rawJob.property.postCode,
+          lat: rawJob.property.lat || 0,
+          long: rawJob.property.long || 0,
+          tenantName: rawJob.property.tenantName,
+          tenantEmail: rawJob.property.tenantEmail,
+          tenantMobile: rawJob.property.tenantMobile,
+          tenantFirstname: rawJob.property.tenantFirstname,
+          tenantLastname: rawJob.property.tenantLastname,
+          tenantFullname: rawJob.property.tenantFullname || '',
+          ownerName: rawJob.property.ownerName,
+          ownerEmail: rawJob.property.ownerEmail,
+          ownerMobile: rawJob.property.ownerMobile,
+          ownerFirstname: rawJob.property.ownerFirstname,
+          ownerLastname: rawJob.property.ownerLastname,
+          ownerFullname: rawJob.property.ownerFullname || '',
+          managerName: rawJob.property.managerName,
+          managerEmail: rawJob.property.managerEmail,
+          managerMobile: rawJob.property.managerMobile,
+          managerFirstname: rawJob.property.managerFirstname,
+          managerLastname: rawJob.property.managerLastname,
+          managerFullname: rawJob.property.managerFullname || '',
+          jobTypeName: rawJob.property.jobTypeName || rawJob.pricing?.jobTypeName,
+          jobStatusName: rawJob.property.jobStatusName || rawJob.propertyMeStatus || 'Unknown',
+          scheduledDate: rawJob.property.scheduledDate,
+          description: rawJob.property.description,
+          siteAccessNotes: rawJob.property.siteAccessNotes,
+        } : null,
+      }
+
+      return { success: true, job }
+    }
+
+    // Check for 401 - token expired
+    if (response.status === 401) {
+      return { success: false, error: 'Token expired', unauthorized: true }
+    }
+
+    const errorText = await response.text()
+    return { success: false, error: `Failed to fetch job details: ${response.status} - ${errorText}` }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
@@ -463,6 +595,118 @@ export interface TCJob {
   statusName: string
   lat: number
   long: number
+}
+
+// ==================== Job Details Types ====================
+
+export interface TCJobHistoryItem {
+  id: number
+  jobId: number
+  description: string
+  timestamp: string
+  statusId: number
+  statusName: string
+  fullname: string
+  firstname: string | null
+  lastname: string | null
+  mobile: string | null
+}
+
+export interface TCJobPricing {
+  lotJobTypeSubscriptionId: number
+  jobTypeId: number
+  lotSubscriptionTypeId: number
+  propertyType: string
+  yearly: number
+  initial: number
+  currentJobCost: number
+  jobTypeName: string
+  initialWithGst: number
+}
+
+export interface TCJobFile {
+  id: number
+  jobId: number
+  filename: string
+  url: string
+  uploadedAt: string
+}
+
+export interface TCJobDetails {
+  // Core job info
+  jobId: number
+  code: string
+  calendarLink: string
+
+  // Property/location
+  lat: number
+  long: number
+  addressState: string | null
+  addressLocality: string | null
+  addressPostcode: string | null
+  addressCountry: string | null
+  entryNotes: string | null
+
+  // Job type and status
+  jobSourcePrettyPrint: string
+  propertyMeStatus: string
+  propertyMeSummary: string
+  isInspection: boolean
+  isEnergyUpgrade: boolean
+  isRectification: boolean
+  hasGas: boolean
+
+  // Contact info
+  phone: string | null
+  jobContactEmail: string | null
+  jobContactFirstName: string | null
+  jobContactLastName: string | null
+  jobContactMobile: string | null
+
+  // Pricing
+  pricing: TCJobPricing | null
+
+  // Related data
+  questions: any[]
+  files: TCJobFile[]
+  history: TCJobHistoryItem[]
+
+  // Property details (nested object with tenant/owner/manager info)
+  property: {
+    id: number
+    address: string | null
+    unit: string | null
+    number: string | null
+    street: string | null
+    suburb: string | null
+    state: string | null
+    postCode: string | null
+    lat: number
+    long: number
+    tenantName: string | null
+    tenantEmail: string | null
+    tenantMobile: string | null
+    tenantFirstname: string | null
+    tenantLastname: string | null
+    tenantFullname: string
+    ownerName: string | null
+    ownerEmail: string | null
+    ownerMobile: string | null
+    ownerFirstname: string | null
+    ownerLastname: string | null
+    ownerFullname: string
+    managerName: string | null
+    managerEmail: string | null
+    managerMobile: string | null
+    managerFirstname: string | null
+    managerLastname: string | null
+    managerFullname: string
+    jobTypeName: string | null
+    jobStatusName: string
+    scheduledDate: string | null
+    description: string | null
+    siteAccessNotes: string | null
+  } | null
 }
 
 export interface TCSchedule {

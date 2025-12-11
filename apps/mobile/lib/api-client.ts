@@ -1497,6 +1497,101 @@ class ApiClient {
       needs_connect?: boolean
     }>(`/integrations/tradieconnect/jobs/${jobId}`)
   }
+
+  /**
+   * Get full TradieConnect job details (for job view screen)
+   */
+  async getTCJobDetails(jobId: string) {
+    return this.request<{
+      success: boolean
+      job?: {
+        jobId: number
+        code: string
+        calendarLink: string
+        lat: number
+        long: number
+        addressState: string | null
+        addressLocality: string | null
+        addressPostcode: string | null
+        addressCountry: string | null
+        entryNotes: string | null
+        jobSourcePrettyPrint: string
+        propertyMeStatus: string
+        propertyMeSummary: string
+        isInspection: boolean
+        isEnergyUpgrade: boolean
+        isRectification: boolean
+        hasGas: boolean
+        phone: string | null
+        jobContactEmail: string | null
+        jobContactFirstName: string | null
+        jobContactLastName: string | null
+        jobContactMobile: string | null
+        pricing: {
+          lotJobTypeSubscriptionId: number
+          jobTypeId: number
+          lotSubscriptionTypeId: number
+          propertyType: string
+          yearly: number
+          initial: number
+          currentJobCost: number
+          jobTypeName: string
+          initialWithGst: number
+        } | null
+        questions: any[]
+        files: any[]
+        history: {
+          id: number
+          jobId: number
+          description: string
+          timestamp: string
+          statusId: number
+          statusName: string
+          fullname: string
+          firstname: string | null
+          lastname: string | null
+          mobile: string | null
+        }[]
+        property: {
+          id: number
+          address: string | null
+          unit: string | null
+          number: string | null
+          street: string | null
+          suburb: string | null
+          state: string | null
+          postCode: string | null
+          lat: number
+          long: number
+          tenantName: string | null
+          tenantEmail: string | null
+          tenantMobile: string | null
+          tenantFirstname: string | null
+          tenantLastname: string | null
+          tenantFullname: string
+          ownerName: string | null
+          ownerEmail: string | null
+          ownerMobile: string | null
+          ownerFirstname: string | null
+          ownerLastname: string | null
+          ownerFullname: string
+          managerName: string | null
+          managerEmail: string | null
+          managerMobile: string | null
+          managerFirstname: string | null
+          managerLastname: string | null
+          managerFullname: string
+          jobTypeName: string | null
+          jobStatusName: string
+          scheduledDate: string | null
+          description: string | null
+          siteAccessNotes: string | null
+        } | null
+      }
+      error?: string
+      needs_reconnection?: boolean
+    }>(`/integrations/tradieconnect/job?jobId=${jobId}`)
+  }
 }
 
 export const apiClient = new ApiClient()
