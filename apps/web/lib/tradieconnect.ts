@@ -234,7 +234,8 @@ export async function fetchJob(
 export async function fetchTCJobDetails(
   jobId: number | string,
   tcUserId: string,
-  tcToken: string
+  tcToken: string,
+  pid: number = 0
 ): Promise<{
   success: boolean
   job?: TCJobDetails
@@ -243,7 +244,7 @@ export async function fetchTCJobDetails(
 }> {
   try {
     const response = await tradieConnectApiRequest(
-      `/api/v2/Job/${jobId}`,
+      `/api/v2/Job/${jobId}?pid=${pid}`,
       tcUserId,
       tcToken,
       { method: 'GET' }
