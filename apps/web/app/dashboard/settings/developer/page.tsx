@@ -183,18 +183,28 @@ export default function DeveloperSettingsPage() {
         }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        const data = await response.json()
         // API returns { api_key: { key, key_prefix, ... } }
-        setNewApiKeyResult({ apiKey: data.api_key.key, keyPrefix: data.api_key.key_prefix })
-        setApiKeyForm({ name: '', permissions: [], expiresInDays: '' })
-        fetchApiKeys()
+        const apiKey = data.api_key?.key || data.apiKey
+        const keyPrefix = data.api_key?.key_prefix || data.apiKeyData?.key_prefix || 'ta_...'
+
+        if (apiKey) {
+          setNewApiKeyResult({ apiKey, keyPrefix })
+          setApiKeyForm({ name: '', permissions: [], expiresInDays: '' })
+          fetchApiKeys()
+        } else {
+          console.error('Unexpected API response:', data)
+          setError('API key created but response format unexpected. Check the API keys list.')
+          fetchApiKeys()
+        }
       } else {
-        const data = await response.json()
         setError(data.error || 'Failed to create API key')
       }
     } catch (error) {
-      setError('Failed to create API key')
+      console.error('Error creating API key:', error)
+      setError(`Failed to create API key: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
