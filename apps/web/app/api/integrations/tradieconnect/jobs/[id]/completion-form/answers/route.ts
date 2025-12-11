@@ -251,7 +251,11 @@ export async function GET(
   } catch (error) {
     console.error('Error getting TC job completion form answers:', error)
     return NextResponse.json(
-      { error: 'Failed to get completion form answers' },
+      {
+        error: 'Failed to get completion form answers',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        stack: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : undefined) : undefined
+      },
       { status: 500 }
     )
   }
