@@ -1,8 +1,17 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Platform } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Platform, Alert } from 'react-native'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { useState, useEffect } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { apiClient } from '../../lib/api-client'
+
+interface CompletionFormTemplate {
+  id: string
+  name: string
+  description: string | null
+  tc_form_id: number
+  group_count: number
+  question_count: number
+}
 
 // TradieConnect Job status colors
 const TC_STATUS_COLORS: Record<string, string> = {
@@ -24,6 +33,8 @@ export default function TCJobDetailScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [formTemplate, setFormTemplate] = useState<CompletionFormTemplate | null>(null)
+  const [loadingForm, setLoadingForm] = useState(false)
 
   const fetchJobDetails = async () => {
     try {
@@ -31,6 +42,24 @@ export default function TCJobDetailScreen() {
       const response = await apiClient.getTCJobDetails(id as string)
       console.log('Fetched TC job details:', response)
       setJob(response.job)
+
+      // If job has a completionFormTypeId, try to find the matching form template
+      if (response.job?.completionFormTypeId) {
+        setLoadingForm(true)
+        try {
+          const formResponse = await apiClient.getCompletionFormTemplateByTcFormId(response.job.completionFormTypeId)
+          if (formResponse.success && formResponse.template) {
+            setFormTemplate(formResponse.template)
+            console.log('Found matching form template:', formResponse.template.name)
+          } else {
+            console.log('No form template found for tc_form_id:', response.job.completionFormTypeId)
+          }
+        } catch (formErr) {
+          console.log('Could not fetch form template:', formErr)
+        } finally {
+          setLoadingForm(false)
+        }
+      }
     } catch (err: any) {
       console.error('Failed to fetch TC job:', err)
       setError(err.message || 'Failed to load job details')
@@ -92,6 +121,29 @@ export default function TCJobDetailScreen() {
 
   const getStatusColor = (status: string) => {
     return TC_STATUS_COLORS[status] || TC_STATUS_COLORS.default
+  }
+
+  const handleOpenCompletionForm = () => {
+    if (!formTemplate) {
+      Alert.alert(
+        'Form Not Available',
+        'No completion form template is available for this job type.',
+        [{ text: 'OK' }]
+      )
+      return
+    }
+
+    // Navigate to completion form screen with the template ID
+    // For TC jobs, we need to pass TC job context
+    router.push({
+      pathname: '/completion-form/[templateId]',
+      params: {
+        templateId: formTemplate.id,
+        tcJobId: job?.jobId?.toString(),
+        tcJobCode: job?.code || `TC-${job?.jobId}`,
+        formName: formTemplate.name,
+      },
+    })
   }
 
   if (loading && !refreshing) {
@@ -465,6 +517,35 @@ export default function TCJobDetailScreen() {
                 <Text style={styles.quickActionLabel}>Call Manager</Text>
               </TouchableOpacity>
             )}
+
+            {/* Complete Form Button */}
+            <TouchableOpacity
+              style={[
+                styles.quickActionCard,
+                formTemplate ? styles.quickActionCardPrimary : styles.quickActionCardDisabled
+              ]}
+              onPress={handleOpenCompletionForm}
+              disabled={loadingForm}
+            >
+              {loadingForm ? (
+                <ActivityIndicator size="small" color={formTemplate ? '#fff' : '#999'} />
+              ) : (
+                <MaterialCommunityIcons
+                  name="clipboard-check"
+                  size={32}
+                  color={formTemplate ? '#fff' : '#999'}
+                />
+              )}
+              <Text style={[
+                styles.quickActionLabel,
+                formTemplate ? styles.quickActionLabelPrimary : styles.quickActionLabelDisabled
+              ]}>
+                {formTemplate ? 'Complete Form' : 'No Form'}
+              </Text>
+              {formTemplate && (
+                <Text style={styles.quickActionSubLabel}>{formTemplate.name}</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -753,6 +834,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2563eb',
     textAlign: 'center',
+  },
+  quickActionCardPrimary: {
+    backgroundColor: '#10b981',
+  },
+  quickActionCardDisabled: {
+    backgroundColor: '#e5e7eb',
+  },
+  quickActionLabelPrimary: {
+    color: '#fff',
+  },
+  quickActionLabelDisabled: {
+    color: '#999',
+  },
+  quickActionSubLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: -4,
   },
   referenceCard: {
     backgroundColor: '#f3f4f6',

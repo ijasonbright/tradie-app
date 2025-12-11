@@ -1499,6 +1499,38 @@ class ApiClient {
   }
 
   /**
+   * Get completion form template by TradieConnect form ID
+   * Used to find the matching completion form for a TC job
+   */
+  async getCompletionFormTemplateByTcFormId(tcFormId: number) {
+    return this.request<{
+      success: boolean
+      template: {
+        id: string
+        organization_id: string | null
+        name: string
+        description: string | null
+        code: string | null
+        job_type: string | null
+        is_global: boolean
+        is_active: boolean
+        tc_form_id: number
+        navigation_type: string
+        include_photos: boolean
+        include_before_after_photos: boolean
+        include_signature: boolean
+        include_technician_signature: boolean
+        created_at: string
+        updated_at: string
+        group_count: number
+        question_count: number
+      } | null
+      tc_form_id?: number
+      error?: string
+    }>(`/completion-forms/templates/by-tc-form-id?tc_form_id=${tcFormId}`)
+  }
+
+  /**
    * Get full TradieConnect job details (for job view screen)
    */
   async getTCJobDetails(jobId: string) {
@@ -1508,6 +1540,7 @@ class ApiClient {
         jobId: number
         code: string
         calendarLink: string
+        completionFormTypeId: number | null
         lat: number
         long: number
         addressState: string | null

@@ -260,6 +260,7 @@ export async function fetchTCJobDetails(
         jobId: rawJob.property?.jobId || parseInt(String(jobId)),
         code: rawJob.code || '',
         calendarLink: rawJob.calendarLink || '',
+        completionFormTypeId: rawJob.completionFormTypeId ?? rawJob.property?.completionFormTypeId ?? null,
 
         lat: rawJob.lat || rawJob.latLong?.lat || 0,
         long: rawJob.long || rawJob.lng || rawJob.latLong?.long || 0,
@@ -640,6 +641,7 @@ export interface TCJobDetails {
   jobId: number
   code: string
   calendarLink: string
+  completionFormTypeId: number | null // TradieConnect form ID for matching to completion forms
 
   // Property/location
   lat: number
