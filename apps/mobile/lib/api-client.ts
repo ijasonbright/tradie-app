@@ -1625,6 +1625,29 @@ class ApiClient {
       needs_reconnection?: boolean
     }>(`/integrations/tradieconnect/job?jobId=${jobId}`)
   }
+
+  /**
+   * Get TC job completion form (if exists)
+   */
+  async getTCJobCompletionForm(tcJobId: string) {
+    return this.request<{ form: any | null }>(`/integrations/tradieconnect/jobs/${tcJobId}/completion-form`)
+  }
+
+  /**
+   * Save TC job completion form draft or update existing
+   */
+  async saveTCJobCompletionForm(
+    tcJobId: string,
+    data: { template_id: string; tc_job_code: string; form_data: any; status: string }
+  ) {
+    return this.request<{ success: boolean; form: any }>(
+      `/integrations/tradieconnect/jobs/${tcJobId}/completion-form`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()

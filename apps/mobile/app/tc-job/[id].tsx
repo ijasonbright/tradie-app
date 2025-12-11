@@ -133,13 +133,12 @@ export default function TCJobDetailScreen() {
       return
     }
 
-    // Navigate to completion form screen with the template ID
-    // For TC jobs, we need to pass TC job context
+    // Navigate to TC-specific completion form screen
     router.push({
-      pathname: '/completion-form/[templateId]',
+      pathname: '/tc-job/completion-form/[tcJobId]',
       params: {
-        templateId: formTemplate.id,
         tcJobId: job?.jobId?.toString(),
+        templateId: formTemplate.id,
         tcJobCode: job?.code || `TC-${job?.jobId}`,
         formName: formTemplate.name,
       },
