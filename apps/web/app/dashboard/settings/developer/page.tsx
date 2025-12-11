@@ -144,7 +144,8 @@ export default function DeveloperSettingsPage() {
       const response = await fetch('/api/developer/api-keys')
       if (response.ok) {
         const data = await response.json()
-        setApiKeys(data.apiKeys || [])
+        // API returns { api_keys: [...] }
+        setApiKeys(data.api_keys || [])
       }
     } catch (error) {
       console.error('Error fetching API keys:', error)
@@ -178,13 +179,14 @@ export default function DeveloperSettingsPage() {
         body: JSON.stringify({
           name: apiKeyForm.name,
           permissions: apiKeyForm.permissions,
-          expiresInDays: apiKeyForm.expiresInDays ? parseInt(apiKeyForm.expiresInDays) : undefined,
+          expires_in_days: apiKeyForm.expiresInDays ? parseInt(apiKeyForm.expiresInDays) : undefined,
         }),
       })
 
       if (response.ok) {
         const data = await response.json()
-        setNewApiKeyResult({ apiKey: data.apiKey, keyPrefix: data.apiKeyData.key_prefix })
+        // API returns { api_key: { key, key_prefix, ... } }
+        setNewApiKeyResult({ apiKey: data.api_key.key, keyPrefix: data.api_key.key_prefix })
         setApiKeyForm({ name: '', permissions: [], expiresInDays: '' })
         fetchApiKeys()
       } else {
