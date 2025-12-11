@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
         tc_user_id,
         tc_token,
         tc_refresh_token,
-        token_expires_at
+        tc_token_expires_at
       FROM tradieconnect_connections
       WHERE user_id = ${user.id}
       LIMIT 1
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
           SET
             tc_token = ${encryptedToken},
             tc_refresh_token = ${encryptedRefreshToken},
-            token_expires_at = ${refreshResult.expiry ? new Date(refreshResult.expiry) : null},
+            tc_token_expires_at = ${refreshResult.expiry ? new Date(refreshResult.expiry) : null},
             updated_at = NOW()
           WHERE user_id = ${user.id}
         `
