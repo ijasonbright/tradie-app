@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+import { extractApiKeyFromHeader, verifyApiKey, hasPermission } from '@/lib/api/api-key-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,12 @@ export const dynamic = 'force-dynamic'
  *
  * Returns all answers for a TC job completion form, mapped with csv_question_id
  * for syncing back to TradieConnect.
+ *
+ * Authentication (supports all three methods):
+ * 1. API Key (for TradieConnect integration) - "Bearer tc_api_xxx" or "Bearer ta_xxx"
+ *    Required permission: tc_completion_forms.read or completion_forms.read
+ * 2. Clerk (web dashboard)
+ * 3. JWT (mobile app)
  *
  * Response format:
  * {
@@ -39,48 +46,69 @@ export async function GET(
 ) {
   try {
     const { id: tcJobId } = await params
+    const sql = neon(process.env.DATABASE_URL!)
+    let organizationId: string | null = null
 
-    // Dual auth: Clerk (web) + JWT (mobile)
-    let clerkUserId: string | null = null
+    const authHeader = request.headers.get('authorization')
 
-    try {
-      const authResult = await auth()
-      clerkUserId = authResult.userId
-    } catch (error) {
-      // Clerk auth failed, try JWT
-    }
+    // Try API Key authentication first (for TradieConnect integration)
+    const apiKey = extractApiKeyFromHeader(authHeader)
 
-    if (!clerkUserId) {
-      const authHeader = request.headers.get('authorization')
-      const token = extractTokenFromHeader(authHeader)
-      if (token) {
-        const payload = await verifyMobileToken(token)
-        if (payload) {
-          clerkUserId = payload.clerkUserId
+    if (apiKey) {
+      const apiKeyPayload = await verifyApiKey(apiKey)
+      if (apiKeyPayload) {
+        // Check for required permission
+        if (!hasPermission(apiKeyPayload, 'tc_completion_forms.read') &&
+            !hasPermission(apiKeyPayload, 'completion_forms.read')) {
+          return NextResponse.json(
+            { error: 'Forbidden', message: 'Missing required permission: tc_completion_forms.read' },
+            { status: 403 }
+          )
         }
+        organizationId = apiKeyPayload.organizationId
       }
     }
 
-    if (!clerkUserId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // If no API key auth, try Clerk (web) + JWT (mobile)
+    if (!organizationId) {
+      let clerkUserId: string | null = null
+
+      try {
+        const authResult = await auth()
+        clerkUserId = authResult.userId
+      } catch (error) {
+        // Clerk auth failed, try JWT
+      }
+
+      if (!clerkUserId) {
+        const token = extractTokenFromHeader(authHeader)
+        if (token) {
+          const payload = await verifyMobileToken(token)
+          if (payload) {
+            clerkUserId = payload.clerkUserId
+          }
+        }
+      }
+
+      if (!clerkUserId) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+
+      // Get user and organization
+      const users = await sql`
+        SELECT u.id, om.organization_id
+        FROM users u
+        JOIN organization_members om ON u.id = om.user_id
+        WHERE u.clerk_user_id = ${clerkUserId}
+        LIMIT 1
+      `
+
+      if (users.length === 0) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      }
+
+      organizationId = users[0].organization_id
     }
-
-    const sql = neon(process.env.DATABASE_URL!)
-
-    // Get user and organization
-    const users = await sql`
-      SELECT u.id, om.organization_id
-      FROM users u
-      JOIN organization_members om ON u.id = om.user_id
-      WHERE u.clerk_user_id = ${clerkUserId}
-      LIMIT 1
-    `
-
-    if (users.length === 0) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const organizationId = users[0].organization_id
 
     // Get the completion form for this TC job
     const forms = await sql`

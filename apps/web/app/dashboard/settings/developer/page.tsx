@@ -46,6 +46,8 @@ const ALL_PERMISSIONS = [
   { id: 'quotes.write', label: 'Create/Update Quotes', category: 'Quotes' },
   { id: 'appointments.read', label: 'Read Appointments', category: 'Appointments' },
   { id: 'appointments.write', label: 'Create/Update Appointments', category: 'Appointments' },
+  { id: 'completion_forms.read', label: 'Read Completion Forms', category: 'Completion Forms' },
+  { id: 'tc_completion_forms.read', label: 'Read TC Job Completion Forms', category: 'TradieConnect' },
   { id: 'webhooks.manage', label: 'Manage Webhooks', category: 'Admin' },
 ]
 
