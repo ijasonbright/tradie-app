@@ -157,6 +157,8 @@ export async function refreshToken(tcUserId: string, tcRefreshToken: string): Pr
 
     console.log('Calling TradieConnect refresh API...')
     console.log('User ID:', tcUserId)
+    console.log('Refresh token prefix:', tcRefreshToken?.substring(0, 20) + '...')
+    console.log('Refresh token length:', tcRefreshToken?.length || 0)
     console.log('Refresh URL (without token):', `${TRADIECONNECT_API_URL}/api/v2/Auth/?param1=refresh&id=${tcUserId}&token=...`)
 
     const response = await fetch(refreshUrl, {
