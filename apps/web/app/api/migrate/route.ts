@@ -918,6 +918,11 @@ export async function POST() {
       // Add TradieConnect provider ID to users table for matching after first sync
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS tc_provider_id INTEGER`,
       `CREATE INDEX IF NOT EXISTS idx_users_tc_provider_id ON users(tc_provider_id) WHERE tc_provider_id IS NOT NULL`,
+
+      // ========== TRADIECONNECT FORM ID MAPPING ==========
+      // Add tc_form_id to completion_form_templates to link with TradieConnect's JobTypeFormId
+      `ALTER TABLE completion_form_templates ADD COLUMN IF NOT EXISTS tc_form_id INTEGER`,
+      `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_tc_form_id ON completion_form_templates(tc_form_id) WHERE tc_form_id IS NOT NULL`,
     ]
 
     const results = []
