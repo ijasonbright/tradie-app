@@ -23,6 +23,7 @@ interface Organization {
   default_hourly_rate: string | null
   default_employee_cost: string | null
   sms_phone_number: string | null
+  role?: string // User's role in the organization
 }
 
 interface TradeType {
@@ -313,15 +314,29 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold">Organization Settings</h1>
             <p className="mt-1 text-gray-600">Manage your business information and pricing</p>
           </div>
-          <Link
-            href="/dashboard/settings/branding"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 flex items-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-            </svg>
-            Logo & Branding
-          </Link>
+          <div className="flex items-center gap-3">
+            {/* Developer Settings - Only visible to owners and admins */}
+            {organization && (organization.role === 'owner' || organization.role === 'admin') && (
+              <Link
+                href="/dashboard/settings/developer"
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                Developer
+              </Link>
+            )}
+            <Link
+              href="/dashboard/settings/branding"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+              Logo & Branding
+            </Link>
+          </div>
         </div>
       </div>
 

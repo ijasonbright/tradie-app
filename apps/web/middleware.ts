@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   '/api/webhooks/(.*)',
   '/api/mobile-auth/(.*)',
   '/api/integrations/propertypal/(.*)', // Property Pal integration endpoints (API key protected)
+  '/api/v1/(.*)', // Public API v1 endpoints (API key protected)
   '/admin/secure/setauth(.*)', // TradieConnect SSO callback (handles its own auth via encrypted params)
   '/sign-in(.*)',
   '/sign-up(.*)',

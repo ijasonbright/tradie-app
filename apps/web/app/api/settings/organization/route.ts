@@ -24,7 +24,7 @@ export async function GET() {
 
     // Get organization where user is owner or admin
     const orgs = await sql`
-      SELECT o.*
+      SELECT o.*, om.role
       FROM organizations o
       INNER JOIN organization_members om ON o.id = om.organization_id
       WHERE om.user_id = ${user.id}

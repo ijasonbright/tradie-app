@@ -22,5 +22,6 @@ export * from './properties'
 export * from './assets'
 export * from './asset-register-jobs'
 export * from './tradieconnect'
+export * from './api-keys'
 // Temporarily disable relations to fix build
 // export * from './relations'
