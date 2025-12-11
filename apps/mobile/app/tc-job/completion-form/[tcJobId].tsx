@@ -140,6 +140,8 @@ export default function TCCompletionFormScreen() {
         jobId={tcJobId as string}
         onSave={handleSaveDraft}
         onSubmit={handleSubmit}
+        isTCJob={true}
+        tcJobCode={tcJobCode as string}
       />
     </View>
   )

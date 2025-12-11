@@ -25,7 +25,17 @@ interface FormTemplate {
   groups: FormGroup[]
 }
 
-export function useCompletionForm(templateId: string, jobId: string) {
+interface UseCompletionFormOptions {
+  isTCJob?: boolean  // If true, use TC-specific API endpoints
+  tcJobCode?: string // TC job code for saving
+}
+
+export function useCompletionForm(
+  templateId: string,
+  jobId: string,
+  options: UseCompletionFormOptions = {}
+) {
+  const { isTCJob = false, tcJobCode } = options
   const [template, setTemplate] = useState<FormTemplate | null>(null)
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -53,7 +63,10 @@ export function useCompletionForm(templateId: string, jobId: string) {
 
   const loadFormData = async () => {
     try {
-      const response = await apiClient.getJobCompletionForm(jobId)
+      // Use TC-specific endpoint for TC jobs
+      const response = isTCJob
+        ? await apiClient.getTCJobCompletionForm(jobId)
+        : await apiClient.getJobCompletionForm(jobId)
       if (response.form && response.form.form_data) {
         setFormData(response.form.form_data)
       }
@@ -128,11 +141,20 @@ export function useCompletionForm(templateId: string, jobId: string) {
   const saveForm = async () => {
     try {
       setIsSaving(true)
-      await apiClient.saveJobCompletionForm(jobId, {
-        template_id: templateId,
-        form_data: formData,
-        status: 'draft',
-      })
+      if (isTCJob) {
+        await apiClient.saveTCJobCompletionForm(jobId, {
+          template_id: templateId,
+          tc_job_code: tcJobCode || `TC-${jobId}`,
+          form_data: formData,
+          status: 'draft',
+        })
+      } else {
+        await apiClient.saveJobCompletionForm(jobId, {
+          template_id: templateId,
+          form_data: formData,
+          status: 'draft',
+        })
+      }
     } catch (error) {
       console.error('Failed to save form:', error)
       throw error
@@ -145,15 +167,26 @@ export function useCompletionForm(templateId: string, jobId: string) {
     try {
       setIsSubmitting(true)
 
-      // First save the form
-      await apiClient.saveJobCompletionForm(jobId, {
-        template_id: templateId,
-        form_data: formData,
-        status: 'draft',
-      })
+      if (isTCJob) {
+        // For TC jobs, save with 'submitted' status
+        await apiClient.saveTCJobCompletionForm(jobId, {
+          template_id: templateId,
+          tc_job_code: tcJobCode || `TC-${jobId}`,
+          form_data: formData,
+          status: 'submitted',
+        })
+        // TODO: Submit to TradieConnect API
+      } else {
+        // First save the form
+        await apiClient.saveJobCompletionForm(jobId, {
+          template_id: templateId,
+          form_data: formData,
+          status: 'draft',
+        })
 
-      // Then submit it
-      await apiClient.submitJobCompletionForm(jobId)
+        // Then submit it
+        await apiClient.submitJobCompletionForm(jobId)
+      }
     } catch (error) {
       console.error('Failed to submit form:', error)
       throw error

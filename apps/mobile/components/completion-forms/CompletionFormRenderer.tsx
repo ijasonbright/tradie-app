@@ -18,6 +18,8 @@ interface CompletionFormRendererProps {
   jobId: string
   onSave?: (formData: any) => void
   onSubmit?: (formData: any) => void
+  isTCJob?: boolean  // If true, use TC-specific API endpoints
+  tcJobCode?: string // TC job code for saving
 }
 
 export function CompletionFormRenderer({
@@ -25,6 +27,8 @@ export function CompletionFormRenderer({
   jobId,
   onSave,
   onSubmit,
+  isTCJob = false,
+  tcJobCode,
 }: CompletionFormRendererProps) {
   const {
     template,
@@ -37,7 +41,7 @@ export function CompletionFormRenderer({
     validateForm,
     saveForm,
     submitForm,
-  } = useCompletionForm(templateId, jobId)
+  } = useCompletionForm(templateId, jobId, { isTCJob, tcJobCode })
 
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0)
   const [validatedSections, setValidatedSections] = useState<Set<number>>(new Set())
