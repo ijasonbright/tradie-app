@@ -1039,6 +1039,49 @@ class ApiClient {
     return await response.json()
   }
 
+  /**
+   * Upload photo to TC job completion form
+   */
+  async uploadTCCompletionFormPhoto(tcJobId: string, imageUri: string, caption: string, photoType: string, questionId?: string) {
+    const formData = new FormData()
+
+    // Create file from URI
+    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('file', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('caption', caption || '')
+    formData.append('photo_type', photoType)
+    if (questionId) formData.append('question_id', questionId)
+
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/integrations/tradieconnect/jobs/${tcJobId}/completion-form/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let the browser set it with boundary
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
+
   // ==================== PROPERTIES API ====================
 
   /**

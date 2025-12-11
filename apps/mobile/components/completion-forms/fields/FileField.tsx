@@ -9,9 +9,10 @@ interface FileFieldProps {
   value: string | string[]
   onChange: (value: string | string[]) => void
   jobId: string
+  isTCJob?: boolean
 }
 
-export function FileField({ question, value, onChange, jobId }: FileFieldProps) {
+export function FileField({ question, value, onChange, jobId, isTCJob = false }: FileFieldProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
 
@@ -64,13 +65,21 @@ export function FileField({ question, value, onChange, jobId }: FileFieldProps) 
         const uri = uris[i]
         setUploadProgress({ current: i + 1, total: uris.length })
 
-        const response = await apiClient.uploadCompletionFormPhoto(
-          jobId,
-          uri,
-          '', // caption
-          'completion_form', // photo_type
-          question.id // question_id
-        )
+        const response = isTCJob
+          ? await apiClient.uploadTCCompletionFormPhoto(
+              jobId,
+              uri,
+              '', // caption
+              'completion_form', // photo_type
+              question.id // question_id
+            )
+          : await apiClient.uploadCompletionFormPhoto(
+              jobId,
+              uri,
+              '', // caption
+              'completion_form', // photo_type
+              question.id // question_id
+            )
         uploadedUrls.push(response.photo.photo_url)
       }
 

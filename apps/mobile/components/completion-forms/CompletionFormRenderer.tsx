@@ -160,6 +160,7 @@ export function CompletionFormRenderer({
               error={validatedSections.has(currentGroupIndex) ? errors[question.id] : undefined}
               onChange={(value) => updateField(question.id, value)}
               jobId={jobId}
+              isTCJob={isTCJob}
             />
           ))}
         </View>
