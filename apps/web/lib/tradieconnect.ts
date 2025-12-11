@@ -374,3 +374,165 @@ export function getAuthUrl(refererUrl?: string): string {
 export function getApiUrl(): string {
   return TRADIECONNECT_API_URL
 }
+
+// ==================== Provider/Team Types ====================
+
+export interface TCProvider {
+  providerId: number
+  userId: number
+  jobTypeId: number
+  firstName: string
+  lastName: string
+  email: string
+  mobile: string
+  name: string
+}
+
+export interface TCJob {
+  jobId: number
+  teamId: number
+  userId: number
+  statusId: number
+  firstName: string
+  lastName: string
+  mobile: string
+  email: string
+  jobType: string
+  jobTypeConfig: string | null
+  address: string
+  start: string
+  duration: number
+  spacing: number
+  title: string
+  description: string
+  statusName: string
+  lat: number
+  long: number
+}
+
+export interface TCSchedule {
+  jobDate: string
+  providers: TCProvider[]
+  jobs: TCJob[]
+}
+
+export interface TCTeam {
+  teamId: number
+  userId: number
+  name: string
+  schedules: TCSchedule[]
+}
+
+/**
+ * Fetches the provider calendar (teams and their assigned tradies/jobs) from TradieConnect
+ * @param date - The date to fetch the calendar for (YYYY-MM-DD format)
+ * @param teamId - The team ID to filter by (0 = all teams)
+ * @param offset - Pagination offset (default 0)
+ */
+export async function fetchProviderCalendar(
+  tcUserId: string,
+  tcToken: string,
+  date: string,
+  teamId: number = 0,
+  offset: number = 0
+): Promise<{
+  success: boolean
+  teams?: TCTeam[]
+  error?: string
+  unauthorized?: boolean
+}> {
+  try {
+    const endpoint = `/api/v2/ProviderCalendar?date=${encodeURIComponent(date)}&teamId=${teamId}&offset=${offset}`
+
+    const response = await tradieConnectApiRequest(
+      endpoint,
+      tcUserId,
+      tcToken,
+      { method: 'GET' }
+    )
+
+    if (response.ok) {
+      const teams = await response.json()
+      return { success: true, teams }
+    }
+
+    if (response.status === 401) {
+      return { success: false, error: 'Token expired', unauthorized: true }
+    }
+
+    const errorText = await response.text()
+    return { success: false, error: `Failed to fetch provider calendar: ${response.status} - ${errorText}` }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+/**
+ * Fetches all jobs for a specific date from the provider calendar
+ */
+export async function fetchJobsForDate(
+  tcUserId: string,
+  tcToken: string,
+  date: string
+): Promise<{
+  success: boolean
+  jobs?: TCJob[]
+  teams?: { teamId: number; teamName: string }[]
+  error?: string
+  unauthorized?: boolean
+}> {
+  const result = await fetchProviderCalendar(tcUserId, tcToken, date, 0, 0)
+
+  if (!result.success) {
+    return result
+  }
+
+  // Flatten jobs from all teams
+  const allJobs: TCJob[] = []
+  const teams: { teamId: number; teamName: string }[] = []
+
+  for (const team of result.teams || []) {
+    teams.push({ teamId: team.teamId, teamName: team.name })
+
+    for (const schedule of team.schedules) {
+      allJobs.push(...schedule.jobs)
+    }
+  }
+
+  return { success: true, jobs: allJobs, teams }
+}
+
+/**
+ * Fetches all providers/tradies from the provider calendar
+ */
+export async function fetchProviders(
+  tcUserId: string,
+  tcToken: string,
+  date: string
+): Promise<{
+  success: boolean
+  providers?: TCProvider[]
+  error?: string
+  unauthorized?: boolean
+}> {
+  const result = await fetchProviderCalendar(tcUserId, tcToken, date, 0, 0)
+
+  if (!result.success) {
+    return result
+  }
+
+  // Flatten providers from all teams and dedupe by providerId
+  const providerMap = new Map<number, TCProvider>()
+
+  for (const team of result.teams || []) {
+    for (const schedule of team.schedules) {
+      for (const provider of schedule.providers) {
+        if (!providerMap.has(provider.providerId)) {
+          providerMap.set(provider.providerId, provider)
+        }
+      }
+    }
+  }
+
+  return { success: true, providers: Array.from(providerMap.values()) }
+}
