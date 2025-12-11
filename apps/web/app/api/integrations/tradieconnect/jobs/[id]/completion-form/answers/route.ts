@@ -44,45 +44,28 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  let authMethod = 'none'
-  let debugInfo: Record<string, any> = {}
-
   try {
     const { id: tcJobId } = await params
-    debugInfo.tcJobId = tcJobId
-
     const sql = neon(process.env.DATABASE_URL!)
     let organizationId: string | null = null
 
     const authHeader = request.headers.get('authorization')
-    debugInfo.hasAuthHeader = !!authHeader
-    debugInfo.authHeaderPrefix = authHeader?.substring(0, 20) + '...'
 
     // Try API Key authentication first (for TradieConnect integration)
     const apiKey = extractApiKeyFromHeader(authHeader)
-    debugInfo.extractedApiKey = apiKey ? `${apiKey.substring(0, 10)}...` : null
 
     if (apiKey) {
-      authMethod = 'api_key_attempt'
       const apiKeyPayload = await verifyApiKey(apiKey)
-      debugInfo.apiKeyPayloadReceived = !!apiKeyPayload
-
       if (apiKeyPayload) {
-        debugInfo.apiKeyOrgId = apiKeyPayload.organizationId
-        debugInfo.apiKeyPermissions = apiKeyPayload.permissions
-
         // Check for required permission
         if (!hasPermission(apiKeyPayload, 'tc_completion_forms.read') &&
             !hasPermission(apiKeyPayload, 'completion_forms.read')) {
           return NextResponse.json(
-            { error: 'Forbidden', message: 'Missing required permission: tc_completion_forms.read', debug: debugInfo },
+            { error: 'Forbidden', message: 'Missing required permission: tc_completion_forms.read' },
             { status: 403 }
           )
         }
         organizationId = apiKeyPayload.organizationId
-        authMethod = 'api_key'
-      } else {
-        debugInfo.apiKeyVerifyFailed = true
       }
     }
 
@@ -91,34 +74,24 @@ export async function GET(
       let clerkUserId: string | null = null
 
       try {
-        authMethod = 'clerk_attempt'
         const authResult = await auth()
         clerkUserId = authResult.userId
-        if (clerkUserId) {
-          authMethod = 'clerk'
-          debugInfo.clerkUserId = clerkUserId
-        }
       } catch (error) {
-        debugInfo.clerkError = error instanceof Error ? error.message : 'Unknown clerk error'
         // Clerk auth failed, try JWT
       }
 
       if (!clerkUserId) {
-        authMethod = 'jwt_attempt'
         const token = extractTokenFromHeader(authHeader)
-        debugInfo.jwtTokenExtracted = !!token
         if (token) {
           const payload = await verifyMobileToken(token)
           if (payload) {
             clerkUserId = payload.clerkUserId
-            authMethod = 'jwt'
-            debugInfo.jwtClerkUserId = clerkUserId
           }
         }
       }
 
       if (!clerkUserId) {
-        return NextResponse.json({ error: 'Unauthorized', debug: debugInfo, authMethod }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
 
       // Get user and organization
@@ -131,14 +104,11 @@ export async function GET(
       `
 
       if (users.length === 0) {
-        return NextResponse.json({ error: 'User not found', debug: debugInfo }, { status: 404 })
+        return NextResponse.json({ error: 'User not found' }, { status: 404 })
       }
 
       organizationId = users[0].organization_id
     }
-
-    debugInfo.organizationId = organizationId
-    debugInfo.authMethodFinal = authMethod
 
     // Get the completion form for this TC job
     const forms = await sql`
@@ -182,7 +152,7 @@ export async function GET(
         g.id as group_id,
         g.name as group_name,
         g.sort_order as group_sort_order,
-        g.csv_group_no as group_number
+        g.csv_group_id as group_number
       FROM completion_form_template_questions q
       JOIN completion_form_template_groups g ON q.group_id = g.id
       WHERE q.template_id = ${templateId}
@@ -284,9 +254,6 @@ export async function GET(
       {
         error: 'Failed to get completion form answers',
         details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined,
-        debug: debugInfo,
-        authMethod,
       },
       { status: 500 }
     )
