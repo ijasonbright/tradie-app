@@ -2,8 +2,41 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
+import { fetchProviderCalendar, TCProvider, TCJob } from '@/lib/tradieconnect'
 
 export const dynamic = 'force-dynamic'
+
+interface TCAppointment {
+  id: string
+  organization_id: string | null
+  title: string
+  description: string
+  appointment_type: string
+  start_time: string
+  end_time: string
+  location_address: string
+  job_id: string | null
+  client_id: string | null
+  assigned_to_user_id: string | null
+  assigned_to_name: string | null
+  created_by_name: string | null
+  company_name: string | null
+  first_name: string
+  last_name: string
+  is_company: boolean
+  client_phone: string
+  client_mobile: string
+  job_number: string
+  job_title: string
+  // TradieConnect specific fields
+  tc_job_id?: number
+  tc_team_id?: number
+  tc_team_name?: string
+  tc_status?: string
+  tc_lat?: number
+  tc_long?: number
+  coworkers?: TCProvider[]
+}
 
 // GET - List all appointments for user's organization(s)
 export async function GET(req: Request) {
@@ -163,7 +196,164 @@ export async function GET(req: Request) {
 
     const appointments = await sql(query, params)
 
-    return NextResponse.json({ appointments })
+    // Check if user wants to include TradieConnect jobs (default: true)
+    const includeTc = searchParams.get('include_tc') !== 'false'
+
+    let tcAppointments: TCAppointment[] = []
+
+    if (includeTc && startDate) {
+      // Fetch TradieConnect jobs if user has a connection
+      try {
+        // Get user's email and tc_provider_id
+        const userDetails = await sql`
+          SELECT email, tc_provider_id FROM users WHERE id = ${user.id} LIMIT 1
+        `
+
+        if (userDetails.length > 0) {
+          const userEmail = userDetails[0].email?.toLowerCase()
+          let tcProviderId: number | null = userDetails[0].tc_provider_id
+
+          // Get active TradieConnect connection
+          const connections = await sql`
+            SELECT id, tc_user_id, tc_token
+            FROM tradieconnect_connections
+            WHERE user_id = ${user.id}
+            AND is_active = true
+            LIMIT 1
+          `
+
+          if (connections.length > 0) {
+            const connection = connections[0]
+
+            // Calculate which dates to fetch for TC
+            const tcDates: string[] = []
+            const tcStartDate = new Date(startDate)
+            const tcEndDate = endDate ? new Date(endDate) : new Date(startDate)
+            tcEndDate.setDate(tcEndDate.getDate() + 1) // Include end date
+
+            for (let d = new Date(tcStartDate); d < tcEndDate; d.setDate(d.getDate() + 1)) {
+              tcDates.push(d.toISOString().split('T')[0])
+            }
+
+            // Fetch TC calendar for each date
+            for (const tcDate of tcDates) {
+              const result = await fetchProviderCalendar(
+                connection.tc_user_id,
+                connection.tc_token,
+                tcDate,
+                0, // all teams
+                0
+              )
+
+              if (result.success && result.teams) {
+                // Find provider ID by email if not known
+                if (!tcProviderId && userEmail) {
+                  for (const team of result.teams) {
+                    for (const schedule of team.schedules) {
+                      for (const provider of schedule.providers) {
+                        if (provider.email?.toLowerCase() === userEmail) {
+                          tcProviderId = provider.providerId
+                          // Store for future syncs
+                          await sql`
+                            UPDATE users SET tc_provider_id = ${tcProviderId}, updated_at = NOW()
+                            WHERE id = ${user.id}
+                          `
+                          break
+                        }
+                      }
+                      if (tcProviderId) break
+                    }
+                    if (tcProviderId) break
+                  }
+                }
+
+                if (tcProviderId) {
+                  // Build map of providers per team for coworker lookup
+                  const teamProviders = new Map<number, TCProvider[]>()
+
+                  for (const team of result.teams) {
+                    for (const schedule of team.schedules) {
+                      const existing = teamProviders.get(team.teamId) || []
+                      for (const provider of schedule.providers) {
+                        if (!existing.find(p => p.providerId === provider.providerId)) {
+                          existing.push(provider)
+                        }
+                      }
+                      teamProviders.set(team.teamId, existing)
+                    }
+                  }
+
+                  // Find jobs assigned to this user
+                  for (const team of result.teams) {
+                    for (const schedule of team.schedules) {
+                      const isUserInTeam = schedule.providers.some(p => p.providerId === tcProviderId)
+
+                      if (isUserInTeam) {
+                        for (const job of schedule.jobs) {
+                          // Calculate end time from start + duration
+                          const jobStart = new Date(job.start)
+                          const jobEnd = new Date(jobStart.getTime() + job.duration * 60000) // duration is in minutes
+
+                          // Get coworkers (other providers in same team)
+                          const coworkers = (teamProviders.get(team.teamId) || [])
+                            .filter(p => p.providerId !== tcProviderId)
+
+                          tcAppointments.push({
+                            id: `tc-${job.jobId}`,
+                            organization_id: null,
+                            title: job.title || job.jobType,
+                            description: job.description || '',
+                            appointment_type: 'tradieconnect',
+                            start_time: job.start,
+                            end_time: jobEnd.toISOString(),
+                            location_address: job.address,
+                            job_id: null,
+                            client_id: null,
+                            assigned_to_user_id: null,
+                            assigned_to_name: null,
+                            created_by_name: null,
+                            company_name: null,
+                            first_name: job.firstName,
+                            last_name: job.lastName,
+                            is_company: false,
+                            client_phone: job.mobile,
+                            client_mobile: job.mobile,
+                            job_number: `TC-${job.jobId}`,
+                            job_title: job.title || job.jobType,
+                            tc_job_id: job.jobId,
+                            tc_team_id: team.teamId,
+                            tc_team_name: team.name,
+                            tc_status: job.statusName,
+                            tc_lat: job.lat,
+                            tc_long: job.long,
+                            coworkers,
+                          })
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (tcError) {
+        // Log but don't fail - TC jobs are supplementary
+        console.error('Error fetching TradieConnect jobs for calendar:', tcError)
+      }
+    }
+
+    // Merge and sort all appointments by start_time
+    const allAppointments = [...appointments, ...tcAppointments].sort((a, b) => {
+      const aTime = new Date(a.start_time).getTime()
+      const bTime = new Date(b.start_time).getTime()
+      return aTime - bTime
+    })
+
+    return NextResponse.json({
+      appointments: allAppointments,
+      tc_jobs_count: tcAppointments.length,
+    })
   } catch (error) {
     console.error('Error fetching appointments:', error)
     return NextResponse.json(

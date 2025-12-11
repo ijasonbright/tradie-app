@@ -914,6 +914,10 @@ export async function POST() {
       `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_name VARCHAR(255)`,
       `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_phone VARCHAR(50)`,
       `ALTER TABLE properties ADD COLUMN IF NOT EXISTS property_manager_email VARCHAR(255)`,
+
+      // Add TradieConnect provider ID to users table for matching after first sync
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS tc_provider_id INTEGER`,
+      `CREATE INDEX IF NOT EXISTS idx_users_tc_provider_id ON users(tc_provider_id) WHERE tc_provider_id IS NOT NULL`,
     ]
 
     const results = []
