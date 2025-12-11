@@ -131,6 +131,39 @@ export async function GET(
       ORDER BY g.sort_order, q.sort_order
     `
 
+    // Get photo metadata for file fields
+    const photos = await sql`
+      SELECT
+        p.id,
+        p.question_id,
+        p.photo_url,
+        p.caption,
+        p.photo_type,
+        p.uploaded_at,
+        u.full_name as uploaded_by_name
+      FROM job_completion_form_photos p
+      LEFT JOIN users u ON p.uploaded_by_user_id = u.id
+      WHERE p.completion_form_id = ${form.id}
+      ORDER BY p.uploaded_at ASC
+    `
+
+    // Group photos by question_id for easy lookup
+    const photosByQuestion: Record<string, any[]> = {}
+    for (const photo of photos) {
+      if (photo.question_id) {
+        if (!photosByQuestion[photo.question_id]) {
+          photosByQuestion[photo.question_id] = []
+        }
+        photosByQuestion[photo.question_id].push({
+          url: photo.photo_url,
+          caption: photo.caption,
+          photo_type: photo.photo_type,
+          uploaded_at: photo.uploaded_at,
+          uploaded_by: photo.uploaded_by_name,
+        })
+      }
+    }
+
     // Build the answers array by matching form_data with questions
     const answers = questions
       .filter((q: any) => {
@@ -150,7 +183,8 @@ export async function GET(
           }
         }
 
-        return {
+        // Base answer object
+        const answer: any = {
           csv_question_id: q.csv_question_id,
           question_id: q.question_id,
           question_text: q.question_text,
@@ -162,6 +196,15 @@ export async function GET(
           group_sort_order: q.group_sort_order,
           question_sort_order: q.question_sort_order,
         }
+
+        // For file fields, include photo metadata
+        if (q.field_type === 'file') {
+          const questionPhotos = photosByQuestion[q.question_id] || []
+          answer.photos = questionPhotos
+          answer.photo_count = questionPhotos.length
+        }
+
+        return answer
       })
 
     return NextResponse.json({
