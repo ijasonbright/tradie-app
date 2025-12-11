@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
-import { fetchTCJobDetails, decryptFromStorage, refreshToken, encryptForStorage } from '@/lib/tradieconnect'
+import { fetchTCJobDetails, refreshToken } from '@/lib/tradieconnect'
 
 /**
  * GET /api/integrations/tradieconnect/job?jobId=123
@@ -79,22 +79,9 @@ export async function GET(request: NextRequest) {
 
     const connection = connections[0]
 
-    // Decrypt tokens
-    let tcToken: string
-    let tcRefreshToken: string | null = null
-
-    try {
-      tcToken = decryptFromStorage(connection.tc_token)
-      if (connection.tc_refresh_token) {
-        tcRefreshToken = decryptFromStorage(connection.tc_refresh_token)
-      }
-    } catch (decryptError) {
-      console.error('Error decrypting TradieConnect tokens:', decryptError)
-      return NextResponse.json({
-        error: 'Failed to decrypt tokens',
-        needs_reconnection: true,
-      }, { status: 400 })
-    }
+    // Tokens are stored as plain text (not encrypted)
+    const tcToken = connection.tc_token
+    const tcRefreshToken = connection.tc_refresh_token || null
 
     // Fetch job details from TradieConnect
     console.log('Fetching TC job details for jobId:', jobId)
@@ -117,17 +104,15 @@ export async function GET(request: NextRequest) {
       const refreshResult = await refreshToken(connection.tc_user_id, tcRefreshToken)
 
       if (refreshResult.success && refreshResult.token) {
-        // Store new tokens
-        const encryptedToken = encryptForStorage(refreshResult.token)
-        const encryptedRefreshToken = refreshResult.refreshToken
-          ? encryptForStorage(refreshResult.refreshToken)
-          : null
+        // Store new tokens (plain text, not encrypted)
+        const newToken = refreshResult.token
+        const newRefreshToken = refreshResult.refreshToken || null
 
         await sql`
           UPDATE tradieconnect_connections
           SET
-            tc_token = ${encryptedToken},
-            tc_refresh_token = ${encryptedRefreshToken},
+            tc_token = ${newToken},
+            tc_refresh_token = ${newRefreshToken},
             tc_token_expires_at = ${refreshResult.expiry ? new Date(refreshResult.expiry) : null},
             updated_at = NOW()
           WHERE user_id = ${user.id}
