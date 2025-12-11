@@ -228,6 +228,61 @@ export async function fetchJob(
 }
 
 /**
+ * TradieConnect User details returned from the User API
+ */
+export interface TCUser {
+  userId: number
+  providerId: number
+  firstName: string
+  lastName: string
+  email: string
+  mobile: string
+  jobTypeId: number
+  jobType: string
+  // There may be more fields, but these are the key ones we need
+}
+
+/**
+ * Fetches the current user's details from TradieConnect
+ * This returns the providerId which is needed for matching jobs
+ *
+ * @param tcUserId - The TradieConnect user GUID (from SSO callback)
+ * @param tcToken - The access token
+ */
+export async function fetchTCUser(
+  tcUserId: string,
+  tcToken: string
+): Promise<{
+  success: boolean
+  user?: TCUser
+  error?: string
+  unauthorized?: boolean
+}> {
+  try {
+    const response = await tradieConnectApiRequest(
+      `/api/v2/User/${tcUserId}`,
+      tcUserId,
+      tcToken,
+      { method: 'GET' }
+    )
+
+    if (response.ok) {
+      const user = await response.json()
+      return { success: true, user }
+    }
+
+    if (response.status === 401) {
+      return { success: false, error: 'Token expired', unauthorized: true }
+    }
+
+    const errorText = await response.text()
+    return { success: false, error: `Failed to fetch user: ${response.status} - ${errorText}` }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+  }
+}
+
+/**
  * Makes an authenticated API call with automatic token refresh on 401
  * This is a higher-level function that handles the refresh flow
  */

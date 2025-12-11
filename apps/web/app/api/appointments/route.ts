@@ -204,14 +204,13 @@ export async function GET(req: Request) {
     if (includeTc && startDate) {
       // Fetch TradieConnect jobs if user has a connection
       try {
-        // Get user's email and tc_provider_id
+        // Get user's tc_provider_id (stored during SSO authentication)
         const userDetails = await sql`
-          SELECT email, tc_provider_id FROM users WHERE id = ${user.id} LIMIT 1
+          SELECT tc_provider_id FROM users WHERE id = ${user.id} LIMIT 1
         `
 
         if (userDetails.length > 0) {
-          const userEmail = userDetails[0].email?.toLowerCase()
-          let tcProviderId: number | null = userDetails[0].tc_provider_id
+          const tcProviderId: number | null = userDetails[0].tc_provider_id
 
           // Get active TradieConnect connection
           const connections = await sql`
@@ -222,7 +221,7 @@ export async function GET(req: Request) {
             LIMIT 1
           `
 
-          if (connections.length > 0) {
+          if (connections.length > 0 && tcProviderId) {
             const connection = connections[0]
 
             // Calculate which dates to fetch for TC
@@ -246,89 +245,66 @@ export async function GET(req: Request) {
               )
 
               if (result.success && result.teams) {
-                // Find provider ID by email if not known
-                if (!tcProviderId && userEmail) {
-                  for (const team of result.teams) {
-                    for (const schedule of team.schedules) {
-                      for (const provider of schedule.providers) {
-                        if (provider.email?.toLowerCase() === userEmail) {
-                          tcProviderId = provider.providerId
-                          // Store for future syncs
-                          await sql`
-                            UPDATE users SET tc_provider_id = ${tcProviderId}, updated_at = NOW()
-                            WHERE id = ${user.id}
-                          `
-                          break
-                        }
+                // Build map of providers per team for coworker lookup
+                const teamProviders = new Map<number, TCProvider[]>()
+
+                for (const team of result.teams) {
+                  for (const schedule of team.schedules) {
+                    const existing = teamProviders.get(team.teamId) || []
+                    for (const provider of schedule.providers) {
+                      if (!existing.find(p => p.providerId === provider.providerId)) {
+                        existing.push(provider)
                       }
-                      if (tcProviderId) break
                     }
-                    if (tcProviderId) break
+                    teamProviders.set(team.teamId, existing)
                   }
                 }
 
-                if (tcProviderId) {
-                  // Build map of providers per team for coworker lookup
-                  const teamProviders = new Map<number, TCProvider[]>()
+                // Find jobs assigned to this user
+                for (const team of result.teams) {
+                  for (const schedule of team.schedules) {
+                    const isUserInTeam = schedule.providers.some(p => p.providerId === tcProviderId)
 
-                  for (const team of result.teams) {
-                    for (const schedule of team.schedules) {
-                      const existing = teamProviders.get(team.teamId) || []
-                      for (const provider of schedule.providers) {
-                        if (!existing.find(p => p.providerId === provider.providerId)) {
-                          existing.push(provider)
-                        }
-                      }
-                      teamProviders.set(team.teamId, existing)
-                    }
-                  }
+                    if (isUserInTeam) {
+                      for (const job of schedule.jobs) {
+                        // Calculate end time from start + duration
+                        const jobStart = new Date(job.start)
+                        const jobEnd = new Date(jobStart.getTime() + job.duration * 60000) // duration is in minutes
 
-                  // Find jobs assigned to this user
-                  for (const team of result.teams) {
-                    for (const schedule of team.schedules) {
-                      const isUserInTeam = schedule.providers.some(p => p.providerId === tcProviderId)
+                        // Get coworkers (other providers in same team)
+                        const coworkers = (teamProviders.get(team.teamId) || [])
+                          .filter(p => p.providerId !== tcProviderId)
 
-                      if (isUserInTeam) {
-                        for (const job of schedule.jobs) {
-                          // Calculate end time from start + duration
-                          const jobStart = new Date(job.start)
-                          const jobEnd = new Date(jobStart.getTime() + job.duration * 60000) // duration is in minutes
-
-                          // Get coworkers (other providers in same team)
-                          const coworkers = (teamProviders.get(team.teamId) || [])
-                            .filter(p => p.providerId !== tcProviderId)
-
-                          tcAppointments.push({
-                            id: `tc-${job.jobId}`,
-                            organization_id: null,
-                            title: job.title || job.jobType,
-                            description: job.description || '',
-                            appointment_type: 'tradieconnect',
-                            start_time: job.start,
-                            end_time: jobEnd.toISOString(),
-                            location_address: job.address,
-                            job_id: null,
-                            client_id: null,
-                            assigned_to_user_id: null,
-                            assigned_to_name: null,
-                            created_by_name: null,
-                            company_name: null,
-                            first_name: job.firstName,
-                            last_name: job.lastName,
-                            is_company: false,
-                            client_phone: job.mobile,
-                            client_mobile: job.mobile,
-                            job_number: `TC-${job.jobId}`,
-                            job_title: job.title || job.jobType,
-                            tc_job_id: job.jobId,
-                            tc_team_id: team.teamId,
-                            tc_team_name: team.name,
-                            tc_status: job.statusName,
-                            tc_lat: job.lat,
-                            tc_long: job.long,
-                            coworkers,
-                          })
-                        }
+                        tcAppointments.push({
+                          id: `tc-${job.jobId}`,
+                          organization_id: null,
+                          title: job.title || job.jobType,
+                          description: job.description || '',
+                          appointment_type: 'tradieconnect',
+                          start_time: job.start,
+                          end_time: jobEnd.toISOString(),
+                          location_address: job.address,
+                          job_id: null,
+                          client_id: null,
+                          assigned_to_user_id: null,
+                          assigned_to_name: null,
+                          created_by_name: null,
+                          company_name: null,
+                          first_name: job.firstName,
+                          last_name: job.lastName,
+                          is_company: false,
+                          client_phone: job.mobile,
+                          client_mobile: job.mobile,
+                          job_number: `TC-${job.jobId}`,
+                          job_title: job.title || job.jobType,
+                          tc_job_id: job.jobId,
+                          tc_team_id: team.teamId,
+                          tc_team_name: team.name,
+                          tc_status: job.statusName,
+                          tc_lat: job.lat,
+                          tc_long: job.long,
+                          coworkers,
+                        })
                       }
                     }
                   }

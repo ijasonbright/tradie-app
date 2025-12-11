@@ -71,9 +71,9 @@ export async function GET(request: Request) {
 
     const sql = neon(process.env.DATABASE_URL!)
 
-    // Get the user from database including tc_provider_id and email
+    // Get the user from database including tc_provider_id (stored during SSO)
     const users = await sql`
-      SELECT id, email, tc_provider_id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
+      SELECT id, tc_provider_id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
     `
 
     if (users.length === 0) {
@@ -81,8 +81,15 @@ export async function GET(request: Request) {
     }
 
     const user = users[0]
-    const userEmail = user.email?.toLowerCase()
-    let tcProviderId: number | null = user.tc_provider_id
+    const tcProviderId: number | null = user.tc_provider_id
+
+    // tc_provider_id is required - it's stored during TradieConnect SSO authentication
+    if (!tcProviderId) {
+      return NextResponse.json({
+        error: 'TradieConnect provider ID not found. Please reconnect to TradieConnect.',
+        needs_reconnect: true,
+      }, { status: 400 })
+    }
 
     // Get active TradieConnect connection
     const connections = await sql`
@@ -114,7 +121,6 @@ export async function GET(request: Request) {
     }[] = []
 
     let totalJobs = 0
-    let providerIdFoundAndStored = false
 
     for (const date of dates) {
       const result = await fetchProviderCalendar(
@@ -137,36 +143,6 @@ export async function GET(request: Request) {
         return NextResponse.json({
           error: result.error || 'Failed to fetch calendar',
         }, { status: 400 })
-      }
-
-      // Find the user's provider ID if not already known
-      if (!tcProviderId && userEmail) {
-        for (const team of result.teams || []) {
-          for (const schedule of team.schedules) {
-            for (const provider of schedule.providers) {
-              if (provider.email?.toLowerCase() === userEmail) {
-                tcProviderId = provider.providerId
-                break
-              }
-            }
-            if (tcProviderId) break
-          }
-          if (tcProviderId) break
-        }
-
-        // Store the provider ID for future syncs
-        if (tcProviderId && !providerIdFoundAndStored) {
-          await sql`
-            UPDATE users SET tc_provider_id = ${tcProviderId}, updated_at = NOW()
-            WHERE id = ${user.id}
-          `
-          providerIdFoundAndStored = true
-        }
-      }
-
-      // If we still don't have a provider ID, we can't match jobs
-      if (!tcProviderId) {
-        continue
       }
 
       // Build a map of all providers by team for co-worker lookup

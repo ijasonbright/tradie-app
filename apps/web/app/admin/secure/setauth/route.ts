@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
-import { decryptUrlParameter } from '@/lib/tradieconnect'
+import { decryptUrlParameter, fetchTCUser } from '@/lib/tradieconnect'
 import { auth } from '@clerk/nextjs/server'
 
 export const dynamic = 'force-dynamic'
@@ -97,6 +97,34 @@ export async function GET(request: Request) {
     }
 
     const user = users[0]
+
+    // Fetch TradieConnect user details to get the providerId
+    let tcProviderId: number | null = null
+    try {
+      const tcUserResult = await fetchTCUser(tcUserId, tcToken)
+      if (tcUserResult.success && tcUserResult.user) {
+        tcProviderId = tcUserResult.user.providerId
+        console.log('Fetched TradieConnect user details:', {
+          userId: tcUserResult.user.userId,
+          providerId: tcUserResult.user.providerId,
+          firstName: tcUserResult.user.firstName,
+          lastName: tcUserResult.user.lastName,
+        })
+      } else {
+        console.warn('Could not fetch TradieConnect user details:', tcUserResult.error)
+      }
+    } catch (tcUserError) {
+      console.warn('Error fetching TradieConnect user details:', tcUserError)
+      // Continue anyway - we can still store the connection without providerId
+    }
+
+    // Store the providerId on the user record for job matching
+    if (tcProviderId) {
+      await sql`
+        UPDATE users SET tc_provider_id = ${tcProviderId}, updated_at = NOW()
+        WHERE id = ${user.id}
+      `
+    }
 
     // Store tokens as plain text (no encryption needed)
     // Check if user already has a TradieConnect connection
