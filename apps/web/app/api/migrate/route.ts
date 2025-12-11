@@ -923,6 +923,104 @@ export async function POST() {
       // Add tc_form_id to completion_form_templates to link with TradieConnect's JobTypeFormId
       `ALTER TABLE completion_form_templates ADD COLUMN IF NOT EXISTS tc_form_id INTEGER`,
       `CREATE INDEX IF NOT EXISTS idx_completion_form_templates_tc_form_id ON completion_form_templates(tc_form_id) WHERE tc_form_id IS NOT NULL`,
+
+      // ========== API KEYS & WEBHOOKS SYSTEM ==========
+      // Create api_keys table for external API authentication
+      `CREATE TABLE IF NOT EXISTS api_keys (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        name VARCHAR(255) NOT NULL,
+        key_hash VARCHAR(64) NOT NULL UNIQUE,
+        key_prefix VARCHAR(20) NOT NULL,
+        key_type VARCHAR(50) DEFAULT 'standard' NOT NULL,
+        permissions JSONB DEFAULT '[]'::jsonb,
+        is_active BOOLEAN DEFAULT true NOT NULL,
+        last_used_at TIMESTAMP,
+        usage_count INTEGER DEFAULT 0 NOT NULL,
+        rate_limit_per_minute INTEGER DEFAULT 100,
+        rate_limit_per_hour INTEGER DEFAULT 1000,
+        created_by_user_id UUID REFERENCES users(id),
+        expires_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create webhook_subscriptions table
+      `CREATE TABLE IF NOT EXISTS webhook_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        subscription_id VARCHAR(100) NOT NULL UNIQUE,
+        name VARCHAR(255),
+        event_type VARCHAR(100) NOT NULL,
+        target_url TEXT NOT NULL,
+        filters JSONB DEFAULT '{}'::jsonb,
+        secret_key VARCHAR(255),
+        headers JSONB DEFAULT '{}'::jsonb,
+        is_active BOOLEAN DEFAULT true NOT NULL,
+        last_triggered_at TIMESTAMP,
+        trigger_count INTEGER DEFAULT 0 NOT NULL,
+        failure_count INTEGER DEFAULT 0 NOT NULL,
+        last_failure_at TIMESTAMP,
+        last_failure_reason TEXT,
+        max_retries INTEGER DEFAULT 3,
+        retry_delay_seconds INTEGER DEFAULT 60,
+        created_by_user_id UUID REFERENCES users(id),
+        api_key_id UUID REFERENCES api_keys(id),
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create webhook_logs table for delivery tracking
+      `CREATE TABLE IF NOT EXISTS webhook_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        subscription_id UUID NOT NULL REFERENCES webhook_subscriptions(id),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        event_type VARCHAR(100) NOT NULL,
+        event_id UUID NOT NULL,
+        target_url TEXT NOT NULL,
+        request_payload JSONB NOT NULL,
+        request_headers JSONB,
+        status_code INTEGER,
+        response_body TEXT,
+        response_headers JSONB,
+        delivery_duration_ms INTEGER,
+        status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+        retry_count INTEGER DEFAULT 0 NOT NULL,
+        next_retry_at TIMESTAMP,
+        triggered_at TIMESTAMP DEFAULT NOW() NOT NULL,
+        delivered_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create api_request_logs table for usage tracking
+      `CREATE TABLE IF NOT EXISTS api_request_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        organization_id UUID NOT NULL REFERENCES organizations(id),
+        api_key_id UUID REFERENCES api_keys(id),
+        method VARCHAR(10) NOT NULL,
+        path VARCHAR(500) NOT NULL,
+        query_params JSONB,
+        status_code INTEGER NOT NULL,
+        response_time_ms INTEGER,
+        error_message TEXT,
+        ip_address VARCHAR(45),
+        user_agent TEXT,
+        created_at TIMESTAMP DEFAULT NOW() NOT NULL
+      )`,
+
+      // Create indexes for API tables
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_organization_id ON api_keys(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_key_hash ON api_keys(key_hash)`,
+      `CREATE INDEX IF NOT EXISTS idx_api_keys_is_active ON api_keys(organization_id, is_active) WHERE is_active = true`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_organization_id ON webhook_subscriptions(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_event_type ON webhook_subscriptions(event_type)`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_subscriptions_is_active ON webhook_subscriptions(organization_id, is_active) WHERE is_active = true`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_logs_subscription_id ON webhook_logs(subscription_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_logs_organization_id ON webhook_logs(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at DESC)`,
+      `CREATE INDEX IF NOT EXISTS idx_api_request_logs_organization_id ON api_request_logs(organization_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_api_request_logs_api_key_id ON api_request_logs(api_key_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_api_request_logs_created_at ON api_request_logs(created_at DESC)`,
     ]
 
     const results = []
