@@ -29,6 +29,9 @@ export const completionFormTemplates = pgTable('completion_form_templates', {
   includeSignature: boolean('include_signature').default(true), // Client signature
   includeTechnicianSignature: boolean('include_technician_signature').default(true),
 
+  // TradieConnect form reference
+  tcFormId: integer('tc_form_id'), // JobTypeFormId from TradieConnect - used to match forms to TC jobs
+
   // Legacy field mappings from CSV
   siteId: integer('site_id'), // From original CSV
   csvJobTypeId: integer('csv_job_type_id'), // From original CSV

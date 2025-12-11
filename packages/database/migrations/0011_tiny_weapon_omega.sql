@@ -1,0 +1,1 @@
+ALTER TABLE "completion_form_templates" ADD COLUMN "tc_form_id" integer;
