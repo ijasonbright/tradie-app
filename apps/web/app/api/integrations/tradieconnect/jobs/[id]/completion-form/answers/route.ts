@@ -5,6 +5,8 @@ import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
 import { extractApiKeyFromHeader, verifyApiKey, hasPermission } from '@/lib/api/api-key-auth'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0 // Disable all caching
+export const fetchCache = 'force-no-store' // Force fresh data
 
 /**
  * GET /api/integrations/tradieconnect/jobs/:tcJobId/completion-form/answers
@@ -45,6 +47,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const requestStartTime = Date.now()
     const { id: tcJobId } = await params
     const sql = neon(process.env.DATABASE_URL!)
     let organizationId: string | null = null
@@ -110,7 +113,16 @@ export async function GET(
       organizationId = users[0].organization_id
     }
 
-    // Get the completion form for this TC job
+    // First, count ALL forms for this TC job to detect duplicates
+    const allFormsCount = await sql`
+      SELECT COUNT(*) as count
+      FROM job_completion_forms jcf
+      WHERE jcf.organization_id = ${organizationId}
+      AND jcf.form_data->>'tc_job_id' = ${tcJobId}
+    `
+    const totalFormsForJob = parseInt(allFormsCount[0]?.count || '0', 10)
+
+    // Get the completion form for this TC job - order by updated_at DESC to get most recent
     const forms = await sql`
       SELECT
         jcf.id,
@@ -125,7 +137,7 @@ export async function GET(
       JOIN completion_form_templates cft ON jcf.template_id = cft.id
       WHERE jcf.organization_id = ${organizationId}
       AND jcf.form_data->>'tc_job_id' = ${tcJobId}
-      ORDER BY jcf.created_at DESC
+      ORDER BY jcf.updated_at DESC
       LIMIT 1
     `
 
@@ -139,6 +151,7 @@ export async function GET(
     const form = forms[0]
     const formData = form.form_data || {}
     const templateId = form.template_id
+    const formDataKeyCount = Object.keys(formData).filter(k => !k.startsWith('tc_')).length
 
     // Get all questions for this template with their groups
     const questions = await sql`
@@ -235,7 +248,7 @@ export async function GET(
         return answer
       })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       tc_job_id: tcJobId,
       tc_job_code: formData.tc_job_code || `TC-${tcJobId}`,
       form_id: form.id,
@@ -247,7 +260,24 @@ export async function GET(
       updated_at: form.updated_at,
       answers: answers,
       answer_count: answers.length,
+      // Debug info to help trace caching issues
+      _debug: {
+        server_timestamp: new Date().toISOString(),
+        request_duration_ms: Date.now() - requestStartTime,
+        total_forms_for_tc_job: totalFormsForJob,
+        form_data_key_count: formDataKeyCount,
+        template_question_count: questions.length,
+        matched_answers_count: answers.length,
+      },
     })
+
+    // Add explicit no-cache headers
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    response.headers.set('Surrogate-Control', 'no-store')
+
+    return response
   } catch (error) {
     console.error('Error getting TC job completion form answers:', error)
     return NextResponse.json(
