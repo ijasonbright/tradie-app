@@ -357,10 +357,14 @@ export async function syncAnswersToTC(
   try {
     console.log('Syncing answers to TC:', {
       jobId: payload.jobId,
+      formGroupId: payload.formGroupId,
       questionCount: payload.jobTypeForm.questions.length,
       answerCount: payload.jobTypeForm.jobAnswers.length,
       isComplete: payload.completeJob,
     })
+
+    // Log full payload for debugging
+    console.log('TC sync payload (full):', JSON.stringify(payload, null, 2))
 
     const response = await tradieConnectApiRequest(
       `/api/v2/JobForm`,
@@ -372,8 +376,18 @@ export async function syncAnswersToTC(
       }
     )
 
+    // Log raw response for debugging
+    const responseText = await response.text()
+    console.log('TC sync raw response:', response.status, responseText)
+
     if (response.ok) {
-      const data = await response.json()
+      // Try to parse as JSON, fall back to raw text
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch {
+        data = responseText
+      }
       console.log('TC sync successful:', data)
       return { success: true, response: data }
     }
@@ -382,9 +396,8 @@ export async function syncAnswersToTC(
       return { success: false, error: 'Token expired', unauthorized: true }
     }
 
-    const errorText = await response.text()
-    console.error('TC sync failed:', response.status, errorText)
-    return { success: false, error: `Failed to sync answers: ${response.status} - ${errorText}` }
+    console.error('TC sync failed:', response.status, responseText)
+    return { success: false, error: `Failed to sync answers: ${response.status} - ${responseText}` }
   } catch (error) {
     console.error('TC sync exception:', error)
     return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
