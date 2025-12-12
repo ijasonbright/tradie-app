@@ -13,7 +13,8 @@ import {
   TCFormAnswerOption,
   TCSyncPayload,
   TCJobAnswer,
-  TCFormQuestionWithAnswer,
+  TCQuestionAnswer,
+  TCQuestionWithAnswers,
   OurFormDefinition,
   OurFormGroup,
   OurFormQuestion,
@@ -188,6 +189,13 @@ export function transformTCFormToOurFormat(
 /**
  * Builds the TC POST payload from our answers and the original form definition
  *
+ * Based on TC API docs:
+ * - Each question should have a groupNo matching formGroupId
+ * - Questions have an 'answers' array containing the submitted answer(s)
+ * - For radio/dropdown/iscompliant, answers need JobTypeFormAnswerId
+ * - For textbox/textarea, JobTypeFormAnswerId can be 0
+ * - jobAnswers array also contains the answers in a different format
+ *
  * @param params - Parameters for building the payload
  */
 export function buildTCSyncPayload(params: {
@@ -212,15 +220,15 @@ export function buildTCSyncPayload(params: {
   } = params
 
   // Filter questions if groupNo is specified
-  const questions = groupNo !== undefined
+  const questionsToProcess = groupNo !== undefined
     ? tcFormDefinition.questions.filter(q => q.groupNo === groupNo)
     : tcFormDefinition.questions
 
-  // Build questions array with answer values
-  const questionsWithAnswers: TCFormQuestionWithAnswer[] = []
+  // Build questions array with answers nested inside
+  const questionsWithAnswers: TCQuestionWithAnswers[] = []
   const jobAnswers: TCJobAnswer[] = []
 
-  for (const q of questions) {
+  for (const q of questionsToProcess) {
     const questionKey = `tc_q_${q.jobTypeFormQuestionId}`
     const answerValue = answers[questionKey]
 
@@ -232,48 +240,77 @@ export function buildTCSyncPayload(params: {
     // For photos, check if we have URLs
     const photos = photoUrls?.[questionKey]
 
-    // Build question with answer
-    const questionWithAnswer: TCFormQuestionWithAnswer = {
-      ...q,
-      value: String(answerValue),
-      fieldValue: String(answerValue),
-    }
-    questionsWithAnswers.push(questionWithAnswer)
+    // Determine the answer ID and value
+    let jobTypeFormAnswerId = 0 // Default for textbox/textarea
+    let finalValue = String(answerValue)
 
-    // Build job answer
-    const jobAnswer: TCJobAnswer = {
-      jobId: tcJobId,
-      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-      answerText: String(answerValue),
-      value: String(answerValue),
-      groupNo: q.groupNo,
-    }
-
-    // For radio/dropdown, look up the answer option ID
-    if ((q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant') && q.answers?.length > 0) {
+    // For radio/dropdown/iscompliant, look up the answer option ID
+    if ((q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant' || q.answerFormat === 'checkboxlist') && q.answers?.length > 0) {
       const matchedOption = q.answers.find(
         (opt: TCFormAnswerOption) =>
           opt.description.toLowerCase() === String(answerValue).toLowerCase() ||
           String(opt.jobTypeFormAnswerId) === String(answerValue)
       )
       if (matchedOption) {
-        jobAnswer.jobTypeFormAnswerId = matchedOption.jobTypeFormAnswerId
-        // Ensure we use the option's description as the value
-        jobAnswer.answerText = matchedOption.description
-        jobAnswer.value = matchedOption.description
+        jobTypeFormAnswerId = matchedOption.jobTypeFormAnswerId
+        finalValue = matchedOption.description
       }
     }
 
-    // For file fields, add photo URLs
+    // Build the answer entry for the question's answers array
+    const questionAnswer: TCQuestionAnswer = {
+      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+      jobTypeFormAnswerId: jobTypeFormAnswerId,
+      value: finalValue,
+      answerFormat: q.answerFormat,
+      groupNo: q.groupNo,
+    }
+
+    // For file fields, add photo path
     if (q.answerFormat === 'file' && photos && photos.length > 0) {
-      // TC expects a single file object, so we'll use the first photo
-      // In the future, we may need to handle multiple photos differently
+      questionAnswer.filePath = photos[0]
+      const fileName = photos[0].split('/').pop() || 'photo.jpg'
+      questionAnswer.fileName = fileName
+      questionAnswer.value = photos[0] // For files, value is the URL
+    }
+
+    // Build question with nested answers array
+    const questionWithAnswers: TCQuestionWithAnswers = {
+      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+      description: q.description,
+      answerFormat: q.answerFormat,
+      groupNo: q.groupNo,
+      sortOrder: q.sortOrder,
+      required: q.required,
+      value: finalValue,
+      fieldValue: finalValue,
+      answers: [questionAnswer], // TC expects answers nested in each question
+    }
+    questionsWithAnswers.push(questionWithAnswers)
+
+    // Also build jobAnswers array entry
+    const jobAnswer: TCJobAnswer = {
+      jobId: tcJobId,
+      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+      jobTypeFormAnswerId: jobTypeFormAnswerId > 0 ? jobTypeFormAnswerId : undefined,
+      questionText: q.description,
+      answerText: finalValue,
+      answerFormat: q.answerFormat,
+      groupNo: q.groupNo,
+      value: finalValue,
+    }
+
+    // For file fields, add file object
+    if (q.answerFormat === 'file' && photos && photos.length > 0) {
       const photoUrl = photos[0]
       const fileName = photoUrl.split('/').pop() || 'photo.jpg'
+      const suffix = fileName.split('.').pop() || 'jpg'
       jobAnswer.file = {
         link: photoUrl,
         name: fileName,
+        suffix: suffix,
       }
+      jobAnswer.value = photoUrl
     }
 
     jobAnswers.push(jobAnswer)
@@ -281,14 +318,13 @@ export function buildTCSyncPayload(params: {
 
   return {
     jobId: tcJobId,
-    formGroupId: 0, // Always 0 for now (test and adjust if needed)
+    formGroupId: groupNo ?? 0, // 0 = entire form, or specific groupNo for single section
     userId: userId,
     providerId: providerId,
-    submissionTypeId: 0, // Always 0 for now (test and adjust if needed)
-    isExternal: true, // We are an external system
-    shouldCreatePdf: isComplete, // Only on final submit
-    shouldCompleteJob: isComplete, // Only on final submit
-    shouldSaveToQueue: true, // Always save to queue
+    submissionTypeId: 0,
+    shouldCreatePdf: isComplete,
+    completeJob: isComplete, // API uses "completeJob" not "shouldCompleteJob"
+    shouldSaveToQueue: true,
     jobTypeForm: {
       id: tcFormDefinition.jobTypeFormId,
       jobTypeFormId: tcFormDefinition.jobTypeFormId,
@@ -323,7 +359,7 @@ export async function syncAnswersToTC(
       jobId: payload.jobId,
       questionCount: payload.jobTypeForm.questions.length,
       answerCount: payload.jobTypeForm.jobAnswers.length,
-      isComplete: payload.shouldCompleteJob,
+      isComplete: payload.completeJob,
     })
 
     const response = await tradieConnectApiRequest(

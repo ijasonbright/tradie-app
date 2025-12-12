@@ -71,19 +71,49 @@ export interface TCFormQuestionWithAnswer extends TCFormQuestion {
 }
 
 /**
- * Job answer item for POST request
+ * Answer entry within a question's answers array for POST request
+ * Based on TC API docs: each question has an answers array with the submitted values
+ */
+export interface TCQuestionAnswer {
+  submissionTypeId?: number
+  jobTypeFormQuestionId: number
+  jobTypeFormGroupId?: number
+  jobTypeFormAnswerId: number // Required for radio/dropdown/iscompliant, 0 for textbox/textarea
+  description?: string
+  question?: string
+  value: string // The actual answer value
+  answerFormat?: string
+  groupNo: number
+  groupName?: string
+  // File fields
+  filePath?: string
+  fileRef?: string
+  fileSize?: number
+  fileSuffix?: string
+  fileName?: string
+}
+
+/**
+ * Job answer item for jobAnswers array in POST request
  */
 export interface TCJobAnswer {
   jobId: number
+  jobAnswerId?: number
   jobTypeFormQuestionId: number
   jobTypeFormAnswerId?: number // Required for radio/dropdown
-  answerText: string
-  value: string
+  questionText?: string
+  answerText?: string
+  answerFormat?: string
   groupNo: number
+  groupName?: string
+  value: string
   // For file/photo fields
   file?: {
-    link: string
     name: string
+    suffix?: string
+    link: string
+    size?: number
+    path?: string
   }
 }
 
@@ -99,19 +129,42 @@ export interface TCJobTypeFormPayload {
 }
 
 /**
+ * Question with answers for POST request
+ * Based on TC API: each question contains an answers array with the submitted values
+ */
+export interface TCQuestionWithAnswers {
+  jobTypeFormQuestionId: number
+  description?: string
+  answerFormat: string
+  groupNo: number
+  groupName?: string
+  sortOrder?: number
+  required?: boolean
+  value?: string
+  fieldValue?: string
+  answers: TCQuestionAnswer[] // The submitted answer(s) for this question
+}
+
+/**
  * Full POST request body for syncing answers to TC
+ * Based on TC API docs for POST /api/v2/JobForm
  */
 export interface TCSyncPayload {
   jobId: number
-  formGroupId: number // 0 for now
+  formGroupId: number // 0 = entire form, or specific groupNo for single section
   userId: number // TC provider ID
   providerId: number // TC provider ID
   submissionTypeId: number // 0 for now
-  isExternal: boolean // true - we are external system
   shouldCreatePdf: boolean // true on final submit
-  shouldCompleteJob: boolean // true on final submit
+  completeJob: boolean // NOTE: API uses "completeJob" not "shouldCompleteJob"
   shouldSaveToQueue: boolean // true - save in progress
-  jobTypeForm: TCJobTypeFormPayload
+  jobTypeForm: {
+    id: number
+    jobTypeFormId: number
+    name: string
+    questions: TCQuestionWithAnswers[]
+    jobAnswers: TCJobAnswer[]
+  }
 }
 
 // ==================== Our Internal Types (for transforming TC format to our format) ====================
