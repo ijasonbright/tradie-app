@@ -331,17 +331,16 @@ export function buildTCSyncPayload(params: {
     completeJob: isComplete, // API uses "completeJob" not "shouldCompleteJob"
     shouldSaveToQueue: true,
     jobTypeForm: {
-      id: tcFormDefinition.jobTypeFormId,
-      jobTypeFormId: tcFormDefinition.jobTypeFormId,
+      jobTypeFormId: tcFormDefinition.jobTypeFormId, // Only use jobTypeFormId, not 'id'
       name: tcFormDefinition.name,
       questions: questionsWithAnswers,
       jobAnswers: jobAnswers,
     },
   }
 
-  // TC API might only use jobAnswers array, try minimal payload structure
-  // Based on TC docs, they may ignore the questions array entirely
-  const minimalPayload = {
+  // TC API payload - use only jobTypeFormId (not duplicate 'id' field)
+  // Include both questions and jobAnswers arrays
+  const fullPayload = {
     jobId: tcJobId,
     formGroupId: groupNo ?? 0,
     userId: userId,
@@ -351,15 +350,33 @@ export function buildTCSyncPayload(params: {
     completeJob: isComplete,
     shouldSaveToQueue: true,
     jobTypeForm: {
-      id: tcFormDefinition.jobTypeFormId,
       jobTypeFormId: tcFormDefinition.jobTypeFormId,
       name: tcFormDefinition.name,
-      // Try WITHOUT questions array - TC may only read jobAnswers
+      // Include questions with nested answers
+      questions: questionsWithAnswers.map(q => ({
+        jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+        jobTypeFormGroupId: q.jobTypeFormGroupId,
+        groupNo: q.groupNo,
+        description: q.description,
+        answerFormat: q.answerFormat,
+        sortOrder: q.sortOrder,
+        required: q.required,
+        value: q.value || '',
+        fieldValue: q.fieldValue || '',
+        // Nested answers array with submitted value
+        answers: q.answers.map(a => ({
+          jobTypeFormQuestionId: a.jobTypeFormQuestionId,
+          jobTypeFormAnswerId: a.jobTypeFormAnswerId,
+          jobTypeFormGroupId: a.jobTypeFormGroupId,
+          groupNo: a.groupNo,
+          value: a.value,
+        })),
+      })),
+      // Also include jobAnswers
       jobAnswers: jobAnswers.map(ja => ({
         jobId: ja.jobId,
         jobTypeFormQuestionId: ja.jobTypeFormQuestionId,
-        jobTypeFormAnswerId: ja.jobTypeFormAnswerId, // Try lowercase first
-        JobTypeFormAnswerId: ja.jobTypeFormAnswerId, // Also include PascalCase for safety
+        jobTypeFormAnswerId: ja.jobTypeFormAnswerId,
         jobTypeFormGroupId: ja.jobTypeFormGroupId,
         groupNo: ja.groupNo,
         questionText: ja.questionText,
@@ -371,8 +388,8 @@ export function buildTCSyncPayload(params: {
     },
   }
 
-  // Return minimal payload - use type assertion since structure differs
-  return minimalPayload as unknown as TCSyncPayload
+  // Return full payload
+  return fullPayload as unknown as TCSyncPayload
 }
 
 // ==================== Sync Answers to TC ====================

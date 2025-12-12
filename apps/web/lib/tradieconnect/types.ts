@@ -163,8 +163,7 @@ export interface TCSyncPayload {
   completeJob: boolean // NOTE: API uses "completeJob" not "shouldCompleteJob"
   shouldSaveToQueue: boolean // true - save in progress
   jobTypeForm: {
-    id: number
-    jobTypeFormId: number
+    jobTypeFormId: number // Use only jobTypeFormId, not 'id'
     name: string
     questions: TCQuestionWithAnswers[]
     jobAnswers: TCJobAnswer[]
