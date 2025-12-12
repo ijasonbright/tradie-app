@@ -8,6 +8,7 @@ import {
   syncAnswersToTC,
 } from '@/lib/tradieconnect/form-api'
 import { SyncAnswersRequest } from '@/lib/tradieconnect/types'
+import { refreshToken } from '@/lib/tradieconnect'
 
 export const dynamic = 'force-dynamic'
 
@@ -99,12 +100,13 @@ export async function POST(
 
     const user = users[0]
 
-    // Get active TradieConnect connection
+    // Get active TradieConnect connection (include refresh token for auto-refresh)
     const connections = await sql`
       SELECT
         id,
         tc_user_id,
-        tc_token
+        tc_token,
+        tc_refresh_token
       FROM tradieconnect_connections
       WHERE user_id = ${user.id}
       AND is_active = true
@@ -129,14 +131,46 @@ export async function POST(
     }
 
     // Tokens are stored as plain text (no decryption needed)
-    const tcToken = connection.tc_token
+    let tcToken = connection.tc_token
+    const tcRefreshToken = connection.tc_refresh_token
 
     // First, fetch the form definition from TC (needed to build the payload correctly)
-    const formResult = await fetchTCFormDefinition(
+    let formResult = await fetchTCFormDefinition(
       tcJobId,
       connection.tc_user_id,
       tcToken
     )
+
+    // If token expired and we have a refresh token, try to refresh
+    if (!formResult.success && formResult.unauthorized && tcRefreshToken) {
+      console.log('TC token expired during form fetch, attempting refresh...')
+
+      const refreshResult = await refreshToken(connection.tc_user_id, tcRefreshToken)
+
+      if (refreshResult.success && refreshResult.token) {
+        // Update tokens in database
+        await sql`
+          UPDATE tradieconnect_connections
+          SET
+            tc_token = ${refreshResult.token},
+            tc_refresh_token = ${refreshResult.refreshToken || null},
+            updated_at = NOW()
+          WHERE id = ${connection.id}
+        `
+
+        console.log('TC token refreshed successfully, retrying form fetch...')
+
+        // Retry with new token
+        tcToken = refreshResult.token
+        formResult = await fetchTCFormDefinition(
+          tcJobId,
+          connection.tc_user_id,
+          tcToken
+        )
+      } else {
+        console.log('TC token refresh failed:', refreshResult.error)
+      }
+    }
 
     if (!formResult.success || !formResult.form) {
       if (formResult.unauthorized) {
@@ -173,11 +207,41 @@ export async function POST(
     })
 
     // Sync to TC
-    const syncResult = await syncAnswersToTC(
+    let syncResult = await syncAnswersToTC(
       payload,
       connection.tc_user_id,
       tcToken
     )
+
+    // If sync failed due to token expiry (and we haven't already refreshed), try to refresh
+    if (!syncResult.success && syncResult.unauthorized && tcRefreshToken) {
+      console.log('TC token expired during sync, attempting refresh...')
+
+      const refreshResult = await refreshToken(connection.tc_user_id, tcRefreshToken)
+
+      if (refreshResult.success && refreshResult.token) {
+        // Update tokens in database
+        await sql`
+          UPDATE tradieconnect_connections
+          SET
+            tc_token = ${refreshResult.token},
+            tc_refresh_token = ${refreshResult.refreshToken || null},
+            updated_at = NOW()
+          WHERE id = ${connection.id}
+        `
+
+        console.log('TC token refreshed successfully, retrying sync...')
+
+        // Retry sync with new token
+        syncResult = await syncAnswersToTC(
+          payload,
+          connection.tc_user_id,
+          refreshResult.token
+        )
+      } else {
+        console.log('TC token refresh failed:', refreshResult.error)
+      }
+    }
 
     if (!syncResult.success) {
       if (syncResult.unauthorized) {

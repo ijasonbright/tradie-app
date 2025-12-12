@@ -6,6 +6,7 @@ import {
   fetchTCFormDefinition,
   transformTCFormToOurFormat,
 } from '@/lib/tradieconnect/form-api'
+import { refreshToken } from '@/lib/tradieconnect'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -86,12 +87,13 @@ export async function GET(
 
     const user = users[0]
 
-    // Get active TradieConnect connection
+    // Get active TradieConnect connection (include refresh token for auto-refresh)
     const connections = await sql`
       SELECT
         id,
         tc_user_id,
-        tc_token
+        tc_token,
+        tc_refresh_token
       FROM tradieconnect_connections
       WHERE user_id = ${user.id}
       AND is_active = true
@@ -108,17 +110,49 @@ export async function GET(
     const connection = connections[0]
 
     // Tokens are stored as plain text (no decryption needed)
-    const tcToken = connection.tc_token
+    let tcToken = connection.tc_token
+    const tcRefreshToken = connection.tc_refresh_token
 
     // Fetch form definition from TC
-    const result = await fetchTCFormDefinition(
+    let result = await fetchTCFormDefinition(
       tcJobId,
       connection.tc_user_id,
       tcToken
     )
 
+    // If token expired and we have a refresh token, try to refresh
+    if (!result.success && result.unauthorized && tcRefreshToken) {
+      console.log('TC token expired, attempting refresh...')
+
+      const refreshResult = await refreshToken(connection.tc_user_id, tcRefreshToken)
+
+      if (refreshResult.success && refreshResult.token) {
+        // Update tokens in database
+        await sql`
+          UPDATE tradieconnect_connections
+          SET
+            tc_token = ${refreshResult.token},
+            tc_refresh_token = ${refreshResult.refreshToken || null},
+            updated_at = NOW()
+          WHERE id = ${connection.id}
+        `
+
+        console.log('TC token refreshed successfully, retrying form fetch...')
+
+        // Retry with new token
+        tcToken = refreshResult.token
+        result = await fetchTCFormDefinition(
+          tcJobId,
+          connection.tc_user_id,
+          tcToken
+        )
+      } else {
+        console.log('TC token refresh failed:', refreshResult.error)
+      }
+    }
+
     if (!result.success || !result.form) {
-      // Check if token expired
+      // Check if token expired (and refresh failed or no refresh token)
       if (result.unauthorized) {
         return NextResponse.json(
           { error: 'TradieConnect session expired', message: 'Please reconnect your TradieConnect account' },
