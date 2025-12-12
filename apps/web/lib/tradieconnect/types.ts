@@ -100,7 +100,7 @@ export interface TCJobAnswer {
   jobId: number
   jobAnswerId?: number
   jobTypeFormQuestionId: number
-  jobTypeFormAnswerId?: number // Required for radio/dropdown
+  jobTypeFormAnswerId: number // 0 for textbox/textarea, actual ID for radio/dropdown
   questionText?: string
   answerText?: string
   answerFormat?: string

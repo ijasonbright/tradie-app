@@ -224,7 +224,7 @@ export function buildTCSyncPayload(params: {
     ? tcFormDefinition.questions.filter(q => q.groupNo === groupNo)
     : tcFormDefinition.questions
 
-  // Build questions array with answers nested inside
+  // Build questions array - include ALL questions for the group, with answers for those we have
   const questionsWithAnswers: TCQuestionWithAnswers[] = []
   const jobAnswers: TCJobAnswer[] = []
 
@@ -232,20 +232,15 @@ export function buildTCSyncPayload(params: {
     const questionKey = `tc_q_${q.jobTypeFormQuestionId}`
     const answerValue = answers[questionKey]
 
-    // Skip if no answer provided
-    if (answerValue === undefined || answerValue === null || answerValue === '') {
-      continue
-    }
-
     // For photos, check if we have URLs
     const photos = photoUrls?.[questionKey]
 
     // Determine the answer ID and value
     let jobTypeFormAnswerId = 0 // Default for textbox/textarea
-    let finalValue = String(answerValue)
+    let finalValue = answerValue !== undefined && answerValue !== null ? String(answerValue) : ''
 
     // For radio/dropdown/iscompliant, look up the answer option ID
-    if ((q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant' || q.answerFormat === 'checkboxlist') && q.answers?.length > 0) {
+    if ((q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant' || q.answerFormat === 'checkboxlist') && q.answers?.length > 0 && finalValue) {
       const matchedOption = q.answers.find(
         (opt: TCFormAnswerOption) =>
           opt.description.toLowerCase() === String(answerValue).toLowerCase() ||
@@ -274,7 +269,7 @@ export function buildTCSyncPayload(params: {
       questionAnswer.value = photos[0] // For files, value is the URL
     }
 
-    // Build question with nested answers array
+    // Build question with nested answers array - ALWAYS include the question
     const questionWithAnswers: TCQuestionWithAnswers = {
       jobTypeFormQuestionId: q.jobTypeFormQuestionId,
       description: q.description,
@@ -284,36 +279,38 @@ export function buildTCSyncPayload(params: {
       required: q.required,
       value: finalValue,
       fieldValue: finalValue,
-      answers: [questionAnswer], // TC expects answers nested in each question
+      answers: finalValue ? [questionAnswer] : [], // Only include answer if we have a value
     }
     questionsWithAnswers.push(questionWithAnswers)
 
-    // Also build jobAnswers array entry
-    const jobAnswer: TCJobAnswer = {
-      jobId: tcJobId,
-      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-      jobTypeFormAnswerId: jobTypeFormAnswerId > 0 ? jobTypeFormAnswerId : undefined,
-      questionText: q.description,
-      answerText: finalValue,
-      answerFormat: q.answerFormat,
-      groupNo: q.groupNo,
-      value: finalValue,
-    }
-
-    // For file fields, add file object
-    if (q.answerFormat === 'file' && photos && photos.length > 0) {
-      const photoUrl = photos[0]
-      const fileName = photoUrl.split('/').pop() || 'photo.jpg'
-      const suffix = fileName.split('.').pop() || 'jpg'
-      jobAnswer.file = {
-        link: photoUrl,
-        name: fileName,
-        suffix: suffix,
+    // Only add to jobAnswers if we have a value
+    if (finalValue) {
+      const jobAnswer: TCJobAnswer = {
+        jobId: tcJobId,
+        jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+        jobTypeFormAnswerId: jobTypeFormAnswerId, // 0 for textbox/textarea, actual ID for radio/dropdown
+        questionText: q.description,
+        answerText: finalValue,
+        answerFormat: q.answerFormat,
+        groupNo: q.groupNo,
+        value: finalValue,
       }
-      jobAnswer.value = photoUrl
-    }
 
-    jobAnswers.push(jobAnswer)
+      // For file fields, add file object
+      if (q.answerFormat === 'file' && photos && photos.length > 0) {
+        const photoUrl = photos[0]
+        const fileName = photoUrl.split('/').pop() || 'photo.jpg'
+        const suffix = fileName.split('.').pop() || 'jpg'
+        jobAnswer.file = {
+          link: photoUrl,
+          name: fileName,
+          suffix: suffix,
+        }
+        jobAnswer.value = photoUrl
+      }
+
+      jobAnswers.push(jobAnswer)
+    }
   }
 
   return {
