@@ -339,27 +339,40 @@ export function buildTCSyncPayload(params: {
     },
   }
 
-  // TC API might expect PascalCase for JobTypeFormAnswerId
-  // Build a raw version with the exact casing TC expects
-  const rawPayload = {
-    ...payload,
+  // TC API might only use jobAnswers array, try minimal payload structure
+  // Based on TC docs, they may ignore the questions array entirely
+  const minimalPayload = {
+    jobId: tcJobId,
+    formGroupId: groupNo ?? 0,
+    userId: userId,
+    providerId: providerId,
+    submissionTypeId: 0,
+    shouldCreatePdf: isComplete,
+    completeJob: isComplete,
+    shouldSaveToQueue: true,
     jobTypeForm: {
-      ...payload.jobTypeForm,
+      id: tcFormDefinition.jobTypeFormId,
+      jobTypeFormId: tcFormDefinition.jobTypeFormId,
+      name: tcFormDefinition.name,
+      // Try WITHOUT questions array - TC may only read jobAnswers
       jobAnswers: jobAnswers.map(ja => ({
         jobId: ja.jobId,
         jobTypeFormQuestionId: ja.jobTypeFormQuestionId,
-        JobTypeFormAnswerId: ja.jobTypeFormAnswerId, // PascalCase as shown in TC docs
+        jobTypeFormAnswerId: ja.jobTypeFormAnswerId, // Try lowercase first
+        JobTypeFormAnswerId: ja.jobTypeFormAnswerId, // Also include PascalCase for safety
         jobTypeFormGroupId: ja.jobTypeFormGroupId,
+        groupNo: ja.groupNo,
         questionText: ja.questionText,
         answerText: ja.answerText,
+        answerFormat: ja.answerFormat,
         value: ja.value,
         ...(ja.file ? { file: ja.file } : {}),
       })),
     },
   }
 
-  // Return the raw payload instead - use type assertion since we're intentionally using different casing
-  return rawPayload as unknown as TCSyncPayload
+  // Return minimal payload - use type assertion since structure differs
+  return minimalPayload as unknown as TCSyncPayload
 }
 
 // ==================== Sync Answers to TC ====================
