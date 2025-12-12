@@ -95,12 +95,14 @@ export interface TCQuestionAnswer {
 
 /**
  * Job answer item for jobAnswers array in POST request
+ * TC API uses jobTypeFormGroupId (same as groupNo)
  */
 export interface TCJobAnswer {
   jobId: number
   jobAnswerId?: number
   jobTypeFormQuestionId: number
   jobTypeFormAnswerId: number // 0 for textbox/textarea, actual ID for radio/dropdown
+  jobTypeFormGroupId?: number // TC uses this (same value as groupNo)
   questionText?: string
   answerText?: string
   answerFormat?: string
@@ -131,9 +133,11 @@ export interface TCJobTypeFormPayload {
 /**
  * Question with answers for POST request
  * Based on TC API: each question contains an answers array with the submitted values
+ * TC API expects jobTypeFormGroupId (not just groupNo)
  */
 export interface TCQuestionWithAnswers {
   jobTypeFormQuestionId: number
+  jobTypeFormGroupId?: number // TC API uses this field (same value as groupNo)
   description?: string
   answerFormat: string
   groupNo: number

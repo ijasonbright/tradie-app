@@ -253,11 +253,13 @@ export function buildTCSyncPayload(params: {
     }
 
     // Build the answer entry for the question's answers array
+    // TC API expects: jobTypeFormQuestionId, jobTypeFormAnswerId, value
+    // And uses jobTypeFormGroupId (not groupNo) at the question level
     const questionAnswer: TCQuestionAnswer = {
       jobTypeFormQuestionId: q.jobTypeFormQuestionId,
       jobTypeFormAnswerId: jobTypeFormAnswerId,
       value: finalValue,
-      answerFormat: q.answerFormat,
+      jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId
       groupNo: q.groupNo,
     }
 
@@ -269,9 +271,11 @@ export function buildTCSyncPayload(params: {
       questionAnswer.value = photos[0] // For files, value is the URL
     }
 
-    // Build question with nested answers array - ALWAYS include the question
+    // Build question with nested answers array
+    // TC API expects minimal structure: jobTypeFormQuestionId, jobTypeFormGroupId, answers[]
     const questionWithAnswers: TCQuestionWithAnswers = {
       jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+      jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId (not groupNo)
       description: q.description,
       answerFormat: q.answerFormat,
       groupNo: q.groupNo,
@@ -289,6 +293,7 @@ export function buildTCSyncPayload(params: {
         jobId: tcJobId,
         jobTypeFormQuestionId: q.jobTypeFormQuestionId,
         jobTypeFormAnswerId: jobTypeFormAnswerId, // 0 for textbox/textarea, actual ID for radio/dropdown
+        jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId
         questionText: q.description,
         answerText: finalValue,
         answerFormat: q.answerFormat,
@@ -313,7 +318,8 @@ export function buildTCSyncPayload(params: {
     }
   }
 
-  return {
+  // Build the payload - TC API seems to want minimal structure with jobAnswers
+  const payload: TCSyncPayload = {
     jobId: tcJobId,
     formGroupId: groupNo ?? 0, // 0 = entire form, or specific groupNo for single section
     userId: userId,
@@ -330,6 +336,8 @@ export function buildTCSyncPayload(params: {
       jobAnswers: jobAnswers,
     },
   }
+
+  return payload
 }
 
 // ==================== Sync Answers to TC ====================
