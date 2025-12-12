@@ -24,7 +24,7 @@ export interface TCFormQuestion {
   description: string
   answerFormat: string // textbox, textarea, radioboxlist, dropdown, file, iscompliant, checkbox
   groupNo: number
-  groupName?: string
+  groupName?: string | null
   sortOrder: number
   required: boolean
   answers: TCFormAnswerOption[]
@@ -36,6 +36,15 @@ export interface TCFormQuestion {
 }
 
 /**
+ * Group definition in the TC form (from groups array)
+ */
+export interface TCFormGroup {
+  jobTypeFormGroupId: number
+  name: string
+  sortOrder: number
+}
+
+/**
  * Form definition returned from TC JobForm API
  */
 export interface TCJobForm {
@@ -44,6 +53,7 @@ export interface TCJobForm {
   name: string
   description?: string
   questions: TCFormQuestion[]
+  groups: TCFormGroup[] // Groups array with proper names and sort order
   // Additional metadata
   jobId?: number
   jobTypeId?: number

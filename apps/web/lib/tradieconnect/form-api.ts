@@ -9,6 +9,7 @@ import { tradieConnectApiRequest } from '../tradieconnect'
 import {
   TCJobForm,
   TCFormQuestion,
+  TCFormGroup,
   TCFormAnswerOption,
   TCSyncPayload,
   TCJobAnswer,
@@ -87,39 +88,54 @@ export function transformTCFormToOurFormat(
   tcForm: TCJobForm,
   tcJobId: number
 ): OurFormDefinition {
+  // Build a map from groupNo (jobTypeFormGroupId) to group details
+  // This uses the 'groups' array from the TC response for proper names and sort order
+  const groupInfoMap = new Map<number, { name: string; sortOrder: number }>()
+
+  if (tcForm.groups && tcForm.groups.length > 0) {
+    for (const group of tcForm.groups) {
+      groupInfoMap.set(group.jobTypeFormGroupId, {
+        name: group.name,
+        sortOrder: group.sortOrder,
+      })
+    }
+  }
+
   // Group questions by groupNo
-  const groupsMap = new Map<number, {
-    groupNo: number
-    groupName: string
-    questions: TCFormQuestion[]
-  }>()
+  const questionsMap = new Map<number, TCFormQuestion[]>()
 
   for (const question of tcForm.questions) {
     const groupNo = question.groupNo
-    if (!groupsMap.has(groupNo)) {
-      groupsMap.set(groupNo, {
-        groupNo,
-        groupName: question.groupName || `Section ${groupNo}`,
-        questions: [],
-      })
+    if (!questionsMap.has(groupNo)) {
+      questionsMap.set(groupNo, [])
     }
-    groupsMap.get(groupNo)!.questions.push(question)
+    questionsMap.get(groupNo)!.push(question)
   }
 
-  // Convert to our format
+  // Convert to our format using group info from the groups array
   const groups: OurFormGroup[] = []
-  let groupSortOrder = 0
 
-  // Sort groups by the minimum sortOrder of their questions
-  const sortedGroups = Array.from(groupsMap.values()).sort((a, b) => {
-    const aMinSort = Math.min(...a.questions.map(q => q.sortOrder))
-    const bMinSort = Math.min(...b.questions.map(q => q.sortOrder))
-    return aMinSort - bMinSort
+  // Get all group IDs and sort by the sortOrder from the groups array
+  const groupIds = Array.from(questionsMap.keys())
+  groupIds.sort((a, b) => {
+    const aInfo = groupInfoMap.get(a)
+    const bInfo = groupInfoMap.get(b)
+    // Use sortOrder from groups array if available, otherwise use groupNo
+    const aSortOrder = aInfo?.sortOrder ?? a
+    const bSortOrder = bInfo?.sortOrder ?? b
+    return aSortOrder - bSortOrder
   })
 
-  for (const group of sortedGroups) {
+  for (const groupNo of groupIds) {
+    const questions = questionsMap.get(groupNo)!
+    const groupInfo = groupInfoMap.get(groupNo)
+
+    // Get group name from groups array, or fallback to question.groupName, or generic name
+    const groupName = groupInfo?.name || questions[0]?.groupName || `Section ${groupNo}`
+    const groupSortOrder = groupInfo?.sortOrder ?? groups.length
+
     // Sort questions within group by sortOrder
-    const sortedQuestions = group.questions.sort((a, b) => a.sortOrder - b.sortOrder)
+    const sortedQuestions = questions.sort((a, b) => a.sortOrder - b.sortOrder)
 
     const ourQuestions: OurFormQuestion[] = sortedQuestions.map((q, idx) => {
       // Map answer options
@@ -137,7 +153,7 @@ export function transformTCFormToOurFormat(
         field_type: mapAnswerFormatToFieldType(q.answerFormat),
         csv_question_id: q.jobTypeFormQuestionId,
         csv_group_id: q.groupNo,
-        group_name: group.groupName,
+        group_name: groupName,
         sort_order: idx,
         required: q.required,
         answer_options: answerOptions,
@@ -146,13 +162,16 @@ export function transformTCFormToOurFormat(
     })
 
     groups.push({
-      id: `tc_g_${group.groupNo}`,
-      name: group.groupName,
-      csv_group_id: group.groupNo,
-      sort_order: groupSortOrder++,
+      id: `tc_g_${groupNo}`,
+      name: groupName,
+      csv_group_id: groupNo,
+      sort_order: groupSortOrder,
       questions: ourQuestions,
     })
   }
+
+  // Re-sort groups by their sort_order to ensure correct final order
+  groups.sort((a, b) => a.sort_order - b.sort_order)
 
   return {
     template_id: `tc_form_${tcForm.jobTypeFormId}`,
