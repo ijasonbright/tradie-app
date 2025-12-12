@@ -61,12 +61,14 @@ export async function GET(request: NextRequest) {
     // Get TradieConnect connection for this user
     const connections = await sql`
       SELECT
+        id,
         tc_user_id,
         tc_token,
         tc_refresh_token,
         tc_token_expires_at
       FROM tradieconnect_connections
       WHERE user_id = ${user.id}
+      AND is_active = true
       LIMIT 1
     `
 
@@ -115,7 +117,7 @@ export async function GET(request: NextRequest) {
             tc_refresh_token = ${newRefreshToken},
             tc_token_expires_at = ${refreshResult.expiry ? new Date(refreshResult.expiry) : null},
             updated_at = NOW()
-          WHERE user_id = ${user.id}
+          WHERE id = ${connection.id}
         `
 
         // Retry the request with new token
