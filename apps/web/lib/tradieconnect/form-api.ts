@@ -395,11 +395,13 @@ export async function syncAnswersToTC(
   unauthorized?: boolean
 }> {
   try {
+    // Cast to any since payload may not have questions array (minimal payload)
+    const payloadAny = payload as any
     console.log('Syncing answers to TC:', {
       jobId: payload.jobId,
       formGroupId: payload.formGroupId,
-      questionCount: payload.jobTypeForm.questions.length,
-      answerCount: payload.jobTypeForm.jobAnswers.length,
+      questionCount: payloadAny.jobTypeForm?.questions?.length ?? 0,
+      answerCount: payloadAny.jobTypeForm?.jobAnswers?.length ?? 0,
       isComplete: payload.completeJob,
     })
 

@@ -198,10 +198,12 @@ export async function POST(
       isComplete: is_complete,
     })
 
+    // Cast to any since payload may not have questions array (minimal payload)
+    const payloadAny = payload as any
     console.log('Built TC sync payload:', {
       jobId: payload.jobId,
-      questionCount: payload.jobTypeForm.questions.length,
-      answerCount: payload.jobTypeForm.jobAnswers.length,
+      questionCount: payloadAny.jobTypeForm?.questions?.length ?? 0,
+      answerCount: payloadAny.jobTypeForm?.jobAnswers?.length ?? 0,
       isComplete: is_complete,
       groupNo: group_no,
     })
