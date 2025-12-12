@@ -319,6 +319,8 @@ export function buildTCSyncPayload(params: {
   }
 
   // Build the payload - TC API seems to want minimal structure with jobAnswers
+  // Note: TC API may use PascalCase for some field names (JobTypeFormAnswerId vs jobTypeFormAnswerId)
+  // We'll build the raw payload to match their exact casing
   const payload: TCSyncPayload = {
     jobId: tcJobId,
     formGroupId: groupNo ?? 0, // 0 = entire form, or specific groupNo for single section
@@ -337,7 +339,27 @@ export function buildTCSyncPayload(params: {
     },
   }
 
-  return payload
+  // TC API might expect PascalCase for JobTypeFormAnswerId
+  // Build a raw version with the exact casing TC expects
+  const rawPayload = {
+    ...payload,
+    jobTypeForm: {
+      ...payload.jobTypeForm,
+      jobAnswers: jobAnswers.map(ja => ({
+        jobId: ja.jobId,
+        jobTypeFormQuestionId: ja.jobTypeFormQuestionId,
+        JobTypeFormAnswerId: ja.jobTypeFormAnswerId, // PascalCase as shown in TC docs
+        jobTypeFormGroupId: ja.jobTypeFormGroupId,
+        questionText: ja.questionText,
+        answerText: ja.answerText,
+        value: ja.value,
+        ...(ja.file ? { file: ja.file } : {}),
+      })),
+    },
+  }
+
+  // Return the raw payload instead - use type assertion since we're intentionally using different casing
+  return rawPayload as unknown as TCSyncPayload
 }
 
 // ==================== Sync Answers to TC ====================
