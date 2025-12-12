@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { neon } from '@neondatabase/serverless'
 import { extractTokenFromHeader, verifyMobileToken } from '@/lib/jwt'
-import { decryptFromStorage } from '@/lib/tradieconnect'
 import {
   fetchTCFormDefinition,
   transformTCFormToOurFormat,
@@ -76,19 +75,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get user with TC credentials
+    // Get user from database
     const users = await sql`
-      SELECT
-        u.id,
-        u.tc_user_id,
-        u.tc_token,
-        u.tc_refresh_token,
-        u.tc_provider_id,
-        om.organization_id
-      FROM users u
-      JOIN organization_members om ON u.id = om.user_id
-      WHERE u.clerk_user_id = ${clerkUserId}
-      LIMIT 1
+      SELECT id FROM users WHERE clerk_user_id = ${clerkUserId} LIMIT 1
     `
 
     if (users.length === 0) {
@@ -97,30 +86,34 @@ export async function GET(
 
     const user = users[0]
 
-    // Check if user has TC credentials
-    if (!user.tc_user_id || !user.tc_token) {
+    // Get active TradieConnect connection
+    const connections = await sql`
+      SELECT
+        id,
+        tc_user_id,
+        tc_token
+      FROM tradieconnect_connections
+      WHERE user_id = ${user.id}
+      AND is_active = true
+      LIMIT 1
+    `
+
+    if (connections.length === 0) {
       return NextResponse.json(
-        { error: 'TradieConnect not connected', message: 'Please connect your TradieConnect account first' },
+        { error: 'TradieConnect not connected', message: 'Please connect your TradieConnect account first', needs_connect: true },
         { status: 400 }
       )
     }
 
-    // Decrypt TC token
-    let tcToken: string
-    try {
-      tcToken = decryptFromStorage(user.tc_token)
-    } catch (error) {
-      console.error('Failed to decrypt TC token:', error)
-      return NextResponse.json(
-        { error: 'TradieConnect authentication error', message: 'Please reconnect your TradieConnect account' },
-        { status: 400 }
-      )
-    }
+    const connection = connections[0]
+
+    // Tokens are stored as plain text (no decryption needed)
+    const tcToken = connection.tc_token
 
     // Fetch form definition from TC
     const result = await fetchTCFormDefinition(
       tcJobId,
-      user.tc_user_id,
+      connection.tc_user_id,
       tcToken
     )
 
