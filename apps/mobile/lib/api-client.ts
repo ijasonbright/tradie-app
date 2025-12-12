@@ -1691,6 +1691,77 @@ class ApiClient {
       }
     )
   }
+
+  // ==================== TC Live Form Sync (Dynamic Forms) ====================
+
+  /**
+   * Fetch form definition directly from TradieConnect API
+   * This returns the latest form structure with all questions
+   */
+  async getTCLiveFormDefinition(tcJobId: string) {
+    return this.request<{
+      success: boolean
+      form?: {
+        template_id: string
+        template_name: string
+        tc_form_id: number
+        tc_job_id: number
+        groups: Array<{
+          id: string
+          name: string
+          csv_group_id: number
+          sort_order: number
+          questions: Array<{
+            id: string
+            question_text: string
+            field_type: string
+            csv_question_id: number
+            csv_group_id: number
+            group_name?: string
+            sort_order: number
+            required: boolean
+            answer_options?: Array<{
+              id: string
+              text: string
+              tc_answer_id?: number
+            }>
+            hint?: string
+          }>
+        }>
+        _tc_raw?: any
+      }
+      error?: string
+      cached?: boolean
+    }>(`/integrations/tradieconnect/jobs/${tcJobId}/form-definition`)
+  }
+
+  /**
+   * Sync form answers to TradieConnect in real-time
+   * Called when user saves a page or completes the form
+   */
+  async syncTCFormAnswers(
+    tcJobId: string,
+    data: {
+      answers: Record<string, any>
+      photo_urls?: Record<string, string[]>
+      group_no?: number
+      is_complete: boolean
+    }
+  ) {
+    return this.request<{
+      success: boolean
+      tc_response?: any
+      synced_answers?: number
+      is_complete?: boolean
+      error?: string
+    }>(
+      `/integrations/tradieconnect/jobs/${tcJobId}/sync-answers`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    )
+  }
 }
 
 export const apiClient = new ApiClient()

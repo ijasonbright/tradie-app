@@ -145,6 +145,17 @@ export default function TCJobDetailScreen() {
     })
   }
 
+  const handleOpenTCLiveForm = () => {
+    // Navigate to TC Live Form screen (fetches form directly from TC API and syncs in real-time)
+    router.push({
+      pathname: '/tc-job/live-form/[tcJobId]',
+      params: {
+        tcJobId: job?.jobId?.toString(),
+        tcJobCode: job?.code || `TC-${job?.jobId}`,
+      },
+    })
+  }
+
   if (loading && !refreshing) {
     return (
       <View style={styles.container}>
@@ -517,7 +528,7 @@ export default function TCJobDetailScreen() {
               </TouchableOpacity>
             )}
 
-            {/* Complete Form Button */}
+            {/* Complete Form Button (Offline - uses cached template) */}
             <TouchableOpacity
               style={[
                 styles.quickActionCard,
@@ -544,6 +555,22 @@ export default function TCJobDetailScreen() {
               {formTemplate && (
                 <Text style={styles.quickActionSubLabel}>{formTemplate.name}</Text>
               )}
+            </TouchableOpacity>
+
+            {/* TC Live Form Button (Online - fetches form from TC API and syncs in real-time) */}
+            <TouchableOpacity
+              style={[styles.quickActionCard, styles.quickActionCardTC]}
+              onPress={handleOpenTCLiveForm}
+            >
+              <MaterialCommunityIcons
+                name="cloud-sync"
+                size={32}
+                color="#fff"
+              />
+              <Text style={[styles.quickActionLabel, styles.quickActionLabelTC]}>
+                TC Live Form
+              </Text>
+              <Text style={styles.quickActionSubLabelTC}>Sync with TradieConnect</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -847,6 +874,18 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   quickActionSubLabel: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  quickActionCardTC: {
+    backgroundColor: '#7c3aed',
+  },
+  quickActionLabelTC: {
+    color: '#fff',
+  },
+  quickActionSubLabelTC: {
     fontSize: 10,
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
