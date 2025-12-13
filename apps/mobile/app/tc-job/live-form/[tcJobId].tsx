@@ -67,8 +67,8 @@ export default function TCLiveFormScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
-  const [savedFiles, setSavedFiles] = useState<Record<string, string>>({}) // TC saved file URLs
-  const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({}) // Locally captured photos
+  const [savedFiles, setSavedFiles] = useState<Record<string, string[]>>({}) // TC saved file URLs (arrays)
+  const [localPhotos, setLocalPhotos] = useState<Record<string, string[]>>({}) // Locally captured photos (arrays)
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null) // Question ID being uploaded
 
   useLayoutEffect(() => {
@@ -105,9 +105,14 @@ export default function TCLiveFormScreen() {
         })
         setFormData(initialData)
 
-        // Load saved files (photos) from TC
+        // Load saved files (photos) from TC - convert single URLs to arrays
         if (response.saved_files) {
-          setSavedFiles(response.saved_files)
+          const filesAsArrays: Record<string, string[]> = {}
+          for (const [key, value] of Object.entries(response.saved_files)) {
+            // Handle both single URL (string) and array of URLs
+            filesAsArrays[key] = Array.isArray(value) ? value : [value]
+          }
+          setSavedFiles(filesAsArrays)
         }
 
         // Log how many saved answers/files were loaded
@@ -144,7 +149,7 @@ export default function TCLiveFormScreen() {
     }
   }
 
-  // Handle photo capture for file fields
+  // Handle photo capture for file fields - adds to array of photos
   const handleCapturePhoto = async (questionId: string) => {
     try {
       // Request camera permissions
@@ -174,14 +179,15 @@ export default function TCLiveFormScreen() {
           )
 
           if (response.success && response.url) {
-            // Store the uploaded URL in localPhotos
+            // Add the uploaded URL to localPhotos array
             setLocalPhotos(prev => ({
               ...prev,
-              [questionId]: response.url,
+              [questionId]: [...(prev[questionId] || []), response.url],
             }))
-            // Also update formData with the URL for syncing
-            updateField(questionId, response.url)
-            Alert.alert('Success', 'Photo uploaded successfully')
+            // Update sync status
+            if (syncStatus === 'synced') {
+              setSyncStatus('idle')
+            }
           } else {
             Alert.alert('Upload Failed', 'Failed to upload photo')
           }
@@ -198,26 +204,64 @@ export default function TCLiveFormScreen() {
     }
   }
 
-  // Get the current photo URL for a question (local > saved from TC)
-  const getPhotoUrl = (questionId: string): string | null => {
-    return localPhotos[questionId] || savedFiles[questionId] || null
+  // Remove a photo from a question
+  const handleRemovePhoto = (questionId: string, photoIndex: number) => {
+    Alert.alert(
+      'Remove Photo',
+      'Are you sure you want to remove this photo?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            // Check if it's a local photo
+            const localList = localPhotos[questionId] || []
+            if (photoIndex < localList.length) {
+              // Remove from local photos
+              setLocalPhotos(prev => ({
+                ...prev,
+                [questionId]: prev[questionId].filter((_, i) => i !== photoIndex),
+              }))
+            } else {
+              // It's a saved file - mark it for removal by clearing savedFiles
+              const savedList = savedFiles[questionId] || []
+              const savedIndex = photoIndex - localList.length
+              setSavedFiles(prev => ({
+                ...prev,
+                [questionId]: prev[questionId].filter((_, i) => i !== savedIndex),
+              }))
+            }
+            if (syncStatus === 'synced') {
+              setSyncStatus('idle')
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  // Get all photos for a question (local photos first, then saved from TC)
+  const getPhotos = (questionId: string): string[] => {
+    const local = localPhotos[questionId] || []
+    const saved = savedFiles[questionId] || []
+    return [...local, ...saved]
   }
 
   // Build photo_urls object for syncing (combines local photos and saved files)
   const buildPhotoUrls = (): Record<string, string[]> => {
     const photoUrls: Record<string, string[]> = {}
 
-    // Add locally captured photos
-    for (const [questionId, url] of Object.entries(localPhotos)) {
-      if (url) {
-        photoUrls[questionId] = [url]
-      }
-    }
+    // Get all unique question IDs from both local and saved
+    const allQuestionIds = new Set([
+      ...Object.keys(localPhotos),
+      ...Object.keys(savedFiles),
+    ])
 
-    // Add saved files from TC (only if not overridden by local photo)
-    for (const [questionId, url] of Object.entries(savedFiles)) {
-      if (url && !localPhotos[questionId]) {
-        photoUrls[questionId] = [url]
+    for (const questionId of allQuestionIds) {
+      const photos = getPhotos(questionId)
+      if (photos.length > 0) {
+        photoUrls[questionId] = photos
       }
     }
 
@@ -423,37 +467,61 @@ export default function TCLiveFormScreen() {
         )
 
       case 'file':
-        const photoUrl = getPhotoUrl(question.id)
+        const photos = getPhotos(question.id)
         const isUploading = uploadingPhoto === question.id
         return (
           <View style={styles.fileFieldContainer}>
-            {photoUrl ? (
-              <View style={styles.photoPreviewContainer}>
-                <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" />
-                <TouchableOpacity
-                  style={styles.retakeButton}
-                  onPress={() => handleCapturePhoto(question.id)}
-                  disabled={isUploading}
-                >
-                  <MaterialCommunityIcons name="camera-retake" size={20} color="#fff" />
-                  <Text style={styles.retakeButtonText}>Retake</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.captureButton}
-                onPress={() => handleCapturePhoto(question.id)}
-                disabled={isUploading}
+            {/* Photo Gallery */}
+            {photos.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.photoGallery}
+                contentContainerStyle={styles.photoGalleryContent}
               >
-                {isUploading ? (
-                  <ActivityIndicator size="small" color="#7c3aed" />
-                ) : (
-                  <>
-                    <MaterialCommunityIcons name="camera" size={32} color="#7c3aed" />
-                    <Text style={styles.captureButtonText}>Take Photo</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                {photos.map((photoUrl, index) => (
+                  <View key={`${question.id}-${index}`} style={styles.photoThumbnailContainer}>
+                    <Image
+                      source={{ uri: photoUrl }}
+                      style={styles.photoThumbnail}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity
+                      style={styles.removePhotoButton}
+                      onPress={() => handleRemovePhoto(question.id, index)}
+                    >
+                      <MaterialCommunityIcons name="close-circle" size={24} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+
+            {/* Add Photo Button */}
+            <TouchableOpacity
+              style={[styles.addPhotoButton, photos.length === 0 && styles.addPhotoButtonEmpty]}
+              onPress={() => handleCapturePhoto(question.id)}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator size="small" color="#7c3aed" />
+              ) : (
+                <>
+                  <MaterialCommunityIcons
+                    name={photos.length > 0 ? "camera-plus" : "camera"}
+                    size={photos.length > 0 ? 24 : 32}
+                    color="#7c3aed"
+                  />
+                  <Text style={styles.addPhotoButtonText}>
+                    {photos.length > 0 ? 'Add Another Photo' : 'Take Photo'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Photo count */}
+            {photos.length > 0 && (
+              <Text style={styles.photoCount}>{photos.length} photo{photos.length !== 1 ? 's' : ''}</Text>
             )}
           </View>
         )
@@ -871,6 +939,55 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  // Photo gallery styles for multiple images
+  photoGallery: {
+    maxHeight: 130,
+  },
+  photoGalleryContent: {
+    padding: 12,
+    gap: 12,
+  },
+  photoThumbnailContainer: {
+    position: 'relative',
+  },
+  photoThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: '#e5e5e5',
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  addPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e5e5',
+  },
+  addPhotoButtonEmpty: {
+    padding: 24,
+    borderTopWidth: 0,
+  },
+  addPhotoButtonText: {
+    fontSize: 14,
+    color: '#7c3aed',
+    fontWeight: '500',
+  },
+  photoCount: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    paddingBottom: 8,
+  },
+  // Legacy styles kept for compatibility
   captureButton: {
     padding: 24,
     alignItems: 'center',
