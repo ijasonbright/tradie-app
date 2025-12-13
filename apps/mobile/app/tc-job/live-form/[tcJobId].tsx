@@ -166,13 +166,11 @@ export default function TCLiveFormScreen() {
         setUploadingPhoto(questionId)
 
         try {
-          // Upload to TC via our API
-          const response = await apiClient.uploadTCCompletionFormPhoto(
+          // Upload to our API - uses the new TC Live Form endpoint
+          const response = await apiClient.uploadTCLiveFormPhoto(
             tcJobId as string,
             imageUri,
-            '', // caption
-            'form_photo',
-            questionId
+            questionId // question key like "tc_q_2279"
           )
 
           if (response.success && response.url) {
@@ -185,7 +183,7 @@ export default function TCLiveFormScreen() {
             updateField(questionId, response.url)
             Alert.alert('Success', 'Photo uploaded successfully')
           } else {
-            Alert.alert('Upload Failed', response.error || 'Failed to upload photo')
+            Alert.alert('Upload Failed', 'Failed to upload photo')
           }
         } catch (uploadError: any) {
           console.error('Photo upload error:', uploadError)

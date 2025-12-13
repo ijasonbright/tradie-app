@@ -1092,6 +1092,51 @@ class ApiClient {
     return await response.json()
   }
 
+  /**
+   * Upload photo for TC Live Form - stores in Vercel Blob and returns URL
+   * This is for the dynamic TC form sync, separate from completion-form photos
+   */
+  async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; question_key: string }> {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
+    const formData = new FormData()
+
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
+    const match = /\.(\w+)$/.exec(filename)
+    const type = match ? `image/${match[1]}` : `image/jpeg`
+
+    formData.append('file', {
+      uri: normalizedUri,
+      name: filename,
+      type,
+    } as any)
+    formData.append('question_key', questionKey)
+
+    const token = await this.getAuthToken()
+    const url = `${API_URL}/integrations/tradieconnect/jobs/${tcJobId}/photos`
+
+    console.log(`API Request: POST ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        // Don't set Content-Type - let the browser set it with boundary
+      },
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API Error: ${response.status} ${response.statusText}`, errorText)
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
+
   // ==================== PROPERTIES API ====================
 
   /**
