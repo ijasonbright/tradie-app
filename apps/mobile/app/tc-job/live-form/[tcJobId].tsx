@@ -203,6 +203,27 @@ export default function TCLiveFormScreen() {
     return localPhotos[questionId] || savedFiles[questionId] || null
   }
 
+  // Build photo_urls object for syncing (combines local photos and saved files)
+  const buildPhotoUrls = (): Record<string, string[]> => {
+    const photoUrls: Record<string, string[]> = {}
+
+    // Add locally captured photos
+    for (const [questionId, url] of Object.entries(localPhotos)) {
+      if (url) {
+        photoUrls[questionId] = [url]
+      }
+    }
+
+    // Add saved files from TC (only if not overridden by local photo)
+    for (const [questionId, url] of Object.entries(savedFiles)) {
+      if (url && !localPhotos[questionId]) {
+        photoUrls[questionId] = [url]
+      }
+    }
+
+    return photoUrls
+  }
+
   const handleSaveAndSync = async () => {
     if (!form) return
 
@@ -211,11 +232,14 @@ export default function TCLiveFormScreen() {
       setSyncStatus('syncing')
 
       const currentGroup = form.groups[currentGroupIndex]
+      const photoUrls = buildPhotoUrls()
 
       console.log('Syncing answers to TC for group:', currentGroup.csv_group_id)
+      console.log('Photo URLs to sync:', Object.keys(photoUrls).length)
 
       const response = await apiClient.syncTCFormAnswers(tcJobId as string, {
         answers: formData,
+        photo_urls: photoUrls,
         group_no: currentGroup.csv_group_id,
         is_complete: false,
       })
@@ -252,8 +276,12 @@ export default function TCLiveFormScreen() {
               setIsSubmitting(true)
               setSyncStatus('syncing')
 
+              const photoUrls = buildPhotoUrls()
+              console.log('Submitting form with photo URLs:', Object.keys(photoUrls).length)
+
               const response = await apiClient.syncTCFormAnswers(tcJobId as string, {
                 answers: formData,
+                photo_urls: photoUrls,
                 is_complete: true,
               })
 
