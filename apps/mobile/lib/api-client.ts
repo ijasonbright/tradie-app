@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
-import { normalizeImageOrientation } from './image-utils'
+import { normalizeImageOrientation, normalizeImageForTradieConnect } from './image-utils'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://tradie-app-web.vercel.app/api'
 
@@ -1095,10 +1095,13 @@ class ApiClient {
   /**
    * Upload photo for TC Live Form - stores in Vercel Blob and returns URL
    * This is for the dynamic TC form sync, separate from completion-form photos
+   *
+   * Uses TC-specific image normalization that counter-rotates by -90 degrees
+   * to compensate for TradieConnect's hardcoded +90 rotation in their PDF template.
    */
   async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; question_key: string }> {
-    // Normalize image orientation to fix EXIF rotation issues
-    const normalizedUri = await normalizeImageOrientation(imageUri)
+    // Use TC-specific normalization that counter-rotates for their PDF template
+    const normalizedUri = await normalizeImageForTradieConnect(imageUri)
 
     const formData = new FormData()
 

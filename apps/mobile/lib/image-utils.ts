@@ -46,6 +46,53 @@ export async function normalizeImageOrientation(
 }
 
 /**
+ * Normalizes image orientation for TradieConnect uploads.
+ *
+ * IMPORTANT: TradieConnect's PDF template applies a hardcoded 90-degree rotation
+ * to all images (see their PDFDetail.cshtml line 660: transform: rotate(90deg)).
+ *
+ * To counteract this, we pre-rotate our images by -90 degrees (270 degrees),
+ * so when TC applies their +90 rotation, the final result is correctly oriented.
+ *
+ * @param imageUri - The URI of the image to normalize
+ * @param quality - JPEG quality (0-1), defaults to 0.85
+ * @returns The URI of the counter-rotated image
+ */
+export async function normalizeImageForTradieConnect(
+  imageUri: string,
+  quality: number = 0.85
+): Promise<string> {
+  try {
+    // First normalize the EXIF orientation, then counter-rotate by -90 degrees
+    // to compensate for TC's hardcoded +90 rotation in their PDF template
+    const result = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [
+        { rotate: 0 },    // First: bake in EXIF orientation
+        { rotate: -90 },  // Then: counter-rotate for TC's +90 in PDF
+      ],
+      {
+        compress: quality,
+        format: ImageManipulator.SaveFormat.JPEG,
+      }
+    )
+
+    console.log('Image normalized for TradieConnect (counter-rotated -90deg):', {
+      original: imageUri.substring(imageUri.length - 50),
+      normalized: result.uri.substring(result.uri.length - 50),
+      width: result.width,
+      height: result.height,
+    })
+
+    return result.uri
+  } catch (error) {
+    console.error('Failed to normalize image for TradieConnect:', error)
+    // If normalization fails, return the original URI
+    return imageUri
+  }
+}
+
+/**
  * Resizes an image while normalizing its orientation.
  * Useful for creating thumbnails or reducing upload size.
  *
