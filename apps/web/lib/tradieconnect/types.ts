@@ -28,11 +28,21 @@ export interface TCFormQuestion {
   sortOrder: number
   required: boolean
   answers: TCFormAnswerOption[]
-  // Additional fields that may be present
+  // Additional fields that may be present (saved answers)
   value?: string
   fieldValue?: string
   hint?: string
   maxLength?: number
+  // For file/photo fields - TC returns file info here
+  file?: {
+    name?: string
+    suffix?: string
+    link?: string
+    size?: number
+    path?: string
+  }
+  // TC may also return the selected answer ID for radio/dropdown
+  jobTypeFormAnswerId?: number
 }
 
 /**

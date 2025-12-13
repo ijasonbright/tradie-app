@@ -169,11 +169,12 @@ export async function GET(
     // Transform to our format
     const ourForm = transformTCFormToOurFormat(result.form, parseInt(tcJobId))
 
-    // Return the form definition with saved answers
+    // Return the form definition with saved answers and files
     const response = NextResponse.json({
       success: true,
       form: ourForm,
       saved_answers: ourForm.saved_answers, // Include saved answers at top level for easy access
+      saved_files: ourForm.saved_files, // Include saved file URLs for photo fields
       cached: false,
       _debug: {
         tc_form_id: result.form.jobTypeFormId,
@@ -181,6 +182,7 @@ export async function GET(
         question_count: result.form.questions?.length || 0,
         group_count: ourForm.groups.length,
         saved_answers_count: ourForm.saved_answers ? Object.keys(ourForm.saved_answers).length : 0,
+        saved_files_count: ourForm.saved_files ? Object.keys(ourForm.saved_files).length : 0,
         fetched_at: new Date().toISOString(),
       },
     })

@@ -89,7 +89,7 @@ function mapAnswerFormatToFieldType(answerFormat: string): string {
 export function transformTCFormToOurFormat(
   tcForm: TCJobForm,
   tcJobId: number
-): OurFormDefinition & { saved_answers?: Record<string, string> } {
+): OurFormDefinition & { saved_answers?: Record<string, string>; saved_files?: Record<string, string> } {
   // Build a map from groupNo (jobTypeFormGroupId) to group details
   // This uses the 'groups' array from the TC response for proper names and sort order
   const groupInfoMap = new Map<number, { name: string; sortOrder: number }>()
@@ -175,14 +175,51 @@ export function transformTCFormToOurFormat(
   // Re-sort groups by their sort_order to ensure correct final order
   groups.sort((a, b) => a.sort_order - b.sort_order)
 
-  // Extract saved answers from TC questions (value/fieldValue fields)
+  // Extract saved answers from TC questions
+  // For text fields: use value/fieldValue
+  // For radio/dropdown: find the selected option text from the answers array
+  // For file fields: extract the file URL
   const savedAnswers: Record<string, string> = {}
+  const savedFiles: Record<string, string> = {}
+
   for (const question of tcForm.questions) {
     const questionKey = `tc_q_${question.jobTypeFormQuestionId}`
-    // TC returns saved answers in the 'value' or 'fieldValue' field
+    const answerFormat = question.answerFormat.toLowerCase()
+
+    // Handle file/photo fields
+    if (answerFormat === 'file' && question.file?.link) {
+      savedFiles[questionKey] = question.file.link
+      continue
+    }
+
+    // For radio/dropdown/iscompliant: TC might return:
+    // 1. The text value directly in value/fieldValue
+    // 2. Or we need to look at the answers array to find which one has value="1"
+    if (answerFormat === 'radioboxlist' || answerFormat === 'dropdown' || answerFormat === 'iscompliant') {
+      // First check if value/fieldValue has the answer text
+      let savedValue = question.value || question.fieldValue
+
+      // If no direct value, check the answers array for selected option (value="1")
+      if (!savedValue && question.answers && question.answers.length > 0) {
+        // TC might return answers with a 'value' field indicating selection
+        const selectedOption = (question.answers as any[]).find(
+          (a: any) => a.value === '1' || a.value === 1 || a.selected === true
+        )
+        if (selectedOption) {
+          savedValue = selectedOption.description
+        }
+      }
+
+      if (savedValue && String(savedValue).trim() !== '') {
+        savedAnswers[questionKey] = String(savedValue)
+      }
+      continue
+    }
+
+    // For text/textarea and other fields: use value/fieldValue directly
     const savedValue = question.value || question.fieldValue
-    if (savedValue && savedValue.trim() !== '') {
-      savedAnswers[questionKey] = savedValue
+    if (savedValue && String(savedValue).trim() !== '') {
+      savedAnswers[questionKey] = String(savedValue)
     }
   }
 
@@ -193,6 +230,7 @@ export function transformTCFormToOurFormat(
     tc_job_id: tcJobId,
     groups,
     saved_answers: Object.keys(savedAnswers).length > 0 ? savedAnswers : undefined,
+    saved_files: Object.keys(savedFiles).length > 0 ? savedFiles : undefined,
     _tc_raw: tcForm, // Store original for building sync payload
   }
 }

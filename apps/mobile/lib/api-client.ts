@@ -1747,6 +1747,7 @@ class ApiClient {
         _tc_raw?: any
       }
       saved_answers?: Record<string, string> // Saved answers from TC (pre-fill form with existing data)
+      saved_files?: Record<string, string> // Saved file URLs for photo fields
       error?: string
       cached?: boolean
     }>(`/integrations/tradieconnect/jobs/${tcJobId}/form-definition`)

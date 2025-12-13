@@ -10,9 +10,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   TextInput,
+  Image,
 } from 'react-native'
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import { apiClient } from '../../../lib/api-client'
 
 // Types matching our API response format
@@ -65,6 +67,9 @@ export default function TCLiveFormScreen() {
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
+  const [savedFiles, setSavedFiles] = useState<Record<string, string>>({}) // TC saved file URLs
+  const [localPhotos, setLocalPhotos] = useState<Record<string, string>>({}) // Locally captured photos
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null) // Question ID being uploaded
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -100,10 +105,16 @@ export default function TCLiveFormScreen() {
         })
         setFormData(initialData)
 
-        // Log how many saved answers were loaded
+        // Load saved files (photos) from TC
+        if (response.saved_files) {
+          setSavedFiles(response.saved_files)
+        }
+
+        // Log how many saved answers/files were loaded
         const savedCount = Object.keys(savedAnswers).length
-        if (savedCount > 0) {
-          console.log(`Loaded ${savedCount} saved answers from TradieConnect`)
+        const filesCount = response.saved_files ? Object.keys(response.saved_files).length : 0
+        if (savedCount > 0 || filesCount > 0) {
+          console.log(`Loaded ${savedCount} saved answers and ${filesCount} files from TradieConnect`)
           setSyncStatus('synced') // Show synced status since we have existing data
         }
 
@@ -131,6 +142,67 @@ export default function TCLiveFormScreen() {
     if (syncStatus === 'synced') {
       setSyncStatus('idle')
     }
+  }
+
+  // Handle photo capture for file fields
+  const handleCapturePhoto = async (questionId: string) => {
+    try {
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync()
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is required to take photos.')
+        return
+      }
+
+      // Launch camera
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.8,
+      })
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri
+        setUploadingPhoto(questionId)
+
+        try {
+          // Upload to TC via our API
+          const response = await apiClient.uploadTCCompletionFormPhoto(
+            tcJobId as string,
+            imageUri,
+            '', // caption
+            'form_photo',
+            questionId
+          )
+
+          if (response.success && response.url) {
+            // Store the uploaded URL in localPhotos
+            setLocalPhotos(prev => ({
+              ...prev,
+              [questionId]: response.url,
+            }))
+            // Also update formData with the URL for syncing
+            updateField(questionId, response.url)
+            Alert.alert('Success', 'Photo uploaded successfully')
+          } else {
+            Alert.alert('Upload Failed', response.error || 'Failed to upload photo')
+          }
+        } catch (uploadError: any) {
+          console.error('Photo upload error:', uploadError)
+          Alert.alert('Upload Error', uploadError.message || 'Failed to upload photo')
+        } finally {
+          setUploadingPhoto(null)
+        }
+      }
+    } catch (err: any) {
+      console.error('Camera error:', err)
+      Alert.alert('Camera Error', err.message || 'Failed to access camera')
+    }
+  }
+
+  // Get the current photo URL for a question (local > saved from TC)
+  const getPhotoUrl = (questionId: string): string | null => {
+    return localPhotos[questionId] || savedFiles[questionId] || null
   }
 
   const handleSaveAndSync = async () => {
@@ -325,10 +397,38 @@ export default function TCLiveFormScreen() {
         )
 
       case 'file':
+        const photoUrl = getPhotoUrl(question.id)
+        const isUploading = uploadingPhoto === question.id
         return (
-          <View style={styles.fileContainer}>
-            <MaterialCommunityIcons name="camera" size={32} color="#999" />
-            <Text style={styles.fileHint}>Photo upload not available in TC Live Form (coming soon)</Text>
+          <View style={styles.fileFieldContainer}>
+            {photoUrl ? (
+              <View style={styles.photoPreviewContainer}>
+                <Image source={{ uri: photoUrl }} style={styles.photoPreview} resizeMode="cover" />
+                <TouchableOpacity
+                  style={styles.retakeButton}
+                  onPress={() => handleCapturePhoto(question.id)}
+                  disabled={isUploading}
+                >
+                  <MaterialCommunityIcons name="camera-retake" size={20} color="#fff" />
+                  <Text style={styles.retakeButtonText}>Retake</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.captureButton}
+                onPress={() => handleCapturePhoto(question.id)}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#7c3aed" />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="camera" size={32} color="#7c3aed" />
+                    <Text style={styles.captureButtonText}>Take Photo</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         )
 
@@ -737,6 +837,49 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
     textAlign: 'center',
+  },
+  fileFieldContainer: {
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e5e5',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  captureButton: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  captureButtonText: {
+    fontSize: 14,
+    color: '#7c3aed',
+    fontWeight: '500',
+  },
+  photoPreviewContainer: {
+    position: 'relative',
+  },
+  photoPreview: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#e5e5e5',
+  },
+  retakeButton: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 6,
+  },
+  retakeButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '500',
   },
   navigationContainer: {
     backgroundColor: '#fff',
