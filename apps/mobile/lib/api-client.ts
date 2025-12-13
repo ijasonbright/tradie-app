@@ -1096,12 +1096,13 @@ class ApiClient {
    * Upload photo for TC Live Form - stores in Vercel Blob and returns URL
    * This is for the dynamic TC form sync, separate from completion-form photos
    *
-   * Uses TC-specific image normalization that counter-rotates by -90 degrees
-   * to compensate for TradieConnect's hardcoded +90 rotation in their PDF template.
+   * Returns both:
+   * - url: The normally-oriented image URL (for display in our app)
+   * - tc_url: The counter-rotated URL (for TC's PDF which adds +90°)
    */
-  async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; question_key: string }> {
-    // Use TC-specific normalization that counter-rotates for their PDF template
-    const normalizedUri = await normalizeImageForTradieConnect(imageUri)
+  async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; display_url: string; question_key: string }> {
+    // Normalize orientation for proper display (our app shows this)
+    const normalizedUri = await normalizeImageOrientation(imageUri)
 
     const formData = new FormData()
 
@@ -1137,7 +1138,12 @@ class ApiClient {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`)
     }
 
-    return await response.json()
+    const result = await response.json()
+    // Add display_url which is the same as url (properly oriented for our app)
+    return {
+      ...result,
+      display_url: result.url, // For display in our app
+    }
   }
 
   // ==================== PROPERTIES API ====================

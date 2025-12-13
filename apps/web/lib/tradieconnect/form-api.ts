@@ -182,13 +182,27 @@ export function transformTCFormToOurFormat(
   const savedAnswers: Record<string, string> = {}
   const savedFiles: Record<string, string> = {}
 
+  // First, check jobAnswers array for file data (TC may return files here)
+  if (tcForm.jobAnswers && tcForm.jobAnswers.length > 0) {
+    for (const answer of tcForm.jobAnswers) {
+      if (answer.file?.link) {
+        const questionKey = `tc_q_${answer.jobTypeFormQuestionId}`
+        savedFiles[questionKey] = answer.file.link
+        console.log(`Found file in jobAnswers for ${questionKey}:`, answer.file.link)
+      }
+    }
+  }
+
   for (const question of tcForm.questions) {
     const questionKey = `tc_q_${question.jobTypeFormQuestionId}`
     const answerFormat = question.answerFormat.toLowerCase()
 
-    // Handle file/photo fields
-    if (answerFormat === 'file' && question.file?.link) {
-      savedFiles[questionKey] = question.file.link
+    // Handle file/photo fields - check question.file if not already found in jobAnswers
+    if (answerFormat === 'file') {
+      if (question.file?.link && !savedFiles[questionKey]) {
+        savedFiles[questionKey] = question.file.link
+        console.log(`Found file in question for ${questionKey}:`, question.file.link)
+      }
       continue
     }
 
@@ -222,6 +236,9 @@ export function transformTCFormToOurFormat(
       savedAnswers[questionKey] = String(savedValue)
     }
   }
+
+  console.log('Extracted saved files:', Object.keys(savedFiles).length, 'files')
+  console.log('Extracted saved answers:', Object.keys(savedAnswers).length, 'answers')
 
   return {
     template_id: `tc_form_${tcForm.jobTypeFormId}`,

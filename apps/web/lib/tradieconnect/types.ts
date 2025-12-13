@@ -64,6 +64,8 @@ export interface TCJobForm {
   description?: string
   questions: TCFormQuestion[]
   groups: TCFormGroup[] // Groups array with proper names and sort order
+  // TC may return jobAnswers array with saved answers including file data
+  jobAnswers?: TCJobAnswer[]
   // Additional metadata
   jobId?: number
   jobTypeId?: number
