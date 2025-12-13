@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store'
+import { normalizeImageOrientation } from './image-utils'
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://tradie-app-web.vercel.app/api'
 
@@ -406,15 +407,18 @@ class ApiClient {
   }
 
   async uploadPhoto(jobId: string, imageUri: string, caption: string, photoType: string) {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
     const formData = new FormData()
 
-    // Create file from URI
-    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
     const match = /\.(\w+)$/.exec(filename)
     const type = match ? `image/${match[1]}` : `image/jpeg`
 
     formData.append('photo', {
-      uri: imageUri,
+      uri: normalizedUri,
       name: filename,
       type,
     } as any)
@@ -1000,15 +1004,18 @@ class ApiClient {
    * Upload photo to completion form
    */
   async uploadCompletionFormPhoto(jobId: string, imageUri: string, caption: string, photoType: string, questionId?: string) {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
     const formData = new FormData()
 
-    // Create file from URI
-    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
     const match = /\.(\w+)$/.exec(filename)
     const type = match ? `image/${match[1]}` : `image/jpeg`
 
     formData.append('file', {
-      uri: imageUri,
+      uri: normalizedUri,
       name: filename,
       type,
     } as any)
@@ -1043,15 +1050,18 @@ class ApiClient {
    * Upload photo to TC job completion form
    */
   async uploadTCCompletionFormPhoto(tcJobId: string, imageUri: string, caption: string, photoType: string, questionId?: string) {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
     const formData = new FormData()
 
-    // Create file from URI
-    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
     const match = /\.(\w+)$/.exec(filename)
     const type = match ? `image/${match[1]}` : `image/jpeg`
 
     formData.append('file', {
-      uri: imageUri,
+      uri: normalizedUri,
       name: filename,
       type,
     } as any)
@@ -1245,15 +1255,18 @@ class ApiClient {
    * Upload photo to an asset
    */
   async uploadAssetPhoto(assetId: string, imageUri: string, caption: string, photoType: string = 'general') {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
     const formData = new FormData()
 
-    // Create file from URI
-    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
     const match = /\.(\w+)$/.exec(filename)
     const type = match ? `image/${match[1]}` : `image/jpeg`
 
     formData.append('file', {
-      uri: imageUri,
+      uri: normalizedUri,
       name: filename,
       type,
     } as any)
@@ -1439,15 +1452,18 @@ class ApiClient {
     room?: string,
     item?: string
   ) {
+    // Normalize image orientation to fix EXIF rotation issues
+    const normalizedUri = await normalizeImageOrientation(imageUri)
+
     const formData = new FormData()
 
-    // Create file from URI
-    const filename = imageUri.split('/').pop() || 'photo.jpg'
+    // Create file from normalized URI
+    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
     const match = /\.(\w+)$/.exec(filename)
     const type = match ? `image/${match[1]}` : `image/jpeg`
 
     formData.append('file', {
-      uri: imageUri,
+      uri: normalizedUri,
       name: filename,
       type,
     } as any)
@@ -1730,6 +1746,7 @@ class ApiClient {
         }>
         _tc_raw?: any
       }
+      saved_answers?: Record<string, string> // Saved answers from TC (pre-fill form with existing data)
       error?: string
       cached?: boolean
     }>(`/integrations/tradieconnect/jobs/${tcJobId}/form-definition`)

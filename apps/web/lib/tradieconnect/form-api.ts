@@ -84,11 +84,12 @@ function mapAnswerFormatToFieldType(answerFormat: string): string {
 
 /**
  * Transforms a TC form definition to our format for rendering
+ * Also extracts saved answers from the TC response (value/fieldValue fields)
  */
 export function transformTCFormToOurFormat(
   tcForm: TCJobForm,
   tcJobId: number
-): OurFormDefinition {
+): OurFormDefinition & { saved_answers?: Record<string, string> } {
   // Build a map from groupNo (jobTypeFormGroupId) to group details
   // This uses the 'groups' array from the TC response for proper names and sort order
   const groupInfoMap = new Map<number, { name: string; sortOrder: number }>()
@@ -174,12 +175,24 @@ export function transformTCFormToOurFormat(
   // Re-sort groups by their sort_order to ensure correct final order
   groups.sort((a, b) => a.sort_order - b.sort_order)
 
+  // Extract saved answers from TC questions (value/fieldValue fields)
+  const savedAnswers: Record<string, string> = {}
+  for (const question of tcForm.questions) {
+    const questionKey = `tc_q_${question.jobTypeFormQuestionId}`
+    // TC returns saved answers in the 'value' or 'fieldValue' field
+    const savedValue = question.value || question.fieldValue
+    if (savedValue && savedValue.trim() !== '') {
+      savedAnswers[questionKey] = savedValue
+    }
+  }
+
   return {
     template_id: `tc_form_${tcForm.jobTypeFormId}`,
     template_name: tcForm.name,
     tc_form_id: tcForm.jobTypeFormId,
     tc_job_id: tcJobId,
     groups,
+    saved_answers: Object.keys(savedAnswers).length > 0 ? savedAnswers : undefined,
     _tc_raw: tcForm, // Store original for building sync payload
   }
 }
@@ -189,12 +202,12 @@ export function transformTCFormToOurFormat(
 /**
  * Builds the TC POST payload from our answers and the original form definition
  *
- * Based on TC API docs:
- * - Each question should have a groupNo matching formGroupId
- * - Questions have an 'answers' array containing the submitted answer(s)
- * - For radio/dropdown/iscompliant, answers need JobTypeFormAnswerId
- * - For textbox/textarea, JobTypeFormAnswerId can be 0
- * - jobAnswers array also contains the answers in a different format
+ * Based on ACTUAL TC sample format:
+ * - Minimal top-level fields: jobId, formGroupId, submissionTypeId, lat, lng, completeJob
+ * - jobTypeForm ONLY has questions array (no jobAnswers, no id, no name)
+ * - For textbox/textarea: jobTypeFormAnswerId = 0, value = the text
+ * - For radioboxlist: ALL options listed with value "0" (not selected) or "1" (selected)
+ * - For file: needs fileName, fileSuffix, fileSize
  *
  * @param params - Parameters for building the payload
  */
@@ -204,8 +217,8 @@ export function buildTCSyncPayload(params: {
   answers: Record<string, any> // Our format: { "tc_q_2474": "Yes", ... }
   photoUrls?: Record<string, string[]> // { "tc_q_1234": ["url1", "url2"], ... }
   groupNo?: number // If syncing specific page
-  userId: number // TC provider ID
-  providerId: number // TC provider ID
+  userId: number // TC provider ID (not used in minimal payload)
+  providerId: number // TC provider ID (not used in minimal payload)
   isComplete: boolean
 }): TCSyncPayload {
   const {
@@ -214,8 +227,6 @@ export function buildTCSyncPayload(params: {
     answers,
     photoUrls,
     groupNo,
-    userId,
-    providerId,
     isComplete,
   } = params
 
@@ -224,172 +235,90 @@ export function buildTCSyncPayload(params: {
     ? tcFormDefinition.questions.filter(q => q.groupNo === groupNo)
     : tcFormDefinition.questions
 
-  // Build questions array - include ALL questions for the group, with answers for those we have
-  const questionsWithAnswers: TCQuestionWithAnswers[] = []
-  const jobAnswers: TCJobAnswer[] = []
+  // Build questions array in TC's minimal format
+  const questions: any[] = []
 
   for (const q of questionsToProcess) {
     const questionKey = `tc_q_${q.jobTypeFormQuestionId}`
     const answerValue = answers[questionKey]
-
-    // For photos, check if we have URLs
     const photos = photoUrls?.[questionKey]
 
-    // Determine the answer ID and value
-    let jobTypeFormAnswerId = 0 // Default for textbox/textarea
-    let finalValue = answerValue !== undefined && answerValue !== null ? String(answerValue) : ''
-
-    // For radio/dropdown/iscompliant, look up the answer option ID
-    if ((q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant' || q.answerFormat === 'checkboxlist') && q.answers?.length > 0 && finalValue) {
-      const matchedOption = q.answers.find(
-        (opt: TCFormAnswerOption) =>
-          opt.description.toLowerCase() === String(answerValue).toLowerCase() ||
-          String(opt.jobTypeFormAnswerId) === String(answerValue)
-      )
-      if (matchedOption) {
-        jobTypeFormAnswerId = matchedOption.jobTypeFormAnswerId
-        finalValue = matchedOption.description
-      }
-    }
-
-    // Build the answer entry for the question's answers array
-    // TC API expects: jobTypeFormQuestionId, jobTypeFormAnswerId, value
-    // And uses jobTypeFormGroupId (not groupNo) at the question level
-    const questionAnswer: TCQuestionAnswer = {
-      jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-      jobTypeFormAnswerId: jobTypeFormAnswerId,
-      value: finalValue,
-      jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId
+    // Build the question object
+    const questionObj: any = {
       groupNo: q.groupNo,
-    }
-
-    // For file fields, add photo path
-    if (q.answerFormat === 'file' && photos && photos.length > 0) {
-      questionAnswer.filePath = photos[0]
-      const fileName = photos[0].split('/').pop() || 'photo.jpg'
-      questionAnswer.fileName = fileName
-      questionAnswer.value = photos[0] // For files, value is the URL
-    }
-
-    // Build question with nested answers array
-    // TC API expects minimal structure: jobTypeFormQuestionId, jobTypeFormGroupId, answers[]
-    const questionWithAnswers: TCQuestionWithAnswers = {
       jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-      jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId (not groupNo)
-      description: q.description,
       answerFormat: q.answerFormat,
-      groupNo: q.groupNo,
-      sortOrder: q.sortOrder,
-      required: q.required,
-      value: finalValue,
-      fieldValue: finalValue,
-      answers: finalValue ? [questionAnswer] : [], // Only include answer if we have a value
+      answers: [],
     }
-    questionsWithAnswers.push(questionWithAnswers)
 
-    // Only add to jobAnswers if we have a value
-    if (finalValue) {
-      const jobAnswer: TCJobAnswer = {
-        jobId: tcJobId,
-        jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-        jobTypeFormAnswerId: jobTypeFormAnswerId, // 0 for textbox/textarea, actual ID for radio/dropdown
-        jobTypeFormGroupId: q.groupNo, // TC uses jobTypeFormGroupId
-        questionText: q.description,
-        answerText: finalValue,
-        answerFormat: q.answerFormat,
-        groupNo: q.groupNo,
-        value: finalValue,
+    // Handle different answer formats based on TC sample
+    if (q.answerFormat === 'radioboxlist' || q.answerFormat === 'dropdown' || q.answerFormat === 'iscompliant' || q.answerFormat === 'checkboxlist') {
+      // For radio/dropdown: List ALL options with value "0" or "1"
+      if (q.answers && q.answers.length > 0) {
+        for (const opt of q.answers) {
+          // Check if this option is selected
+          const isSelected =
+            opt.description.toLowerCase() === String(answerValue || '').toLowerCase() ||
+            String(opt.jobTypeFormAnswerId) === String(answerValue);
+
+          questionObj.answers.push({
+            jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+            jobTypeFormAnswerId: opt.jobTypeFormAnswerId,
+            value: isSelected ? "1" : "0",
+          })
+        }
       }
-
-      // For file fields, add file object
-      if (q.answerFormat === 'file' && photos && photos.length > 0) {
+    } else if (q.answerFormat === 'file') {
+      // For file fields
+      if (photos && photos.length > 0) {
         const photoUrl = photos[0]
         const fileName = photoUrl.split('/').pop() || 'photo.jpg'
-        const suffix = fileName.split('.').pop() || 'jpg'
-        jobAnswer.file = {
-          link: photoUrl,
-          name: fileName,
-          suffix: suffix,
-        }
-        jobAnswer.value = photoUrl
-      }
+        const fileSuffix = fileName.split('.').pop() || 'jpg'
 
-      jobAnswers.push(jobAnswer)
+        questionObj.answers.push({
+          jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+          jobTypeFormAnswerId: 0,
+          value: photoUrl,
+          fileName: fileName,
+          fileSuffix: fileSuffix,
+          fileSize: 1024, // We don't have actual file size, use placeholder
+        })
+      }
+    } else {
+      // For textbox, textarea, and other text-based fields
+      const textValue = answerValue !== undefined && answerValue !== null ? String(answerValue) : ''
+
+      if (textValue) {
+        questionObj.answers.push({
+          jobTypeFormQuestionId: q.jobTypeFormQuestionId,
+          jobTypeFormAnswerId: 0,
+          value: textValue,
+        })
+      }
+    }
+
+    // Only include questions that have answers
+    if (questionObj.answers.length > 0) {
+      questions.push(questionObj)
     }
   }
 
-  // Build the payload - TC API seems to want minimal structure with jobAnswers
-  // Note: TC API may use PascalCase for some field names (JobTypeFormAnswerId vs jobTypeFormAnswerId)
-  // We'll build the raw payload to match their exact casing
-  const payload: TCSyncPayload = {
-    jobId: tcJobId,
-    formGroupId: groupNo ?? 0, // 0 = entire form, or specific groupNo for single section
-    userId: userId,
-    providerId: providerId,
-    submissionTypeId: 0,
-    shouldCreatePdf: isComplete,
-    completeJob: isComplete, // API uses "completeJob" not "shouldCompleteJob"
-    shouldSaveToQueue: true,
-    jobTypeForm: {
-      jobTypeFormId: tcFormDefinition.jobTypeFormId, // Only use jobTypeFormId, not 'id'
-      name: tcFormDefinition.name,
-      questions: questionsWithAnswers,
-      jobAnswers: jobAnswers,
-    },
-  }
-
-  // TC API payload - use only jobTypeFormId (not duplicate 'id' field)
-  // Include both questions and jobAnswers arrays
-  const fullPayload = {
+  // Build minimal payload matching TC sample exactly
+  const payload = {
     jobId: tcJobId,
     formGroupId: groupNo ?? 0,
-    userId: userId,
-    providerId: providerId,
     submissionTypeId: 0,
-    shouldCreatePdf: isComplete,
+    lat: 0,
+    lng: 0,
     completeJob: isComplete,
-    shouldSaveToQueue: true,
     jobTypeForm: {
-      jobTypeFormId: tcFormDefinition.jobTypeFormId,
-      name: tcFormDefinition.name,
-      // Include questions with nested answers
-      questions: questionsWithAnswers.map(q => ({
-        jobTypeFormQuestionId: q.jobTypeFormQuestionId,
-        jobTypeFormGroupId: q.jobTypeFormGroupId,
-        groupNo: q.groupNo,
-        description: q.description,
-        answerFormat: q.answerFormat,
-        sortOrder: q.sortOrder,
-        required: q.required,
-        value: q.value || '',
-        fieldValue: q.fieldValue || '',
-        // Nested answers array with submitted value
-        answers: q.answers.map(a => ({
-          jobTypeFormQuestionId: a.jobTypeFormQuestionId,
-          jobTypeFormAnswerId: a.jobTypeFormAnswerId,
-          jobTypeFormGroupId: a.jobTypeFormGroupId,
-          groupNo: a.groupNo,
-          value: a.value,
-        })),
-      })),
-      // Also include jobAnswers
-      jobAnswers: jobAnswers.map(ja => ({
-        jobId: ja.jobId,
-        jobTypeFormQuestionId: ja.jobTypeFormQuestionId,
-        jobTypeFormAnswerId: ja.jobTypeFormAnswerId,
-        jobTypeFormGroupId: ja.jobTypeFormGroupId,
-        groupNo: ja.groupNo,
-        questionText: ja.questionText,
-        answerText: ja.answerText,
-        answerFormat: ja.answerFormat,
-        value: ja.value,
-        ...(ja.file ? { file: ja.file } : {}),
-      })),
+      questions: questions,
     },
   }
 
-  // Return full payload
-  return fullPayload as unknown as TCSyncPayload
+  console.log('Built TC payload (minimal format):', JSON.stringify(payload, null, 2))
+
+  return payload as unknown as TCSyncPayload
 }
 
 // ==================== Sync Answers to TC ====================

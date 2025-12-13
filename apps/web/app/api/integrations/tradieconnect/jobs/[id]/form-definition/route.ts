@@ -169,16 +169,18 @@ export async function GET(
     // Transform to our format
     const ourForm = transformTCFormToOurFormat(result.form, parseInt(tcJobId))
 
-    // Return the form definition
+    // Return the form definition with saved answers
     const response = NextResponse.json({
       success: true,
       form: ourForm,
+      saved_answers: ourForm.saved_answers, // Include saved answers at top level for easy access
       cached: false,
       _debug: {
         tc_form_id: result.form.jobTypeFormId,
         tc_form_name: result.form.name,
         question_count: result.form.questions?.length || 0,
         group_count: ourForm.groups.length,
+        saved_answers_count: ourForm.saved_answers ? Object.keys(ourForm.saved_answers).length : 0,
         fetched_at: new Date().toISOString(),
       },
     })

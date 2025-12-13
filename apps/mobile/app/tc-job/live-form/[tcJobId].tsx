@@ -87,14 +87,25 @@ export default function TCLiveFormScreen() {
 
       if (response.success && response.form) {
         setForm(response.form)
-        // Initialize form data with empty values
+
+        // Initialize form data - use saved answers if available, otherwise empty
         const initialData: Record<string, any> = {}
+        const savedAnswers = response.saved_answers || {}
+
         response.form.groups.forEach(group => {
           group.questions.forEach(question => {
-            initialData[question.id] = ''
+            // Check if we have a saved answer for this question
+            initialData[question.id] = savedAnswers[question.id] || ''
           })
         })
         setFormData(initialData)
+
+        // Log how many saved answers were loaded
+        const savedCount = Object.keys(savedAnswers).length
+        if (savedCount > 0) {
+          console.log(`Loaded ${savedCount} saved answers from TradieConnect`)
+          setSyncStatus('synced') // Show synced status since we have existing data
+        }
 
         // Update header with form name
         navigation.setOptions({

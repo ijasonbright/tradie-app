@@ -198,14 +198,14 @@ export async function POST(
       isComplete: is_complete,
     })
 
-    // Cast to any since payload may not have questions array (minimal payload)
+    // Log payload details (minimal format - no jobAnswers)
     const payloadAny = payload as any
-    console.log('Built TC sync payload:', {
+    console.log('Built TC sync payload (minimal format):', {
       jobId: payload.jobId,
+      formGroupId: payloadAny.formGroupId,
       questionCount: payloadAny.jobTypeForm?.questions?.length ?? 0,
-      answerCount: payloadAny.jobTypeForm?.jobAnswers?.length ?? 0,
       isComplete: is_complete,
-      groupNo: group_no,
+      completeJob: payloadAny.completeJob,
     })
 
     // Sync to TC
@@ -264,10 +264,11 @@ export async function POST(
     }
 
     // Success!
+    const questionsCount = payloadAny.jobTypeForm?.questions?.length ?? 0
     return NextResponse.json({
       success: true,
       tc_response: syncResult.response,
-      synced_answers: payload.jobTypeForm.jobAnswers.length,
+      synced_questions: questionsCount,
       is_complete,
       group_no: group_no || null,
       _debug: {
