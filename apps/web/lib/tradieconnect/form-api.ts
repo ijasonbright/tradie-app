@@ -182,13 +182,42 @@ export function transformTCFormToOurFormat(
   const savedAnswers: Record<string, string> = {}
   const savedFiles: Record<string, string> = {}
 
+  // Log raw TC form for debugging file extraction
+  console.log('TC Form raw data for file extraction:', JSON.stringify({
+    hasJobAnswers: !!tcForm.jobAnswers,
+    jobAnswersCount: tcForm.jobAnswers?.length || 0,
+    fileQuestions: tcForm.questions
+      .filter(q => q.answerFormat.toLowerCase() === 'file')
+      .map(q => ({
+        id: q.jobTypeFormQuestionId,
+        value: q.value,
+        fieldValue: q.fieldValue,
+        file: q.file,
+      })),
+  }, null, 2))
+
   // First, check jobAnswers array for file data (TC may return files here)
   if (tcForm.jobAnswers && tcForm.jobAnswers.length > 0) {
+    console.log(`Processing ${tcForm.jobAnswers.length} jobAnswers for saved files`)
     for (const answer of tcForm.jobAnswers) {
+      const questionKey = `tc_q_${answer.jobTypeFormQuestionId}`
+
+      // Check answer.file.link (TC native file format)
       if (answer.file?.link) {
-        const questionKey = `tc_q_${answer.jobTypeFormQuestionId}`
         savedFiles[questionKey] = answer.file.link
-        console.log(`Found file in jobAnswers for ${questionKey}:`, answer.file.link)
+        console.log(`Found file in jobAnswers.file.link for ${questionKey}:`, answer.file.link)
+        continue
+      }
+
+      // Also check answer.value or answer.answerText for blob URLs
+      const answerUrl = answer.value || (answer as any).answerText
+      if (answerUrl && typeof answerUrl === 'string' && (
+        answerUrl.startsWith('http://') ||
+        answerUrl.startsWith('https://') ||
+        answerUrl.includes('blob.vercel-storage.com')
+      )) {
+        savedFiles[questionKey] = answerUrl
+        console.log(`Found file URL in jobAnswers.value/answerText for ${questionKey}:`, answerUrl)
       }
     }
   }
@@ -197,11 +226,34 @@ export function transformTCFormToOurFormat(
     const questionKey = `tc_q_${question.jobTypeFormQuestionId}`
     const answerFormat = question.answerFormat.toLowerCase()
 
-    // Handle file/photo fields - check question.file if not already found in jobAnswers
+    // Handle file/photo fields - check multiple possible locations
     if (answerFormat === 'file') {
+      // Log full question object for debugging file fields
+      console.log(`File question ${questionKey} full data:`, JSON.stringify({
+        jobTypeFormQuestionId: question.jobTypeFormQuestionId,
+        answerFormat: question.answerFormat,
+        value: question.value,
+        fieldValue: question.fieldValue,
+        file: question.file,
+      }))
+
+      // Check question.file.link first (TC native file format)
       if (question.file?.link && !savedFiles[questionKey]) {
         savedFiles[questionKey] = question.file.link
-        console.log(`Found file in question for ${questionKey}:`, question.file.link)
+        console.log(`Found file in question.file for ${questionKey}:`, question.file.link)
+      }
+
+      // Also check value/fieldValue - TC might store blob URLs here
+      if (!savedFiles[questionKey]) {
+        const valueUrl = question.value || question.fieldValue
+        if (valueUrl && typeof valueUrl === 'string' && (
+          valueUrl.startsWith('http://') ||
+          valueUrl.startsWith('https://') ||
+          valueUrl.includes('blob.vercel-storage.com')
+        )) {
+          savedFiles[questionKey] = valueUrl
+          console.log(`Found file URL in value/fieldValue for ${questionKey}:`, valueUrl)
+        }
       }
       continue
     }

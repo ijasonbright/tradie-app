@@ -1100,28 +1100,43 @@ class ApiClient {
    * - url: The normally-oriented image URL (for display in our app)
    * - tc_url: The counter-rotated URL (for TC's PDF which adds +90°)
    */
-  async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; display_url: string; question_key: string }> {
-    // Normalize orientation for proper display (our app shows this)
-    const normalizedUri = await normalizeImageOrientation(imageUri)
+  async uploadTCLiveFormPhoto(tcJobId: string, imageUri: string, questionKey: string): Promise<{ success: boolean; url: string; display_url: string; tc_url: string; question_key: string }> {
+    // Create TWO versions of the image:
+    // 1. Normal orientation for display in our app
+    // 2. Counter-rotated (-90°) to compensate for TC's hardcoded +90° rotation in their PDF
+    const displayUri = await normalizeImageOrientation(imageUri)
+    const tcUri = await normalizeImageForTradieConnect(imageUri)
 
     const formData = new FormData()
 
-    // Create file from normalized URI
-    const filename = normalizedUri.split('/').pop() || 'photo.jpg'
-    const match = /\.(\w+)$/.exec(filename)
-    const type = match ? `image/${match[1]}` : `image/jpeg`
+    // Create display file (normal orientation for our app)
+    const displayFilename = displayUri.split('/').pop() || 'display_photo.jpg'
+    const displayMatch = /\.(\w+)$/.exec(displayFilename)
+    const displayType = displayMatch ? `image/${displayMatch[1]}` : `image/jpeg`
 
-    formData.append('file', {
-      uri: normalizedUri,
-      name: filename,
-      type,
+    formData.append('display_file', {
+      uri: displayUri,
+      name: displayFilename,
+      type: displayType,
     } as any)
+
+    // Create TC file (counter-rotated for TradieConnect)
+    const tcFilename = tcUri.split('/').pop() || 'tc_photo.jpg'
+    const tcMatch = /\.(\w+)$/.exec(tcFilename)
+    const tcType = tcMatch ? `image/${tcMatch[1]}` : `image/jpeg`
+
+    formData.append('tc_file', {
+      uri: tcUri,
+      name: tcFilename,
+      type: tcType,
+    } as any)
+
     formData.append('question_key', questionKey)
 
     const token = await this.getAuthToken()
     const url = `${API_URL}/integrations/tradieconnect/jobs/${tcJobId}/photos`
 
-    console.log(`API Request: POST ${url}`)
+    console.log(`API Request: POST ${url} (uploading display + TC versions)`)
 
     const response = await fetch(url, {
       method: 'POST',
@@ -1139,11 +1154,7 @@ class ApiClient {
     }
 
     const result = await response.json()
-    // Add display_url which is the same as url (properly oriented for our app)
-    return {
-      ...result,
-      display_url: result.url, // For display in our app
-    }
+    return result
   }
 
   // ==================== PROPERTIES API ====================
@@ -1833,6 +1844,51 @@ class ApiClient {
         body: JSON.stringify(data),
       }
     )
+  }
+
+  /**
+   * Get TC job calendar details
+   * Returns the fields needed for enhanced calendar display:
+   * - Contact person (firstname, lastname, mobile)
+   * - Job type (tfname, additionaljobtype)
+   * - Status, Address, coordinates for navigation
+   */
+  async getTCJobCalendarDetails(tcJobId: string | number) {
+    return this.request<{
+      success: boolean
+      job?: {
+        // Contact person
+        firstname: string | null
+        lastname: string | null
+        mobile: string | null
+        email: string | null
+        // Job type
+        tfname: string | null
+        additionaljobtype: string | null
+        // Status
+        statusName: string | null
+        statusId: number | null
+        // Address
+        address1: string | null
+        address2: string | null
+        suburb: string | null
+        state: string | null
+        postcode: string | null
+        fullAddress: string | null
+        // Navigation
+        lat: number | null
+        long: number | null
+        // Date/time
+        start: string | null
+        scheduledDate: string | null
+        prettyPrintDate: string | null
+        // Other
+        jobId: number
+        description: string | null
+        entryNotes: string | null
+      }
+      error?: string
+    }>(`/integrations/tradieconnect/jobs/${tcJobId}/calendar-details`)
   }
 }
 

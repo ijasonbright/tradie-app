@@ -68,7 +68,8 @@ export default function TCLiveFormScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced' | 'error'>('idle')
   const [savedFiles, setSavedFiles] = useState<Record<string, string[]>>({}) // TC saved file URLs (arrays)
-  const [localPhotos, setLocalPhotos] = useState<Record<string, string[]>>({}) // Locally captured photos (arrays)
+  // Local photos store both display_url (for our app) and tc_url (for TC sync)
+  const [localPhotos, setLocalPhotos] = useState<Record<string, Array<{ display_url: string; tc_url: string }>>>({})
   const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null) // Question ID being uploaded
 
   useLayoutEffect(() => {
@@ -178,11 +179,16 @@ export default function TCLiveFormScreen() {
             questionId // question key like "tc_q_2279"
           )
 
-          if (response.success && response.url) {
-            // Add the uploaded URL to localPhotos array
+          if (response.success && response.display_url && response.tc_url) {
+            // Add both URLs to localPhotos array
+            // - display_url: for showing in our app (normal orientation)
+            // - tc_url: for syncing to TC (counter-rotated to compensate for TC's +90°)
             setLocalPhotos(prev => ({
               ...prev,
-              [questionId]: [...(prev[questionId] || []), response.url],
+              [questionId]: [...(prev[questionId] || []), {
+                display_url: response.display_url,
+                tc_url: response.tc_url,
+              }],
             }))
             // Update sync status
             if (syncStatus === 'synced') {
@@ -215,21 +221,21 @@ export default function TCLiveFormScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            // Check if it's a local photo
+            // Check if it's a local photo (local photos are stored with both display_url and tc_url)
             const localList = localPhotos[questionId] || []
             if (photoIndex < localList.length) {
               // Remove from local photos
               setLocalPhotos(prev => ({
                 ...prev,
-                [questionId]: prev[questionId].filter((_, i) => i !== photoIndex),
+                [questionId]: (prev[questionId] || []).filter((_, i) => i !== photoIndex),
               }))
             } else {
-              // It's a saved file - mark it for removal by clearing savedFiles
+              // It's a saved file from TC - mark it for removal
               const savedList = savedFiles[questionId] || []
               const savedIndex = photoIndex - localList.length
               setSavedFiles(prev => ({
                 ...prev,
-                [questionId]: prev[questionId].filter((_, i) => i !== savedIndex),
+                [questionId]: (prev[questionId] || []).filter((_, i) => i !== savedIndex),
               }))
             }
             if (syncStatus === 'synced') {
@@ -241,14 +247,28 @@ export default function TCLiveFormScreen() {
     )
   }
 
-  // Get all photos for a question (local photos first, then saved from TC)
-  const getPhotos = (questionId: string): string[] => {
+  // Get all DISPLAY URLs for a question (for showing in our app)
+  // Returns display_url for local photos, and saved file URLs as-is
+  const getDisplayPhotos = (questionId: string): string[] => {
     const local = localPhotos[questionId] || []
     const saved = savedFiles[questionId] || []
-    return [...local, ...saved]
+    // Extract display_url from local photos (objects with display_url and tc_url)
+    const localDisplayUrls = local.map(p => p.display_url)
+    return [...localDisplayUrls, ...saved]
   }
 
-  // Build photo_urls object for syncing (combines local photos and saved files)
+  // Get all TC URLs for a question (for syncing to TradieConnect)
+  // Returns tc_url for local photos, and saved file URLs as-is (already in TC)
+  const getTCPhotos = (questionId: string): string[] => {
+    const local = localPhotos[questionId] || []
+    const saved = savedFiles[questionId] || []
+    // Extract tc_url from local photos (objects with display_url and tc_url)
+    const localTCUrls = local.map(p => p.tc_url)
+    return [...localTCUrls, ...saved]
+  }
+
+  // Build photo_urls object for syncing TO TRADIECONNECT
+  // Uses tc_url for local photos (counter-rotated) and saved URLs as-is
   const buildPhotoUrls = (): Record<string, string[]> => {
     const photoUrls: Record<string, string[]> = {}
 
@@ -259,9 +279,9 @@ export default function TCLiveFormScreen() {
     ])
 
     for (const questionId of allQuestionIds) {
-      const photos = getPhotos(questionId)
-      if (photos.length > 0) {
-        photoUrls[questionId] = photos
+      const tcPhotos = getTCPhotos(questionId)
+      if (tcPhotos.length > 0) {
+        photoUrls[questionId] = tcPhotos
       }
     }
 
@@ -467,7 +487,8 @@ export default function TCLiveFormScreen() {
         )
 
       case 'file':
-        const photos = getPhotos(question.id)
+        // Use getDisplayPhotos for showing in our app (normal orientation)
+        const photos = getDisplayPhotos(question.id)
         const isUploading = uploadingPhoto === question.id
         return (
           <View style={styles.fileFieldContainer}>

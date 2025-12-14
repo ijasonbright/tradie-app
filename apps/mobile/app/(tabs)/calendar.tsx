@@ -1,10 +1,29 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Linking, Platform } from 'react-native'
 import { FAB } from 'react-native-paper'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import { useAuth } from '../../lib/auth'
 import { apiClient } from '../../lib/api-client'
+
+// Type for TC calendar details
+interface TCCalendarDetails {
+  firstname: string | null
+  lastname: string | null
+  mobile: string | null
+  email: string | null
+  tfname: string | null
+  additionaljobtype: string | null
+  statusName: string | null
+  statusId: number | null
+  address1: string | null
+  fullAddress: string | null
+  lat: number | null
+  long: number | null
+  prettyPrintDate: string | null
+  description: string | null
+  entryNotes: string | null
+}
 
 // Mock data for today's schedule
 const MOCK_APPOINTMENTS = [
@@ -60,6 +79,9 @@ export default function CalendarScreen() {
   const [error, setError] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [viewMode, setViewMode] = useState<ViewMode>('day')
+  // Cache for TC job details (keyed by tc_job_id)
+  const [tcDetailsCache, setTcDetailsCache] = useState<Record<string, TCCalendarDetails>>({})
+  const [loadingTcDetails, setLoadingTcDetails] = useState<Set<string>>(new Set())
 
   const formatHeaderDate = () => {
     if (viewMode === 'day') {
@@ -92,6 +114,45 @@ export default function CalendarScreen() {
     )
   }
 
+  // Fetch TC job details for calendar display
+  const fetchTCJobDetails = useCallback(async (tcJobId: number | string) => {
+    const jobIdStr = String(tcJobId)
+
+    // Skip if already cached or currently loading
+    if (tcDetailsCache[jobIdStr] || loadingTcDetails.has(jobIdStr)) {
+      return
+    }
+
+    // Mark as loading
+    setLoadingTcDetails(prev => new Set(prev).add(jobIdStr))
+
+    try {
+      const response = await apiClient.getTCJobCalendarDetails(tcJobId)
+      if (response.success && response.job) {
+        setTcDetailsCache(prev => ({
+          ...prev,
+          [jobIdStr]: response.job as TCCalendarDetails
+        }))
+      }
+    } catch (err) {
+      console.error(`Failed to fetch TC job details for ${tcJobId}:`, err)
+    } finally {
+      setLoadingTcDetails(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(jobIdStr)
+        return newSet
+      })
+    }
+  }, [tcDetailsCache, loadingTcDetails])
+
+  // Fetch TC details for all TradieConnect appointments
+  const fetchAllTCDetails = useCallback(async (apps: any[]) => {
+    const tcApps = apps.filter(app => app.appointment_type === 'tradieconnect' && app.tc_job_id)
+    for (const app of tcApps) {
+      fetchTCJobDetails(app.tc_job_id)
+    }
+  }, [fetchTCJobDetails])
+
   // Fetch appointments based on selected date and view mode
   const fetchAppointments = async () => {
     try {
@@ -121,7 +182,11 @@ export default function CalendarScreen() {
         end_date: endDate.toISOString()
       })
       console.log('Fetched appointments:', response)
-      setAppointments(response.appointments || [])
+      const apps = response.appointments || []
+      setAppointments(apps)
+
+      // Fetch TC job details for TradieConnect appointments
+      fetchAllTCDetails(apps)
     } catch (err: any) {
       console.error('Failed to fetch appointments:', err)
       setError(err.message || 'Failed to load appointments')
@@ -238,9 +303,36 @@ export default function CalendarScreen() {
       }
     }
 
-    // Build client name - safely handle null/undefined values
+    // Calculate end time for TC jobs (30 min duration)
+    const getEndTimeFor30Min = (startDateStr: string | null | undefined) => {
+      if (!startDateStr) return ''
+      try {
+        const date = new Date(startDateStr)
+        if (isNaN(date.getTime())) return ''
+        date.setMinutes(date.getMinutes() + 30)
+        return date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+      } catch (e) {
+        return ''
+      }
+    }
+
+    // Determine what type of item this is
+    const isTradieConnect = appointment.appointment_type === 'tradieconnect'
+    const isAssetRegister = appointment.appointment_type === 'asset_register'
+    const isJob = appointment.job_id && appointment.job_id === appointment.id
+
+    // Get TC details from cache if this is a TradieConnect appointment
+    const tcJobId = appointment.tc_job_id ? String(appointment.tc_job_id) : null
+    const tcDetails = tcJobId ? tcDetailsCache[tcJobId] : null
+    const isLoadingTcDetails = tcJobId ? loadingTcDetails.has(tcJobId) : false
+
+    // Build client name - use TC details for TradieConnect appointments
     let clientName = ''
-    if (appointment.is_company && appointment.company_name) {
+    if (isTradieConnect && tcDetails) {
+      const firstName = tcDetails.firstname || ''
+      const lastName = tcDetails.lastname || ''
+      clientName = `${firstName} ${lastName}`.trim()
+    } else if (appointment.is_company && appointment.company_name) {
       clientName = appointment.company_name
     } else {
       const firstName = appointment.first_name || ''
@@ -252,7 +344,10 @@ export default function CalendarScreen() {
     const appointmentType = appointment.appointment_type || 'job'
 
     const startTime = formatTime(appointment.start_time)
-    const endTime = formatTime(appointment.end_time)
+    // For TC jobs, use 30 min duration; otherwise use actual end time
+    const endTime = isTradieConnect
+      ? getEndTimeFor30Min(appointment.start_time)
+      : formatTime(appointment.end_time)
 
     // Format the date for week view - safely handle null/invalid dates
     let dateLabel = ''
@@ -271,16 +366,31 @@ export default function CalendarScreen() {
       }
     }
 
-    // Get phone number from client data
-    const clientPhone = appointment.client_phone || appointment.client_mobile || null
+    // Get phone number - prefer TC details mobile for TC appointments
+    const clientPhone = isTradieConnect && tcDetails?.mobile
+      ? tcDetails.mobile
+      : (appointment.client_phone || appointment.client_mobile || null)
 
-    // Determine what type of item this is
-    // If appointment_type is 'tradieconnect', navigate to TC job view
-    // If appointment_type is 'asset_register', navigate to asset register screen
-    // If job_id equals id, then this row came from the jobs UNION query
-    const isTradieConnect = appointment.appointment_type === 'tradieconnect'
-    const isAssetRegister = appointment.appointment_type === 'asset_register'
-    const isJob = appointment.job_id && appointment.job_id === appointment.id
+    // Get address - prefer TC details for TC appointments
+    const displayAddress = isTradieConnect && tcDetails?.address1
+      ? tcDetails.address1
+      : appointment.location_address
+
+    // Get navigation address - prefer full address from TC details
+    const navigationAddress = isTradieConnect && tcDetails?.fullAddress
+      ? tcDetails.fullAddress
+      : (isTradieConnect && tcDetails?.address1 ? tcDetails.address1 : appointment.location_address)
+
+    // Get job type from TC details
+    const tcJobType = tcDetails?.tfname || null
+    const tcAdditionalJobType = tcDetails?.additionaljobtype || null
+    const tcStatusName = tcDetails?.statusName || null
+
+    // Build title - use TC job type for TradieConnect appointments
+    const displayTitle = isTradieConnect && tcJobType
+      ? tcJobType
+      : (appointment.title || 'Untitled Appointment')
+
     const handlePress = () => {
       if (!appointment.id) return // Safety check
       if (isTradieConnect && appointment.tc_job_id) {
@@ -316,7 +426,7 @@ export default function CalendarScreen() {
 
         <View style={styles.detailsColumn}>
           <View style={styles.header}>
-            <Text style={styles.title}>{appointment.title || 'Untitled Appointment'}</Text>
+            <Text style={styles.title}>{displayTitle}</Text>
             <View
               style={[
                 styles.typeChip,
@@ -324,11 +434,28 @@ export default function CalendarScreen() {
               ]}
             >
               <Text style={styles.chipText}>
-                {(appointmentType || 'job').replace('_', ' ').toUpperCase()}
+                {isTradieConnect ? 'TC' : (appointmentType || 'job').replace('_', ' ').toUpperCase()}
               </Text>
             </View>
           </View>
 
+          {/* Additional Job Type - highlighted if present (TC only) */}
+          {isTradieConnect && tcAdditionalJobType && (
+            <View style={styles.additionalJobTypeRow}>
+              <MaterialCommunityIcons name="alert-circle" size={14} color="#ea580c" />
+              <Text style={styles.additionalJobTypeText}>{tcAdditionalJobType}</Text>
+            </View>
+          )}
+
+          {/* Status (TC only) */}
+          {isTradieConnect && tcStatusName && (
+            <View style={styles.row}>
+              <MaterialCommunityIcons name="flag" size={14} color="#666" />
+              <Text style={styles.info}>{tcStatusName}</Text>
+            </View>
+          )}
+
+          {/* Contact name */}
           {clientName && (
             <View style={styles.row}>
               <MaterialCommunityIcons name="account" size={14} color="#666" />
@@ -336,10 +463,19 @@ export default function CalendarScreen() {
             </View>
           )}
 
-          {appointment.location_address && (
+          {/* Address */}
+          {displayAddress && (
             <View style={styles.row}>
               <MaterialCommunityIcons name="map-marker" size={14} color="#666" />
-              <Text style={styles.info}>{appointment.location_address}</Text>
+              <Text style={styles.info}>{displayAddress}</Text>
+            </View>
+          )}
+
+          {/* Loading indicator for TC details */}
+          {isTradieConnect && isLoadingTcDetails && (
+            <View style={styles.row}>
+              <ActivityIndicator size="small" color="#7c3aed" />
+              <Text style={styles.loadingDetailsText}>Loading details...</Text>
             </View>
           )}
 
@@ -358,7 +494,7 @@ export default function CalendarScreen() {
               style={styles.actionButton}
               onPress={(e) => {
                 e.stopPropagation() // Prevent navigating to edit screen
-                handleNavigate(appointment.location_address)
+                handleNavigate(navigationAddress)
               }}
             >
               <MaterialCommunityIcons name="navigation" size={18} color="#2563eb" />
@@ -670,6 +806,28 @@ const styles = StyleSheet.create({
   info: {
     fontSize: 13,
     color: '#666',
+  },
+  additionalJobTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+    backgroundColor: '#fff7ed',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    marginRight: 8,
+    alignSelf: 'flex-start',
+  },
+  additionalJobTypeText: {
+    fontSize: 13,
+    color: '#ea580c',
+    fontWeight: '600',
+  },
+  loadingDetailsText: {
+    fontSize: 12,
+    color: '#7c3aed',
+    marginLeft: 4,
   },
   actions: {
     flexDirection: 'row',
